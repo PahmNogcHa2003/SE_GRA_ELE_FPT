@@ -1,4 +1,4 @@
-namespace SE_GRA_ELE_FPT_API
+namespace API
 {
     public class WeatherForecast
     {

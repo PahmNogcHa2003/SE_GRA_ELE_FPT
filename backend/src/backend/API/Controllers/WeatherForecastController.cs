@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 
-namespace SE_GRA_ELE_FPT_API.Controllers
+namespace API.Controllers
 {
     [ApiController]
     [Route("[controller]")]
