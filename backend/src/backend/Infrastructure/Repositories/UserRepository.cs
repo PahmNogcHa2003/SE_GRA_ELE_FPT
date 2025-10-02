@@ -1,4 +1,5 @@
-﻿using Domain.Entities.Models;
+﻿
+using Domain.Entities;
 using Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -12,7 +13,7 @@ namespace Infrastructure.Repositories
     // Infrastructure/Repositories/UserRepository.cs
     public class UserRepository : BaseRepository<AspNetUser, long>
     {
-        public UserRepository(AppDbContext ctx) : base(ctx) { }
+        public UserRepository(HolaBikeContext ctx) : base(ctx) { }
 
         // custom query
         public Task<AspNetUser?> GetByEmailAsync(string email, CancellationToken ct = default) =>

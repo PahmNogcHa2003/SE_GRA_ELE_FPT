@@ -1,7 +1,7 @@
 ﻿using Application.Interfaces;
 using Application.Mapping;
 using Application.Services;
-using Domain.Entities.Models;
+using Domain.Entities;
 using Infrastructure.Dependency_Injection;
 using Infrastructure.Persistence;
 using Infrastructure.Repositories;
@@ -24,7 +24,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddAutoMapper(typeof(AppMappingProfile).Assembly);
 
 // DbContext
-builder.Services.AddDbContext<AppDbContext>(options =>
+builder.Services.AddDbContext<HolaBikeContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // UnitOfWork
