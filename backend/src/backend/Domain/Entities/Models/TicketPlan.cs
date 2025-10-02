@@ -1,9 +1,7 @@
-﻿
-namespace Domain.Entities.Models
+﻿namespace Domain.Entities.Models
 {
-    public class TicketPlan
+    public class TicketPlan : BaseEntity<long>
     {
-        public long Id { get; private set; }
         public string Name { get; private set; } = null!;
         public string? Description { get; private set; }
         public int DurationMinutes { get; private set; }
@@ -44,17 +42,15 @@ namespace Domain.Entities.Models
             DurationMinutes = newDuration;
         }
 
-        public void Deactivate()
-        {
-            IsActive = false;
-        }
+        public void Deactivate() => IsActive = false;
+        public void Activate() => IsActive = true;
 
         public void AddPrice(TicketPlanPrice price)
         {
-            if (!_ticketPlanPrices.Contains(price))
-            {
-                _ticketPlanPrices.Add(price);
-            }
+            if (_ticketPlanPrices.Any(p => p.Id == price.Id))
+                throw new InvalidOperationException("This price is already assigned to the plan.");
+
+            _ticketPlanPrices.Add(price);
         }
     }
 }

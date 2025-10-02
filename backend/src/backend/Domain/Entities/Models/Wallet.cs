@@ -3,9 +3,8 @@ using System.Collections.Generic;
 
 namespace Domain.Entities.Models
 {
-    public class Wallet
+    public class Wallet : BaseEntity<long>  
     {
-        public long Id { get; set; }
         public long UserId { get; set; }
         public decimal Balance { get; set; }
         public DateTimeOffset UpdatedAt { get; set; }

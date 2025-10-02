@@ -1,8 +1,7 @@
 ﻿namespace Domain.Entities.Models
 {
-    public class UserAddress
+    public class UserAddress : BaseEntity<long>
     {
-        public long Id { get; private set; }
         public long UserId { get; private set; }
         public string? Address { get; private set; }
         public string? City { get; private set; }

@@ -1,19 +1,18 @@
 ﻿namespace Domain.Entities.Models
 {
-    public class StationLog
+    public class StationLog : BaseEntity<long>
     {
-        public long Id { get; private set; }
         public long StationId { get; private set; }
         public string Action { get; private set; } = null!;
         public DateTimeOffset Timestamp { get; private set; }
 
-        // Navigation (nếu cần sử dụng trong domain logic)
+        // Navigation property (optional cho ORM, không dùng trong domain logic)
         public Station? Station { get; private set; }
 
-        private StationLog() { } // constructor rỗng cho EF/AutoMapper
+        private StationLog() { } // Cho EF/AutoMapper
 
-        // Factory method
-        public static StationLog Create(long stationId, string action, DateTimeOffset timestamp)
+        // Factory method: ghi log
+        public static StationLog Create(long stationId, string action)
         {
             if (string.IsNullOrWhiteSpace(action))
                 throw new ArgumentException("Action cannot be empty.", nameof(action));
@@ -22,8 +21,17 @@
             {
                 StationId = stationId,
                 Action = action,
-                Timestamp = timestamp
+                Timestamp = DateTimeOffset.UtcNow
             };
         }
+    }
+
+    // Gợi ý: để tránh hardcode string, bạn có thể định nghĩa các action sẵn
+    public static class StationActions
+    {
+        public const string VehicleArrived = "VehicleArrived";
+        public const string VehicleDeparted = "VehicleDeparted";
+        public const string Maintenance = "Maintenance";
+        public const string Incident = "Incident";
     }
 }

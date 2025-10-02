@@ -1,8 +1,8 @@
 ﻿namespace Domain.Entities.Models
 {
-    public class UserDevice
+    public class UserDevice : BaseEntity<long>
     {
-        public long Id { get; private set; }
+    
         public long UserId { get; private set; }
         public string? DeviceId { get; private set; }
         public string? DeviceType { get; private set; }

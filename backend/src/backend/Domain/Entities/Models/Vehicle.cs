@@ -3,9 +3,8 @@ using System.Collections.Generic;
 
 namespace Domain.Entities.Models
 {
-    public class Vehicle
+    public class Vehicle : BaseEntity<long> 
     {
-        public long Id { get; set; }
         public long? CategoryId { get; set; }
         public string BikeCode { get; set; } = null!;
         public int? BatteryLevel { get; set; }

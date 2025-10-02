@@ -3,9 +3,8 @@ using System.Collections.Generic;
 
 namespace Domain.Entities.Models
 {
-    public class AspNetUser
+    public class AspNetUser : BaseEntity<long>
     {
-        public long Id { get; set; }
         public string? UserName { get; set; }
         public string? NormalizedUserName { get; set; }
         public string? Email { get; set; }
@@ -21,19 +20,39 @@ namespace Domain.Entities.Models
         public bool LockoutEnabled { get; set; }
         public int AccessFailedCount { get; set; }
 
-        // Navigation properties
-        public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
-        public virtual ICollection<Contact> Contacts { get; set; } = new List<Contact>();
-        public virtual ICollection<KycSubmission> KycSubmissions { get; set; } = new List<KycSubmission>();
-        public virtual ICollection<News> News { get; set; } = new List<News>();
-        public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
-        public virtual ICollection<UserAddress> UserAddresses { get; set; } = new List<UserAddress>();
-        public virtual ICollection<UserDevice> UserDevices { get; set; } = new List<UserDevice>();
-        public virtual ICollection<UserProfile> UserProfiles { get; set; } = new List<UserProfile>();
-        public virtual ICollection<UserSession> UserSessions { get; set; } = new List<UserSession>();
-        public virtual ICollection<UserTicket> UserTickets { get; set; } = new List<UserTicket>();
-        public virtual ICollection<Wallet> Wallets { get; set; } = new List<Wallet>();
+        // Navigation properties (Aggregate relationships)
+        public ICollection<Booking> Bookings { get; private set; } = new List<Booking>();
+        public ICollection<Contact> Contacts { get; private set; } = new List<Contact>();
+        public ICollection<KycSubmission> KycSubmissions { get; private set; } = new List<KycSubmission>();
+        public ICollection<News> News { get; private set; } = new List<News>();
+        public ICollection<Order> Orders { get; private set; } = new List<Order>();
+        public ICollection<UserAddress> UserAddresses { get; private set; } = new List<UserAddress>();
+        public ICollection<UserDevice> UserDevices { get; private set; } = new List<UserDevice>();
+        public ICollection<UserProfile> UserProfiles { get; private set; } = new List<UserProfile>();
+        public ICollection<UserSession> UserSessions { get; private set; } = new List<UserSession>();
+        public ICollection<UserTicket> UserTickets { get; private set; } = new List<UserTicket>();
+        public ICollection<Wallet> Wallets { get; private set; } = new List<Wallet>();
 
-        private AspNetUser() { } // private constructor nếu muốn enforce factory hoặc ORM
+        // ✅ Factory method để tạo user mới (Domain-driven design style)
+        public static AspNetUser Create(string userName, string email)
+        {
+            return new AspNetUser
+            {
+                UserName = userName,
+                NormalizedUserName = userName.ToUpperInvariant(),
+                Email = email,
+                NormalizedEmail = email.ToUpperInvariant(),
+                SecurityStamp = Guid.NewGuid().ToString(),
+                ConcurrencyStamp = Guid.NewGuid().ToString(),
+                EmailConfirmed = false,
+                PhoneNumberConfirmed = false,
+                TwoFactorEnabled = false,
+                LockoutEnabled = true,
+                AccessFailedCount = 0
+            };
+        }
+
+        // private constructor để enforce dùng Factory
+        private AspNetUser() { }
     }
 }

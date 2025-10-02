@@ -1,15 +1,14 @@
 ﻿namespace Domain.Entities.Models
 {
-    public class Rental
+    public class Rental : BaseEntity<long>
     {
-        public long Id { get; private set; }
         public long BookingId { get; private set; }
         public DateTimeOffset StartTime { get; private set; }
         public DateTimeOffset? EndTime { get; private set; }
         public decimal? Distance { get; private set; }
-        public string Status { get; private set; } = "Ongoing";
+        public string Status { get; private set; } = RentalStatus.Ongoing;
 
-        private Rental() { } // constructor rỗng cho EF/AutoMapper
+        private Rental() { } // Cho EF/AutoMapper
 
         // Factory method: bắt đầu một rental mới
         public static Rental Start(long bookingId)
@@ -18,7 +17,7 @@
             {
                 BookingId = bookingId,
                 StartTime = DateTimeOffset.UtcNow,
-                Status = "Ongoing"
+                Status = RentalStatus.Ongoing
             };
         }
 
@@ -27,10 +26,12 @@
         {
             if (EndTime != null)
                 throw new InvalidOperationException("Rental has already ended.");
+            if (Status == RentalStatus.Cancelled)
+                throw new InvalidOperationException("Cannot complete a cancelled rental.");
 
             EndTime = DateTimeOffset.UtcNow;
             Distance = distance;
-            Status = "Completed";
+            Status = RentalStatus.Completed;
         }
 
         // Business method: hủy chuyến đi
@@ -38,9 +39,19 @@
         {
             if (EndTime != null)
                 throw new InvalidOperationException("Rental has already ended.");
+            if (Status == RentalStatus.Completed)
+                throw new InvalidOperationException("Cannot cancel a completed rental.");
 
             EndTime = DateTimeOffset.UtcNow;
-            Status = "Cancelled";
+            Status = RentalStatus.Cancelled;
         }
+    }
+
+    // Tách trạng thái ra riêng
+    public static class RentalStatus
+    {
+        public const string Ongoing = "Ongoing";
+        public const string Completed = "Completed";
+        public const string Cancelled = "Cancelled";
     }
 }

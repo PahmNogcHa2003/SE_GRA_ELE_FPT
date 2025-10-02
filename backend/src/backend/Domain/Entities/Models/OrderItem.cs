@@ -1,14 +1,13 @@
 ﻿namespace Domain.Entities.Models
 {
-    public class OrderItem
+    public class OrderItem : BaseEntity<long>
     {
-        public long Id { get; private set; }
         public long OrderId { get; private set; }
-        public string? ProductName { get; private set; }
+        public string ProductName { get; private set; } = null!;
         public int Quantity { get; private set; }
         public decimal Price { get; private set; }
 
-        private OrderItem() { } // constructor rỗng cho EF/AutoMapper
+        private OrderItem() { } // constructor rỗng cho EF/ORM
 
         // Factory method
         public static OrderItem Create(long orderId, string productName, int quantity, decimal price)
@@ -35,6 +34,13 @@
             if (newQuantity <= 0)
                 throw new ArgumentException("Quantity must be greater than zero.");
             Quantity = newQuantity;
+        }
+
+        public void UpdatePrice(decimal newPrice)
+        {
+            if (newPrice < 0)
+                throw new ArgumentException("Price cannot be negative.");
+            Price = newPrice;
         }
 
         public decimal GetTotalPrice()

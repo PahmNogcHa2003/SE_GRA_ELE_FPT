@@ -1,11 +1,9 @@
-﻿
-namespace Domain.Entities.Models
+﻿namespace Domain.Entities.Models
 {
-    public class TicketPlanPrice
+    public class TicketPlanPrice : BaseEntity<long>
     {
-        public long Id { get; private set; }
         public long PlanId { get; private set; }
-        public string? VehicleType { get; private set; }
+        public string VehicleType { get; private set; } = null!;
         public decimal Price { get; private set; }
 
         private readonly List<BookingTicket> _bookingTickets = new();
@@ -17,8 +15,10 @@ namespace Domain.Entities.Models
         private TicketPlanPrice() { } // EF/AutoMapper cần
 
         // Factory
-        public static TicketPlanPrice Create(long planId, string? vehicleType, decimal price)
+        public static TicketPlanPrice Create(long planId, string vehicleType, decimal price)
         {
+            if (string.IsNullOrWhiteSpace(vehicleType))
+                throw new ArgumentException("Vehicle type cannot be empty.", nameof(vehicleType));
             if (price <= 0)
                 throw new ArgumentException("Price must be greater than zero.", nameof(price));
 
@@ -39,21 +39,28 @@ namespace Domain.Entities.Models
             Price = newPrice;
         }
 
-        public void ChangeVehicleType(string? newVehicleType)
+        public void ChangeVehicleType(string newVehicleType)
         {
+            if (string.IsNullOrWhiteSpace(newVehicleType))
+                throw new ArgumentException("Vehicle type cannot be empty.", nameof(newVehicleType));
+
             VehicleType = newVehicleType;
         }
 
         public void AddBookingTicket(BookingTicket bookingTicket)
         {
-            if (!_bookingTickets.Contains(bookingTicket))
-                _bookingTickets.Add(bookingTicket);
+            if (_bookingTickets.Any(bt => bt.Id == bookingTicket.Id))
+                return;
+
+            _bookingTickets.Add(bookingTicket);
         }
 
         public void AddUserTicket(UserTicket userTicket)
         {
-            if (!_userTickets.Contains(userTicket))
-                _userTickets.Add(userTicket);
+            if (_userTickets.Any(ut => ut.Id == userTicket.Id))
+                return;
+
+            _userTickets.Add(userTicket);
         }
     }
 }
