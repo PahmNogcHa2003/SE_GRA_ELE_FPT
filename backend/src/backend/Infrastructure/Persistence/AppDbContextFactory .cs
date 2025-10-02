@@ -6,19 +6,19 @@ using System.IO;
 
 namespace Infrastructure.Persistence
 {
-    public class AppDbContextFactory : IDesignTimeDbContextFactory<AppDbContext>
+    public class AppDbContextFactory : IDesignTimeDbContextFactory<HolaBikeContext>
     {
-        public AppDbContext CreateDbContext(string[] args)
+        public HolaBikeContext CreateDbContext(string[] args)
         {
             var configuration = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile("appsettings.json", optional: false)
                 .Build();
 
-            var optionsBuilder = new DbContextOptionsBuilder<AppDbContext>();
+            var optionsBuilder = new DbContextOptionsBuilder<HolaBikeContext>();
             optionsBuilder.UseSqlServer(configuration.GetConnectionString("DefaultConnection"));
 
-            return new AppDbContext(optionsBuilder.Options);
+            return new HolaBikeContext(optionsBuilder.Options);
         }
     }
 }

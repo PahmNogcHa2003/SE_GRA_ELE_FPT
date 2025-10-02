@@ -13,7 +13,7 @@ namespace Application.Mapping
         {
             // Example mapping configuration
             // CreateMap<Source, Destination>();
-            CreateMap<Domain.Entities.Models.AspNetUser, DTOs.UserDTO>().ReverseMap();
+            CreateMap<Domain.Entities.AspNetUser, DTOs.UserDTO>().ReverseMap();
         }
     }
 }

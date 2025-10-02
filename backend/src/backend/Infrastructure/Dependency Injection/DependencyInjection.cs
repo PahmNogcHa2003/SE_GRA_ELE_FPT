@@ -1,4 +1,7 @@
-﻿using Infrastructure.Persistence;
+﻿using Application.Interfaces;
+using Domain.Entities;
+using Infrastructure.Persistence;
+using Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -14,11 +17,9 @@ namespace Infrastructure.Dependency_Injection
     {
         public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration config)
         {
-            services.AddDbContext<AppDbContext>(options =>
-                options.UseSqlServer(config.GetConnectionString("DefaultConnection")));
-
-            // thêm Identity, Auth service, Repository...
-
+            services.AddScoped<IUnitOfWork, UnitOfWork>();
+            services.AddScoped(typeof(IRepository<,>), typeof(BaseRepository<,>));
+            services.AddScoped<IRepository<AspNetUser, long>, UserRepository>();
             return services;
         }
     }

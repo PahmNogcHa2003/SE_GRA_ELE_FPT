@@ -1,17 +1,17 @@
 ﻿using Application.Common;
 using Application.Interfaces;
 using AutoMapper;
+using AutoMapper.QueryableExtensions;
+using Microsoft.EntityFrameworkCore;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Application.Services
 {
-    // Application/Services/GenericService.cs
     public class GenericService<TEntity, TDto, TKey> : IService<TEntity, TDto, TKey>
-     where TEntity : class
+        where TEntity : class
     {
         protected readonly IRepository<TEntity, TKey> _repo;
         protected readonly IMapper _mapper;
@@ -24,22 +24,35 @@ namespace Application.Services
             _uow = uow;
         }
 
+        public IQueryable<TEntity> Query() => _repo.Query().AsNoTracking();
+
         public async Task<TDto?> GetAsync(TKey id, CancellationToken ct = default)
         {
-            var e = await _repo.GetByIdAsync(id, ct);
-            return e == null ? default : _mapper.Map<TDto>(e);
+            var entity = await _repo.Query()
+                                    .AsNoTracking()
+                                    .FirstOrDefaultAsync(e => EF.Property<TKey>(e, "Id")!.Equals(id), ct);
+            return entity == null ? default : _mapper.Map<TDto>(entity);
         }
 
-        public async Task<PagedResult<TDto>> GetPagedAsync(int page, int pageSize, CancellationToken ct = default)
+        public async Task<PagedResult<TDto>> GetPagedAsync(
+            int page,
+            int pageSize,
+            Func<IQueryable<TEntity>, IQueryable<TEntity>>? queryShaper = null,
+            CancellationToken ct = default)
         {
-            var p = await _repo.PageAsync(page, pageSize, ct);
-            return new PagedResult<TDto>
-            {
-                Items = p.Items.Select(i => _mapper.Map<TDto>(i)),
-                TotalCount = p.TotalCount,
-                Page = p.Page,
-                PageSize = p.PageSize
-            };
+            var query = _repo.Query().AsNoTracking();
+
+            if (queryShaper != null)
+                query = queryShaper(query);
+
+            // Bắt buộc OrderBy để Skip/Take ổn định
+            query = query.OrderBy(e => EF.Property<object>(e, "Id"));
+
+            // Project trực tiếp sang DTO
+            var projected = query.ProjectTo<TDto>(_mapper.ConfigurationProvider);
+
+            // Phân trang
+            return await PagedResult<TDto>.FromQueryableAsync(projected, page, pageSize);
         }
 
         public async Task<TDto> CreateAsync(TDto dto, CancellationToken ct = default)
@@ -47,25 +60,28 @@ namespace Application.Services
             var entity = _mapper.Map<TEntity>(dto);
             await _repo.AddAsync(entity, ct);
             await _uow.SaveChangesAsync(ct);
-            return _mapper.Map<TDto>(entity); // may include assigned Id
+            return _mapper.Map<TDto>(entity);
         }
 
         public async Task UpdateAsync(TKey id, TDto dto, CancellationToken ct = default)
         {
-            var existing = await _repo.GetByIdAsync(id, ct);
-            if (existing == null) throw new KeyNotFoundException();
-            _mapper.Map(dto, existing);
-            _repo.Update(existing);
+            var entity = await _repo.Query()
+                                    .FirstOrDefaultAsync(e => EF.Property<TKey>(e, "Id")!.Equals(id), ct);
+            if (entity == null) throw new KeyNotFoundException();
+
+            _mapper.Map(dto, entity);
+            _repo.Update(entity);
             await _uow.SaveChangesAsync(ct);
         }
 
         public async Task DeleteAsync(TKey id, CancellationToken ct = default)
         {
-            var existing = await _repo.GetByIdAsync(id, ct);
-            if (existing == null) throw new KeyNotFoundException();
-            _repo.Remove(existing);
+            var entity = await _repo.Query()
+                                    .FirstOrDefaultAsync(e => EF.Property<TKey>(e, "Id")!.Equals(id), ct);
+            if (entity == null) throw new KeyNotFoundException();
+
+            _repo.Remove(entity);
             await _uow.SaveChangesAsync(ct);
         }
     }
-
 }
