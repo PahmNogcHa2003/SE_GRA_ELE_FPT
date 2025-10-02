@@ -1,8 +1,7 @@
 ﻿namespace Domain.Entities.Models
 {
-    public class UserProfile
+    public class UserProfile : BaseEntity<long>
     {
-        public long Id { get; private set; }
         public long UserId { get; private set; }
         public string? FullName { get; private set; }
         public DateOnly? Dob { get; private set; }

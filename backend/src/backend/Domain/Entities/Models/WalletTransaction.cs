@@ -2,9 +2,8 @@
 
 namespace Domain.Entities.Models
 {
-    public class WalletTransaction
+    public class WalletTransaction : BaseEntity<long>
     {
-        public long Id { get; set; }
         public long WalletId { get; set; }
         public decimal Amount { get; set; }
         public string Type { get; set; } = null!;

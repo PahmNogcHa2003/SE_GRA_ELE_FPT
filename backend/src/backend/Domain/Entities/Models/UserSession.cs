@@ -1,8 +1,7 @@
 ﻿namespace Domain.Entities.Models
 {
-    public class UserSession
+    public class UserSession : BaseEntity<long>
     {
-        public long Id { get; private set; }
         public long UserId { get; private set; }
         public string? SessionToken { get; private set; }
         public DateTimeOffset? Expiry { get; private set; }

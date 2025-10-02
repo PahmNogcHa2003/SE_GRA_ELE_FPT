@@ -1,8 +1,7 @@
 ﻿namespace Domain.Entities.Models
 {
-    public class UserTicket
+    public class UserTicket : BaseEntity<long>
     {
-        public long Id { get; private set; }
         public long UserId { get; private set; }
         public long PlanPriceId { get; private set; }
         public DateTimeOffset StartTime { get; private set; }

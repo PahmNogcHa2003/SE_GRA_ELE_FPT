@@ -2,9 +2,8 @@
 
 namespace Domain.Entities.Models
 {
-    public class VehicleUsageLog
+    public class VehicleUsageLog : BaseEntity<long> 
     {
-        public long Id { get; set; }
         public long VehicleId { get; set; }
         public long BookingId { get; set; }
         public string Status { get; set; } = null!;
