@@ -11,6 +11,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Interfaces\Admin\Service\" />
+    <Folder Include="Interfaces\Admin\Repository\" />
+    <Folder Include="Interfaces\Staff\Repository\" />
+    <Folder Include="Interfaces\Staff\Service\" />
+    <Folder Include="Services\Admin\" />
+    <Folder Include="Services\Staff\" />
     <Folder Include="Validators\" />
   </ItemGroup>
 

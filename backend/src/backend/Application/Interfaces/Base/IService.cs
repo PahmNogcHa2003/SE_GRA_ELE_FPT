@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Application.Interfaces
+namespace Application.Interfaces.Base
 {
     public interface IService<TEntity, TDto, TKey> where TEntity : class
     {

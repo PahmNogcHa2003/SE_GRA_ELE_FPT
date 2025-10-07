@@ -1,4 +1,5 @@
 ﻿using Application.Interfaces;
+using Application.Interfaces.Base;
 using Domain.Entities;
 using Infrastructure.Persistence;
 using Infrastructure.Repositories;
