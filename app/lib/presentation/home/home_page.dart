@@ -57,17 +57,19 @@ class HomeContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: const [
-        HomeHeader(),
-        SizedBox(height: 16),
-        HomeMenu(),
-        SizedBox(height: 16),
-        HomePromo(),
-        SizedBox(height: 16),
-        HomeNews(),
-      ],
+    return SafeArea(
+      child: ListView(
+        padding: const EdgeInsets.all(16),
+        children: const [
+          HomeHeader(),
+          SizedBox(height: 16),
+          HomeMenu(),
+          SizedBox(height: 16),
+          HomePromo(),
+          SizedBox(height: 16),
+          HomeNews(),
+        ],
+      ),
     );
   }
 }
