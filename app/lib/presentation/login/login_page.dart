@@ -54,7 +54,10 @@ class LoginScreen extends StatelessWidget {
                   MaterialPageRoute(builder: (_) => const HomeScreen()),
                 );
               },
-              child: const Text("Đăng nhập", style: TextStyle(fontSize: 16)),
+              child: const Text(
+                "Đăng nhập",
+                style: TextStyle(fontSize: 16, color: AppColors.card),
+              ),
             ),
           ],
         ),

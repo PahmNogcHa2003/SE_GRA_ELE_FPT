@@ -32,7 +32,7 @@ class _SplashScreenState extends State<SplashScreen> {
       backgroundColor: AppColors.primary,
       body: Center(
         child: Text(
-          "🚲 TNGo Elegant",
+          "🚲 Hola Bike",
           style: TextStyle(
             fontSize: 28,
             color: Colors.white,
