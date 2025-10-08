@@ -18,34 +18,32 @@
 //     );
 //   }
 // }
-
 import 'package:flutter/material.dart';
-import 'presentation/home/home_page.dart';
-import 'presentation/login/login_page.dart';
-import 'presentation/splash/splash_page.dart';
+import 'package:hola_bike_app/presentation/splash/splash_page.dart';
+import 'theme/app_colors.dart';
 
 void main() {
-  runApp(const SmartBikeApp());
+  runApp(const MyApp());
 }
 
-class SmartBikeApp extends StatelessWidget {
-  const SmartBikeApp({super.key});
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Smart Bike',
       debugShowCheckedModeBanner: false,
-      initialRoute: '/',
-      routes: {
-        '/': (context) => const SplashPage(),
-        '/login': (context) => const LoginPage(),
-        '/home': (context) => const HomePage(),
-      },
+      title: 'Elegant App',
       theme: ThemeData(
-        primarySwatch: Colors.green,
-        scaffoldBackgroundColor: Colors.grey[100],
+        fontFamily: 'Arial',
+        scaffoldBackgroundColor: AppColors.background,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: AppColors.primary,
+          primary: AppColors.primary,
+          background: AppColors.background,
+        ),
       ),
+      home: const SplashScreen(),
     );
   }
 }
