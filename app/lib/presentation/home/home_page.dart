@@ -1,94 +1,73 @@
 import 'package:flutter/material.dart';
+import '../../theme/app_colors.dart';
+import 'widgets/home_header.dart';
+import 'widgets/home_menu.dart';
+import 'widgets/home_promo.dart';
+import 'widgets/home_news.dart';
 
-class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
 
   @override
-  State<HomePage> createState() => _HomePageState();
+  State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomePageState extends State<HomePage> {
-  int _selectedIndex = 0;
+class _HomeScreenState extends State<HomeScreen> {
+  int _index = 0;
 
-  static const List<Widget> _pages = <Widget>[
-    BikeListPage(),
-    HistoryPage(),
-    AccountPage(),
+  final pages = [
+    const HomeContent(),
+    const Center(child: Text("🚲 Trạm xe")),
+    const Center(child: Text("🔔 Thông báo")),
+    const Center(child: Text("☰ Mở rộng")),
   ];
-
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Thuê xe thông minh"),
-        backgroundColor: Colors.green,
+      body: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 300),
+        child: pages[_index],
       ),
-      body: _pages[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        selectedItemColor: Colors.green,
-        onTap: _onItemTapped,
+        currentIndex: _index,
+        onTap: (i) => setState(() => _index = i),
+        selectedItemColor: AppColors.primary,
+        unselectedItemColor: AppColors.textSecondary,
+        type: BottomNavigationBarType.fixed,
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.pedal_bike), label: 'Xe'),
-          BottomNavigationBarItem(icon: Icon(Icons.history), label: 'Lịch sử'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Tài khoản'),
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: "Trang chủ"),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.pedal_bike),
+            label: "Trạm xe",
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.notifications),
+            label: "Thông báo",
+          ),
+          BottomNavigationBarItem(icon: Icon(Icons.menu), label: "Mở rộng"),
         ],
       ),
     );
   }
 }
 
-class BikeListPage extends StatelessWidget {
-  const BikeListPage({super.key});
+class HomeContent extends StatelessWidget {
+  const HomeContent({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return ListView.builder(
+    return ListView(
       padding: const EdgeInsets.all(16),
-      itemCount: 5,
-      itemBuilder: (context, index) {
-        return Card(
-          margin: const EdgeInsets.only(bottom: 12),
-          child: ListTile(
-            leading: const Icon(
-              Icons.pedal_bike,
-              size: 40,
-              color: Colors.green,
-            ),
-            title: Text("Xe đạp #${index + 1}"),
-            subtitle: const Text("Cách bạn 150m"),
-            trailing: ElevatedButton(
-              onPressed: () {},
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-              child: const Text("Thuê"),
-            ),
-          ),
-        );
-      },
+      children: const [
+        HomeHeader(),
+        SizedBox(height: 16),
+        HomeMenu(),
+        SizedBox(height: 16),
+        HomePromo(),
+        SizedBox(height: 16),
+        HomeNews(),
+      ],
     );
-  }
-}
-
-class HistoryPage extends StatelessWidget {
-  const HistoryPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const Center(child: Text("📜 Lịch sử thuê xe sẽ hiển thị ở đây"));
-  }
-}
-
-class AccountPage extends StatelessWidget {
-  const AccountPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const Center(child: Text("👤 Trang tài khoản người dùng"));
   }
 }
