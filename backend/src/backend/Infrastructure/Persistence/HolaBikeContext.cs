@@ -17,7 +17,9 @@ public partial class HolaBikeContext : IdentityDbContext<AspNetUser, IdentityRol
         : base(options)
     {
     }
-  
+    public virtual DbSet<UserVerified> UserVerifieds { get; set; }
+
+    public virtual DbSet<AdminProfile> AdminProfiles { get; set; }
 
     public virtual DbSet<Booking> Bookings { get; set; }
 
@@ -585,8 +587,89 @@ public partial class HolaBikeContext : IdentityDbContext<AspNetUser, IdentityRol
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_WalletTransaction_Wallet");
         });
+        modelBuilder.Entity<AdminProfile>(entity =>
+        {
+            entity.ToTable("AdminProfile");
+
+            entity.HasKey(e => e.UserId).HasName("PK_AdminProfile");
+
+            entity.Property(e => e.FullName).HasMaxLength(150);
+            entity.Property(e => e.Position).HasMaxLength(100);
+            entity.Property(e => e.AvatarUrl).HasMaxLength(255);
+
+            entity.Property(e => e.CreatedAt)
+                  .HasPrecision(0)
+                  .HasDefaultValueSql("(sysdatetimeoffset())");
+            entity.Property(e => e.UpdatedAt)
+                  .HasPrecision(0)
+                  .HasDefaultValueSql("(sysdatetimeoffset())");
+
+            entity.HasOne(d => d.User)
+                  .WithOne(p => p.AdminProfile)
+                  .HasForeignKey<AdminProfile>(d => d.UserId)
+                  .OnDelete(DeleteBehavior.Cascade) 
+                  .HasConstraintName("FK_AdminProfile_User");
+        });
+
+        modelBuilder.Entity<UserVerified>(entity =>
+        {
+            entity.ToTable("UserVerified");
+            entity.HasKey(e => e.Id).HasName("PK_UserVerified");
+
+     
+            entity.Property(e => e.Type).HasMaxLength(50);
+            entity.Property(e => e.Number).HasMaxLength(100);
+            entity.Property(e => e.FullName).HasMaxLength(150);
+            entity.Property(e => e.PlaceOfBirth).HasMaxLength(150);
+            entity.Property(e => e.IssuedBy).HasMaxLength(100);
+            entity.Property(e => e.VerificationMethod).HasMaxLength(50);
+
+            entity.Property(e => e.CreatedAt)
+                  .HasDefaultValueSql("(sysdatetimeoffset())");
+            entity.Property(e => e.UpdatedAt)
+                  .HasDefaultValueSql("(sysdatetimeoffset())");
+
+
+            entity.HasIndex(e => e.UserId)
+                  .IsUnique()
+                  .HasDatabaseName("UX_UserVerified_UserId");                
+
+            entity.HasIndex(e => e.VerifiedBy)
+                  .HasDatabaseName("IX_UserVerified_VerifiedBy");
+
+            entity.HasIndex(e => e.SubmissionId)
+                  .HasDatabaseName("IX_UserVerified_SubmissionId");
+
+     
+            entity.HasIndex(e => new { e.VerifiedAt, e.Type })
+                  .HasDatabaseName("IX_UserVerified_VerifiedAt_Type");
+
+
+            entity.HasOne(d => d.User)
+                  .WithMany(p => p.UserVerifieds)
+                  .HasForeignKey(d => d.UserId)
+                  .OnDelete(DeleteBehavior.Cascade)
+                  .HasConstraintName("FK_UserVerified_User");
+
+     
+            entity.HasOne(d => d.VerifiedByUser)
+                  .WithMany(p => p.VerifiedUsers)          
+                  .HasForeignKey(d => d.VerifiedBy)
+                  .OnDelete(DeleteBehavior.NoAction)    
+                  .HasConstraintName("FK_UserVerified_VerifiedBy");
+
+    
+            entity.HasOne(d => d.Submission)
+                  .WithMany()                               
+                  .HasForeignKey(d => d.SubmissionId)
+                  .OnDelete(DeleteBehavior.SetNull)
+                  .HasConstraintName("FK_UserVerified_Submission");
+        });
+
+
 
         OnModelCreatingPartial(modelBuilder);
+
     }
 
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
