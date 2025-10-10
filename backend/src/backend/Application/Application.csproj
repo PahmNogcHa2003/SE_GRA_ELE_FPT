@@ -1,0 +1,31 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Domain\Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Interfaces\Admin\Service\" />
+    <Folder Include="Interfaces\Admin\Repository\" />
+    <Folder Include="Interfaces\Staff\Repository\" />
+    <Folder Include="Interfaces\Staff\Service\" />
+    <Folder Include="Interfaces\User\Repository\" />
+    <Folder Include="Interfaces\User\Service\" />
+    <Folder Include="Services\Admin\" />
+    <Folder Include="Services\Staff\" />
+    <Folder Include="Services\User\" />
+    <Folder Include="Validators\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AutoMapper" Version="12.0.0" />
+    <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="12.0.0" />
+  </ItemGroup>
+
+</Project>
