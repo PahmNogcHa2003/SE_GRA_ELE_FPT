@@ -7,10 +7,9 @@ using Microsoft.EntityFrameworkCore;
 namespace Domain.Entities;
 
 [Table("UserDevice")]
-[Index("UserId", Name = "IX_UserDevice_UserId")]
+[Microsoft.EntityFrameworkCore.Index(nameof(UserId), Name = "IX_UserDevice_UserId")]
 public partial class UserDevice : BaseEntity<long>
 {
-
     public long UserId { get; set; }
 
     [StringLength(100)]
@@ -21,7 +20,7 @@ public partial class UserDevice : BaseEntity<long>
 
     public DateTimeOffset? LastLogin { get; set; }
 
-    [ForeignKey("UserId")]
-    [InverseProperty("UserDevices")]
+    [ForeignKey(nameof(UserId))]
+    [InverseProperty(nameof(AspNetUser.UserDevices))]
     public virtual AspNetUser User { get; set; } = null!;
 }

@@ -1,12 +1,9 @@
 ﻿using Application.Interfaces;
 using Application.Interfaces.Base;
-using Application.Interfaces.User.Service;
 using Application.Mapping;
 using Application.Services.Base;
-using Application.Services.User;
 using Domain.Entities;
 using Infrastructure.Persistence;
-using Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -24,11 +21,11 @@ namespace Infrastructure.Dependency_Injection
             // --- Unit of Work & Repositories ---
             services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddScoped(typeof(IRepository<,>), typeof(BaseRepository<,>));
-            services.AddScoped<IRepository<AspNetUser, long>, UserRepository>();
+            //services.AddScoped<IRepository<AspNetUser, long>, UserRepository>();
 
             // --- Services (application layer) ---
             services.AddScoped(typeof(IService<,,>), typeof(GenericService<,,>));
-            services.AddScoped<IUserService, UserService>();
+            //services.AddScoped<IUserService, UserService>();
 
             // --- AutoMapper ---
             services.AddAutoMapper(typeof(AppMappingProfile).Assembly);

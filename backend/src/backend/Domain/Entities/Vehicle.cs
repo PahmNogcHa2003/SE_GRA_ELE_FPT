@@ -7,9 +7,9 @@ using Microsoft.EntityFrameworkCore;
 namespace Domain.Entities;
 
 [Table("Vehicle")]
-[Index("BikeCode", Name = "IX_Vehicle_BikeCode", IsUnique = true)]
-[Index("CategoryId", Name = "IX_Vehicle_CategoryId")]
-[Index("StationId", Name = "IX_Vehicle_StationId")]
+[Microsoft.EntityFrameworkCore.Index(nameof(BikeCode), Name = "IX_Vehicle_BikeCode", IsUnique = true)]
+[Microsoft.EntityFrameworkCore.Index(nameof(CategoryId), Name = "IX_Vehicle_CategoryId")]
+[Microsoft.EntityFrameworkCore.Index(nameof(StationId), Name = "IX_Vehicle_StationId")]
 public partial class Vehicle : BaseEntity<long>
 {
     public long? CategoryId { get; set; }
@@ -30,17 +30,17 @@ public partial class Vehicle : BaseEntity<long>
     [Precision(0)]
     public DateTimeOffset CreatedAt { get; set; }
 
-    [InverseProperty("Vehicle")]
+    [InverseProperty(nameof(Booking.Vehicle))]
     public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
 
-    [ForeignKey("CategoryId")]
-    [InverseProperty("Vehicles")]
+    [ForeignKey(nameof(CategoryId))]
+    [InverseProperty(nameof(CategoriesVehicle.Vehicles))]
     public virtual CategoriesVehicle? Category { get; set; }
 
-    [ForeignKey("StationId")]
-    [InverseProperty("Vehicles")]
+    [ForeignKey(nameof(StationId))]
+    [InverseProperty(nameof(Station.Vehicles))]
     public virtual Station? Station { get; set; }
 
-    [InverseProperty("Vehicle")]
+    [InverseProperty(nameof(VehicleUsageLog.Vehicle))]
     public virtual ICollection<VehicleUsageLog> VehicleUsageLogs { get; set; } = new List<VehicleUsageLog>();
 }

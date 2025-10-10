@@ -6,8 +6,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Domain.Entities;
 
-[Index("BookingId", Name = "IX_VehicleUsageLogs_BookingId")]
-[Index("VehicleId", Name = "IX_VehicleUsageLogs_VehicleId")]
+[Microsoft.EntityFrameworkCore.Index(nameof(BookingId), Name = "IX_VehicleUsageLogs_BookingId")]
+[Microsoft.EntityFrameworkCore.Index(nameof(VehicleId), Name = "IX_VehicleUsageLogs_VehicleId")]
 public partial class VehicleUsageLog : BaseEntity<long>
 {
     public long VehicleId { get; set; }
@@ -19,11 +19,11 @@ public partial class VehicleUsageLog : BaseEntity<long>
 
     public DateTimeOffset Timestamp { get; set; }
 
-    [ForeignKey("BookingId")]
-    [InverseProperty("VehicleUsageLogs")]
+    [ForeignKey(nameof(BookingId))]
+    [InverseProperty(nameof(Booking.VehicleUsageLogs))]
     public virtual Booking Booking { get; set; } = null!;
 
-    [ForeignKey("VehicleId")]
-    [InverseProperty("VehicleUsageLogs")]
+    [ForeignKey(nameof(VehicleId))]
+    [InverseProperty(nameof(Vehicle.VehicleUsageLogs))]
     public virtual Vehicle Vehicle { get; set; } = null!;
 }

@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Domain.Entities;
 
-[Index("AuthorId", Name = "IX_News_AuthorId")]
+[Microsoft.EntityFrameworkCore.Index(nameof(AuthorId), Name = "IX_News_AuthorId")]
 public partial class News : BaseEntity<long>
 {
     [StringLength(200)]

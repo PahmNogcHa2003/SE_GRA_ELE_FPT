@@ -15,8 +15,11 @@
     <Folder Include="Interfaces\Admin\Repository\" />
     <Folder Include="Interfaces\Staff\Repository\" />
     <Folder Include="Interfaces\Staff\Service\" />
+    <Folder Include="Interfaces\User\Repository\" />
+    <Folder Include="Interfaces\User\Service\" />
     <Folder Include="Services\Admin\" />
     <Folder Include="Services\Staff\" />
+    <Folder Include="Services\User\" />
     <Folder Include="Validators\" />
   </ItemGroup>
 

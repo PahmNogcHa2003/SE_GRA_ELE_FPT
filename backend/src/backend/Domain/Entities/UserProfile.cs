@@ -7,10 +7,9 @@ using Microsoft.EntityFrameworkCore;
 namespace Domain.Entities;
 
 [Table("UserProfile")]
-[Index("UserId", Name = "IX_UserProfile_UserId")]
+[Microsoft.EntityFrameworkCore.Index(nameof(UserId), Name = "IX_UserProfile_UserId")]
 public partial class UserProfile : BaseEntity<long>
 {
-
     public long UserId { get; set; }
 
     [StringLength(150)]
@@ -21,7 +20,7 @@ public partial class UserProfile : BaseEntity<long>
     [StringLength(20)]
     public string? Gender { get; set; }
 
-    [ForeignKey("UserId")]
-    [InverseProperty("UserProfiles")]
+    [ForeignKey(nameof(UserId))]
+    [InverseProperty(nameof(AspNetUser.UserProfiles))]
     public virtual AspNetUser User { get; set; } = null!;
 }

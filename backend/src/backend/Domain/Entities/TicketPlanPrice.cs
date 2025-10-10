@@ -7,8 +7,8 @@ using Microsoft.EntityFrameworkCore;
 namespace Domain.Entities;
 
 [Table("TicketPlanPrice")]
-[Index("PlanId", Name = "IX_TicketPlanPrice_PlanId")]
-public partial class TicketPlanPrice : BaseEntity<long> 
+[Microsoft.EntityFrameworkCore.Index(nameof(PlanId), Name = "IX_TicketPlanPrice_PlanId")]
+public partial class TicketPlanPrice : BaseEntity<long>
 {
     public long PlanId { get; set; }
 

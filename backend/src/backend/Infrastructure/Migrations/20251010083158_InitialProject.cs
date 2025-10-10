@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class testConnect : Migration
+    public partial class InitialProject : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -32,6 +32,8 @@ namespace Infrastructure.Migrations
                 {
                     Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
+                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedDate = table.Column<DateTime>(type: "datetime2", nullable: true),
                     UserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     Email = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
@@ -44,12 +46,12 @@ namespace Infrastructure.Migrations
                     PhoneNumberConfirmed = table.Column<bool>(type: "bit", nullable: false),
                     TwoFactorEnabled = table.Column<bool>(type: "bit", nullable: false),
                     LockoutEnd = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
-                    LockoutEnabled = table.Column<bool>(type: "bit", nullable: false, defaultValue: true),
+                    LockoutEnabled = table.Column<bool>(type: "bit", nullable: false),
                     AccessFailedCount = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK__AspNetUs__3214EC072EDEC32C", x => x.Id);
+                    table.PrimaryKey("PK_AspNetUsers", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -228,8 +230,8 @@ namespace Infrastructure.Migrations
                     Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     UserId = table.Column<long>(type: "bigint", nullable: false),
-                    Message = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
-                    CreatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false, defaultValueSql: "(sysdatetimeoffset())")
+                    Message = table.Column<string>(type: "varchar(500)", unicode: false, maxLength: 500, nullable: true),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset(0)", precision: 0, nullable: false, defaultValueSql: "(sysdatetimeoffset())")
                 },
                 constraints: table =>
                 {
@@ -248,9 +250,9 @@ namespace Infrastructure.Migrations
                     Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     UserId = table.Column<long>(type: "bigint", nullable: false),
-                    Status = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false, defaultValue: "Pending"),
-                    SubmittedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false, defaultValueSql: "(sysdatetimeoffset())"),
-                    ReviewedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true)
+                    Status = table.Column<string>(type: "varchar(50)", unicode: false, maxLength: 50, nullable: false, defaultValue: "Pending"),
+                    SubmittedAt = table.Column<DateTimeOffset>(type: "datetimeoffset(0)", precision: 0, nullable: false, defaultValueSql: "(sysdatetimeoffset())"),
+                    ReviewedAt = table.Column<DateTimeOffset>(type: "datetimeoffset(0)", precision: 0, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -484,9 +486,9 @@ namespace Infrastructure.Migrations
                     Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     SubmissionId = table.Column<long>(type: "bigint", nullable: false),
-                    DocType = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
-                    DocPath = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true),
-                    UploadedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false, defaultValueSql: "(sysdatetimeoffset())")
+                    DocType = table.Column<string>(type: "varchar(50)", unicode: false, maxLength: 50, nullable: true),
+                    DocPath = table.Column<string>(type: "varchar(255)", unicode: false, maxLength: 255, nullable: true),
+                    UploadedAt = table.Column<DateTimeOffset>(type: "datetimeoffset(0)", precision: 0, nullable: false, defaultValueSql: "(sysdatetimeoffset())")
                 },
                 constraints: table =>
                 {
@@ -505,10 +507,10 @@ namespace Infrastructure.Migrations
                     Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     SubmissionId = table.Column<long>(type: "bigint", nullable: false),
-                    VerifiedName = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: true),
+                    VerifiedName = table.Column<string>(type: "varchar(150)", unicode: false, maxLength: 150, nullable: true),
                     VerifiedDob = table.Column<DateOnly>(type: "date", nullable: true),
-                    VerifiedGender = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
-                    VerifiedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true)
+                    VerifiedGender = table.Column<string>(type: "varchar(20)", unicode: false, maxLength: 20, nullable: true),
+                    VerifiedAt = table.Column<DateTimeOffset>(type: "datetimeoffset(0)", precision: 0, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -729,7 +731,7 @@ namespace Infrastructure.Migrations
                     BookingId = table.Column<long>(type: "bigint", nullable: false),
                     UserTicketId = table.Column<long>(type: "bigint", nullable: false),
                     PlanPriceId = table.Column<long>(type: "bigint", nullable: false),
-                    VehicleType = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
+                    VehicleType = table.Column<string>(type: "varchar(50)", unicode: false, maxLength: 50, nullable: true),
                     UsedMinutes = table.Column<int>(type: "int", nullable: true),
                     AppliedAt = table.Column<DateTimeOffset>(type: "datetimeoffset(0)", precision: 0, nullable: true)
                 },
@@ -763,7 +765,7 @@ namespace Infrastructure.Migrations
                 table: "AspNetRoles",
                 column: "NormalizedName",
                 unique: true,
-                filter: "([NormalizedName] IS NOT NULL)");
+                filter: "[NormalizedName] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetUserClaims_UserId",
@@ -790,7 +792,7 @@ namespace Infrastructure.Migrations
                 table: "AspNetUsers",
                 column: "NormalizedUserName",
                 unique: true,
-                filter: "([NormalizedUserName] IS NOT NULL)");
+                filter: "[NormalizedUserName] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Booking_EndStationId",
@@ -866,6 +868,11 @@ namespace Infrastructure.Migrations
                 name: "IX_Payment_OrderId",
                 table: "Payment",
                 column: "OrderId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Rental_BookingId",
+                table: "Rentals",
+                column: "BookingId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Rentals_BookingId",
