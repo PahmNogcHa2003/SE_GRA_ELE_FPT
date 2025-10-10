@@ -16,6 +16,7 @@
     <Folder Include="Authentication\" />
     <Folder Include="Repositories\Admin\" />
     <Folder Include="Repositories\Staff\" />
+    <Folder Include="Repositories\User\" />
   </ItemGroup>
 
   <ItemGroup>

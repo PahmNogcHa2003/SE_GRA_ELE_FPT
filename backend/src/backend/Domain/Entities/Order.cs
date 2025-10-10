@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Domain.Entities;
 
 [Table("Order")]
-[Index("UserId", Name = "IX_Order_UserId")]
+[Microsoft.EntityFrameworkCore.Index(nameof(UserId), Name = "IX_Order_UserId")]
 public partial class Order : BaseEntity<long>   
 {
     public long UserId { get; set; }

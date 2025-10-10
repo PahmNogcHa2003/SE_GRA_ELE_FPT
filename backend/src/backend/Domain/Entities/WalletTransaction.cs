@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Domain.Entities;
 
 [Table("WalletTransaction")]
-[Index("WalletId", Name = "IX_WalletTransaction_WalletId")]
+[Microsoft.EntityFrameworkCore.Index(nameof(WalletId), Name = "IX_WalletTransaction_WalletId")]
 public partial class WalletTransaction : BaseEntity<long>
 {
     public long WalletId { get; set; }
@@ -20,7 +20,7 @@ public partial class WalletTransaction : BaseEntity<long>
 
     public DateTimeOffset CreatedAt { get; set; }
 
-    [ForeignKey("WalletId")]
-    [InverseProperty("WalletTransactions")]
+    [ForeignKey(nameof(WalletId))]
+    [InverseProperty(nameof(Wallet.WalletTransactions))]
     public virtual Wallet Wallet { get; set; } = null!;
 }

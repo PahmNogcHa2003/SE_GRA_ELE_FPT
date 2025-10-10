@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Domain.Entities;
 
-[Index("BookingId", Name = "IX_Rentals_BookingId")]
+[Microsoft.EntityFrameworkCore.Index(nameof(BookingId), Name = "IX_Rental_BookingId")]
 public partial class Rental : BaseEntity<long>
 {
 

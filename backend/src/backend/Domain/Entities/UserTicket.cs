@@ -7,8 +7,8 @@ using Microsoft.EntityFrameworkCore;
 namespace Domain.Entities;
 
 [Table("UserTicket")]
-[Index("PlanPriceId", Name = "IX_UserTicket_PlanPriceId")]
-[Index("UserId", Name = "IX_UserTicket_UserId")]
+[Microsoft.EntityFrameworkCore.Index(nameof(PlanPriceId), Name = "IX_UserTicket_PlanPriceId")]
+[Microsoft.EntityFrameworkCore.Index(nameof(UserId), Name = "IX_UserTicket_UserId")]
 public partial class UserTicket : BaseEntity<long>
 {
     public long UserId { get; set; }
@@ -21,14 +21,14 @@ public partial class UserTicket : BaseEntity<long>
 
     public bool IsUsed { get; set; }
 
-    [InverseProperty("UserTicket")]
+    [InverseProperty(nameof(BookingTicket.UserTicket))]
     public virtual ICollection<BookingTicket> BookingTickets { get; set; } = new List<BookingTicket>();
 
-    [ForeignKey("PlanPriceId")]
-    [InverseProperty("UserTickets")]
+    [ForeignKey(nameof(PlanPriceId))]
+    [InverseProperty(nameof(TicketPlanPrice.UserTickets))]
     public virtual TicketPlanPrice PlanPrice { get; set; } = null!;
 
-    [ForeignKey("UserId")]
-    [InverseProperty("UserTickets")]
+    [ForeignKey(nameof(UserId))]
+    [InverseProperty(nameof(AspNetUser.UserTickets))]
     public virtual AspNetUser User { get; set; } = null!;
 }
