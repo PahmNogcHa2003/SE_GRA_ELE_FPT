@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Domain.Entities;
 
 [Table("Wallet")]
-[Index("UserId", Name = "IX_Wallet_UserId")]
+[Microsoft.EntityFrameworkCore.Index(nameof(UserId), Name = "IX_Wallet_UserId")]
 public partial class Wallet : BaseEntity<long>
 {
     public long UserId { get; set; }
@@ -17,10 +17,10 @@ public partial class Wallet : BaseEntity<long>
 
     public DateTimeOffset UpdatedAt { get; set; }
 
-    [ForeignKey("UserId")]
-    [InverseProperty("Wallets")]
+    [ForeignKey(nameof(UserId))]
+    [InverseProperty(nameof(AspNetUser.Wallets))]
     public virtual AspNetUser User { get; set; } = null!;
 
-    [InverseProperty("Wallet")]
+    [InverseProperty(nameof(WalletTransaction.Wallet))]
     public virtual ICollection<WalletTransaction> WalletTransactions { get; set; } = new List<WalletTransaction>();
 }

@@ -1,15 +1,12 @@
 ﻿using Application.Interfaces;
+using Application.Interfaces.Base;
+using Application.Mapping;
+using Application.Services.Base;
 using Domain.Entities;
 using Infrastructure.Persistence;
-using Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Infrastructure.Dependency_Injection
 {
@@ -17,9 +14,22 @@ namespace Infrastructure.Dependency_Injection
     {
         public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration config)
         {
+            // --- DbContext ---
+            services.AddDbContext<HolaBikeContext>(options =>
+                options.UseSqlServer(config.GetConnectionString("DefaultConnection")));
+
+            // --- Unit of Work & Repositories ---
             services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddScoped(typeof(IRepository<,>), typeof(BaseRepository<,>));
-            services.AddScoped<IRepository<AspNetUser, long>, UserRepository>();
+            //services.AddScoped<IRepository<AspNetUser, long>, UserRepository>();
+
+            // --- Services (application layer) ---
+            services.AddScoped(typeof(IService<,,>), typeof(GenericService<,,>));
+            //services.AddScoped<IUserService, UserService>();
+
+            // --- AutoMapper ---
+            services.AddAutoMapper(typeof(AppMappingProfile).Assembly);
+
             return services;
         }
     }

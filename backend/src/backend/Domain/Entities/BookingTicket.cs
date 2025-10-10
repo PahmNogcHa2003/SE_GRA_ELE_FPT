@@ -7,18 +7,22 @@ using Microsoft.EntityFrameworkCore;
 namespace Domain.Entities;
 
 [Table("BookingTicket")]
-[Index("BookingId", Name = "IX_BookingTicket_BookingId")]
-[Index("PlanPriceId", Name = "IX_BookingTicket_PlanPriceId")]
-[Index("UserTicketId", Name = "IX_BookingTicket_UserTicketId")]
-public partial class BookingTicket : BaseEntity<long>
+[Microsoft.EntityFrameworkCore.Index(nameof(BookingId), Name = "IX_BookingTicket_BookingId")]
+[Microsoft.EntityFrameworkCore.Index(nameof(PlanPriceId), Name = "IX_BookingTicket_PlanPriceId")]
+[Microsoft.EntityFrameworkCore.Index(nameof(UserTicketId), Name = "IX_BookingTicket_UserTicketId")]
+public class BookingTicket : BaseEntity<long>
 {
+    [Required]
     public long BookingId { get; set; }
 
+    [Required]
     public long UserTicketId { get; set; }
 
+    [Required]
     public long PlanPriceId { get; set; }
 
     [StringLength(50)]
+    [Unicode(false)]
     public string? VehicleType { get; set; }
 
     public int? UsedMinutes { get; set; }
@@ -26,15 +30,17 @@ public partial class BookingTicket : BaseEntity<long>
     [Precision(0)]
     public DateTimeOffset? AppliedAt { get; set; }
 
-    [ForeignKey("BookingId")]
-    [InverseProperty("BookingTickets")]
-    public virtual Booking Booking { get; set; } = null!;
+    // 🔗 Navigation properties
 
-    [ForeignKey("PlanPriceId")]
-    [InverseProperty("BookingTickets")]
-    public virtual TicketPlanPrice PlanPrice { get; set; } = null!;
+    [ForeignKey(nameof(BookingId))]
+    [InverseProperty(nameof(Booking.BookingTickets))]
+    public Booking Booking { get; set; } = null!;
 
-    [ForeignKey("UserTicketId")]
-    [InverseProperty("BookingTickets")]
-    public virtual UserTicket UserTicket { get; set; } = null!;
+    [ForeignKey(nameof(PlanPriceId))]
+    [InverseProperty(nameof(TicketPlanPrice.BookingTickets))]
+    public TicketPlanPrice PlanPrice { get; set; } = null!;
+
+    [ForeignKey(nameof(UserTicketId))]
+    [InverseProperty(nameof(UserTicket.BookingTickets))]
+    public UserTicket UserTicket { get; set; } = null!;
 }

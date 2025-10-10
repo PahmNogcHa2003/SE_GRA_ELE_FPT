@@ -7,8 +7,8 @@ using Microsoft.EntityFrameworkCore;
 namespace Domain.Entities;
 
 [Table("UserSession")]
-[Index("UserId", Name = "IX_UserSession_UserId")]
-public partial class UserSession : BaseEntity<long> 
+[Microsoft.EntityFrameworkCore.Index(nameof(UserId), Name = "IX_UserSession_UserId")]
+public partial class UserSession : BaseEntity<long>
 {
     public long UserId { get; set; }
 
@@ -17,7 +17,7 @@ public partial class UserSession : BaseEntity<long>
 
     public DateTimeOffset? Expiry { get; set; }
 
-    [ForeignKey("UserId")]
-    [InverseProperty("UserSessions")]
+    [ForeignKey(nameof(UserId))]
+    [InverseProperty(nameof(AspNetUser.UserSessions))]
     public virtual AspNetUser User { get; set; } = null!;
 }
