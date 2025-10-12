@@ -14,7 +14,6 @@
   <ItemGroup>
     <Folder Include="Authentication\" />
     <Folder Include="Repositories\Admin\" />
-    <Folder Include="Repositories\Staff\" />
     <Folder Include="Repositories\User\" />
   </ItemGroup>
 
@@ -35,6 +34,7 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.FileExtensions" Version="9.0.9" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.9" />
     <PackageReference Include="Microsoft.Extensions.Identity.Stores" Version="9.0.9" />
+    <PackageReference Include="System.Linq.Dynamic.Core" Version="1.6.9" />
   </ItemGroup>
 
 </Project>

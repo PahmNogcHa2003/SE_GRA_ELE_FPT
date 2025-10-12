@@ -5,7 +5,9 @@ using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Dynamic.Core;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -25,8 +27,6 @@ namespace Application.Services.Base
             _uow = uow;
         }
 
-        public IQueryable<TEntity> Query() => _repo.Query().AsNoTracking();
-
         public async Task<TDto?> GetAsync(TKey id, CancellationToken ct = default)
         {
             var entity = await _repo.Query()
@@ -35,25 +35,51 @@ namespace Application.Services.Base
             return entity == null ? default : _mapper.Map<TDto>(entity);
         }
 
-        public async Task<PagedResult<TDto>> GetPagedAsync(
+        public async Task<Application.Common.PagedResult<TDto>> GetPagedAsync(
             int page,
             int pageSize,
-            Func<IQueryable<TEntity>, IQueryable<TEntity>>? queryShaper = null,
+            string? searchQuery = null,
+            string? filterField = null,
+            string? filterValue = null,
+            string? sortOrder = null,
             CancellationToken ct = default)
         {
             var query = _repo.Query().AsNoTracking();
 
-            if (queryShaper != null)
-                query = queryShaper(query);
+            // 1. Áp dụng tìm kiếm chung (Search)
+            if (!string.IsNullOrWhiteSpace(searchQuery))
+            {
+                query = ApplySearch(query, searchQuery);
+            }
 
-            // Bắt buộc OrderBy để Skip/Take ổn định
-            query = query.OrderBy(e => EF.Property<object>(e, "Id"));
+            // 2. Áp dụng bộ lọc (Filter)
+            if (!string.IsNullOrWhiteSpace(filterField) && !string.IsNullOrWhiteSpace(filterValue))
+            {
+                query = query.Where($"{filterField}.Contains(@0)", filterValue);
+            }
 
-            // Project trực tiếp sang DTO
-            var projected = query.ProjectTo<TDto>(_mapper.ConfigurationProvider);
+            // 3. Áp dụng sắp xếp (Sort)
+            if (!string.IsNullOrWhiteSpace(sortOrder))
+            {
+                query = query.OrderBy(sortOrder);
+            }
+            else
+            {
+                query = query.OrderBy("Id");
+            }
 
-            // Phân trang
-            return await PagedResult<TDto>.FromQueryableAsync(projected, page, pageSize);
+            var projectedQuery = query.ProjectTo<TDto>(_mapper.ConfigurationProvider);
+
+            return await Application.Common.PagedResult<TDto>.FromQueryableAsync(projectedQuery, page, pageSize, ct);
+        }
+
+        /// <summary>
+        /// Phương thức ảo để các lớp service con có thể override và định nghĩa logic search riêng.
+        /// </summary>
+        protected virtual IQueryable<TEntity> ApplySearch(IQueryable<TEntity> query, string searchQuery)
+        {
+            // Logic mặc định không làm gì cả. Các lớp con sẽ triển khai logic cụ thể.
+            return query;
         }
 
         public async Task<TDto> CreateAsync(TDto dto, CancellationToken ct = default)
@@ -66,9 +92,9 @@ namespace Application.Services.Base
 
         public async Task UpdateAsync(TKey id, TDto dto, CancellationToken ct = default)
         {
-            var entity = await _repo.Query()
-                                    .FirstOrDefaultAsync(e => EF.Property<TKey>(e, "Id")!.Equals(id), ct);
-            if (entity == null) throw new KeyNotFoundException();
+            var entity = await _repo.Query().FirstOrDefaultAsync(e => EF.Property<TKey>(e, "Id")!.Equals(id), ct);
+
+            if (entity == null) throw new KeyNotFoundException($"Entity with id {id} not found.");
 
             _mapper.Map(dto, entity);
             _repo.Update(entity);
@@ -77,9 +103,9 @@ namespace Application.Services.Base
 
         public async Task DeleteAsync(TKey id, CancellationToken ct = default)
         {
-            var entity = await _repo.Query()
-                                    .FirstOrDefaultAsync(e => EF.Property<TKey>(e, "Id")!.Equals(id), ct);
-            if (entity == null) throw new KeyNotFoundException();
+            var entity = await _repo.Query().FirstOrDefaultAsync(e => EF.Property<TKey>(e, "Id")!.Equals(id), ct);
+
+            if (entity == null) throw new KeyNotFoundException($"Entity with id {id} not found.");
 
             _repo.Remove(entity);
             await _uow.SaveChangesAsync(ct);
