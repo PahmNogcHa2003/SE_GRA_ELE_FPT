@@ -1,9 +1,12 @@
-﻿using Domain.Entities;
+﻿using Application.Common;
+using Domain.Entities;
 using Infrastructure.Dependency_Injection;
+using Infrastructure.Middlewares;
 using Infrastructure.Persistence;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
@@ -23,6 +26,28 @@ builder.Services.AddIdentity<AspNetUser, IdentityRole<long>>(options =>
 })
 .AddEntityFrameworkStores<HolaBikeContext>()
 .AddDefaultTokenProviders();
+
+// -------------------- ApiBehaviorOptions  --------------------
+
+
+builder.Services.AddControllers()
+    .ConfigureApiBehaviorOptions(options =>
+    {
+        options.InvalidModelStateResponseFactory = context =>
+        {
+            var errors = context.ModelState
+                .Where(e => e.Value.Errors.Count > 0)
+                .SelectMany(x => x.Value.Errors)
+                .Select(x => x.ErrorMessage);
+
+            var errorResponse = ApiResponse<object>.ErrorResponse(
+                message: "Validation Failed",
+                errors: errors
+            );
+
+            return new BadRequestObjectResult(errorResponse);
+        };
+    });
 
 // -------------------- Authentication & JWT --------------------
 builder.Services.AddAuthentication(options =>
@@ -57,6 +82,10 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseMiddleware<ValidationMiddleware>(); // ✅ middleware validate global
+app.UseMiddleware<ResponseMiddleware>();   // ✅ middleware format JSON (bắt exception)
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 app.UseHttpsRedirection();
 app.UseRouting();
