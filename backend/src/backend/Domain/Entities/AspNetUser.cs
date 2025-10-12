@@ -43,5 +43,14 @@ namespace Domain.Entities
 
         [InverseProperty("User")]
         public virtual ICollection<Wallet> Wallets { get; set; } = new List<Wallet>();
+
+        [InverseProperty("User")]
+        public virtual AdminProfile? AdminProfile { get; set; }
+
+        [InverseProperty("User")]
+        public virtual ICollection<UserVerified> UserVerifieds { get; set; } = new List<UserVerified>();
+
+        [InverseProperty("VerifiedByUser")]
+        public virtual ICollection<UserVerified> VerifiedUsers { get; set; } = new List<UserVerified>();
     }
 }

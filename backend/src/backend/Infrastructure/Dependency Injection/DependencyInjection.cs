@@ -1,9 +1,11 @@
 ﻿using Application.Interfaces;
 using Application.Interfaces.Base;
+using Application.Interfaces.Identity;
 using Application.Mapping;
 using Application.Services.Base;
 using Domain.Entities;
 using Infrastructure.Persistence;
+using Infrastructure.Services.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -29,6 +31,10 @@ namespace Infrastructure.Dependency_Injection
 
             // --- AutoMapper ---
             services.AddAutoMapper(typeof(AppMappingProfile).Assembly);
+
+            //  Add AuthService (Identity + JWT)
+            services.AddScoped<IAuthService, AuthService>();
+
 
             return services;
         }
