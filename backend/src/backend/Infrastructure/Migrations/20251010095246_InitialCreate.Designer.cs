@@ -4,6 +4,7 @@ using Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(HolaBikeContext))]
-    partial class HolaBikeContextModelSnapshot : ModelSnapshot
+    [Migration("20251010095246_InitialCreate")]
+    partial class InitialCreate
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,41 +24,6 @@ namespace Infrastructure.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
-
-            modelBuilder.Entity("Domain.Entities.AdminProfile", b =>
-                {
-                    b.Property<long>("UserId")
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("AvatarUrl")
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasPrecision(0)
-                        .HasColumnType("datetimeoffset(0)")
-                        .HasDefaultValueSql("(sysdatetimeoffset())");
-
-                    b.Property<string>("FullName")
-                        .HasMaxLength(150)
-                        .HasColumnType("nvarchar(150)");
-
-                    b.Property<string>("Position")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<DateTimeOffset>("UpdatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasPrecision(0)
-                        .HasColumnType("datetimeoffset(0)")
-                        .HasDefaultValueSql("(sysdatetimeoffset())");
-
-                    b.HasKey("UserId")
-                        .HasName("PK_AdminProfile");
-
-                    b.ToTable("AdminProfile", (string)null);
-                });
 
             modelBuilder.Entity("Domain.Entities.AspNetUser", b =>
                 {
@@ -865,94 +833,6 @@ namespace Infrastructure.Migrations
                     b.ToTable("UserTicket", (string)null);
                 });
 
-            modelBuilder.Entity("Domain.Entities.UserVerified", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
-
-                    b.Property<DateTimeOffset?>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetimeoffset")
-                        .HasDefaultValueSql("(sysdatetimeoffset())");
-
-                    b.Property<long?>("CreatedId")
-                        .HasColumnType("bigint");
-
-                    b.Property<DateTimeOffset?>("DateOfBirth")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<DateTimeOffset?>("ExpiryDate")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<string>("FullName")
-                        .HasMaxLength(150)
-                        .HasColumnType("nvarchar(150)");
-
-                    b.Property<string>("IssuedBy")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<DateTimeOffset?>("IssuedDate")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<string>("Number")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("PlaceOfBirth")
-                        .HasMaxLength(150)
-                        .HasColumnType("nvarchar(150)");
-
-                    b.Property<long?>("SubmissionId")
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("Type")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<DateTimeOffset?>("UpdatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetimeoffset")
-                        .HasDefaultValueSql("(sysdatetimeoffset())");
-
-                    b.Property<long?>("UpdatedId")
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("UserId")
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("VerificationMethod")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<DateTimeOffset?>("VerifiedAt")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<long?>("VerifiedBy")
-                        .HasColumnType("bigint");
-
-                    b.HasKey("Id")
-                        .HasName("PK_UserVerified");
-
-                    b.HasIndex("SubmissionId")
-                        .HasDatabaseName("IX_UserVerified_SubmissionId");
-
-                    b.HasIndex("UserId")
-                        .IsUnique()
-                        .HasDatabaseName("UX_UserVerified_UserId");
-
-                    b.HasIndex("VerifiedBy")
-                        .HasDatabaseName("IX_UserVerified_VerifiedBy");
-
-                    b.HasIndex("VerifiedAt", "Type")
-                        .HasDatabaseName("IX_UserVerified_VerifiedAt_Type");
-
-                    b.ToTable("UserVerified", (string)null);
-                });
-
             modelBuilder.Entity("Domain.Entities.Vehicle", b =>
                 {
                     b.Property<long>("Id")
@@ -1247,18 +1127,6 @@ namespace Infrastructure.Migrations
                     b.ToTable("TagNew", (string)null);
                 });
 
-            modelBuilder.Entity("Domain.Entities.AdminProfile", b =>
-                {
-                    b.HasOne("Domain.Entities.AspNetUser", "User")
-                        .WithOne("AdminProfile")
-                        .HasForeignKey("Domain.Entities.AdminProfile", "UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_AdminProfile_User");
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("Domain.Entities.Booking", b =>
                 {
                     b.HasOne("Domain.Entities.Station", "EndStation")
@@ -1504,34 +1372,6 @@ namespace Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Domain.Entities.UserVerified", b =>
-                {
-                    b.HasOne("Domain.Entities.KycSubmission", "Submission")
-                        .WithMany()
-                        .HasForeignKey("SubmissionId")
-                        .OnDelete(DeleteBehavior.SetNull)
-                        .HasConstraintName("FK_UserVerified_Submission");
-
-                    b.HasOne("Domain.Entities.AspNetUser", "User")
-                        .WithMany("UserVerifieds")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_UserVerified_User");
-
-                    b.HasOne("Domain.Entities.AspNetUser", "VerifiedByUser")
-                        .WithMany("VerifiedUsers")
-                        .HasForeignKey("VerifiedBy")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .HasConstraintName("FK_UserVerified_VerifiedBy");
-
-                    b.Navigation("Submission");
-
-                    b.Navigation("User");
-
-                    b.Navigation("VerifiedByUser");
-                });
-
             modelBuilder.Entity("Domain.Entities.Vehicle", b =>
                 {
                     b.HasOne("Domain.Entities.CategoriesVehicle", "Category")
@@ -1658,8 +1498,6 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Domain.Entities.AspNetUser", b =>
                 {
-                    b.Navigation("AdminProfile");
-
                     b.Navigation("Bookings");
 
                     b.Navigation("Contacts");
@@ -1679,10 +1517,6 @@ namespace Infrastructure.Migrations
                     b.Navigation("UserSessions");
 
                     b.Navigation("UserTickets");
-
-                    b.Navigation("UserVerifieds");
-
-                    b.Navigation("VerifiedUsers");
 
                     b.Navigation("Wallets");
                 });
