@@ -72,9 +72,12 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer(); // ✅ cần để Swagger hoạt động
 builder.Services.AddSwaggerGen();            // ✅ cần để tạo giao diện Swagger
-
+builder.Services.AddCors(o => o.AddPolicy("frontend", p =>
+    p.WithOrigins("http://localhost:5173")
+     .AllowAnyHeader().AllowAnyMethod().AllowCredentials()
+));
 var app = builder.Build();
-
+app.UseCors("frontend");
 // -------------------- Middleware --------------------
 if (app.Environment.IsDevelopment())
 {

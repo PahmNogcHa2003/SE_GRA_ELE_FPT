@@ -45,26 +45,15 @@ namespace Application.Services.Staff
             switch (lowerFilterField)
             {
                 // Filter by exact Status (supports "true"/"false" and "1"/"0")
-                case "status":
+                case "isactive":
                     {
-                        // Try to parse from "true" or "false" string
                         if (bool.TryParse(filterValue, out bool isActive))
                         {
                             return query.Where(s => s.IsActive == isActive);
                         }
-
-                        // If that fails, try checking for "1" or "0" values
-                        if (filterValue == "1")
-                        {
-                            return query.Where(s => s.IsActive == true);
-                        }
-
-                        if (filterValue == "0")
-                        {
-                            return query.Where(s => s.IsActive == false);
-                        }
-
-                        // If the value is invalid, skip this filter
+                        
+                        if (filterValue == "1") return query.Where(s => s.IsActive == true);
+                        if (filterValue == "0") return query.Where(s => s.IsActive == false);
                         return query;
                     }
 
@@ -83,8 +72,9 @@ namespace Application.Services.Staff
         }
 
         /// <summary>
-        /// Overrides the sorting logic.
-        /// Allows for defining custom sorting rules.
+        /// Ghi đè logic sắp xếp.
+        /// Chỉ xử lý các quy tắc sắp xếp đặc biệt dành riêng cho Station.
+        /// Các trường hợp còn lại sẽ được chuyển về cho lớp GenericService xử lý.
         /// </summary>
         protected override IQueryable<Station> ApplySort(IQueryable<Station> query, string? sortOrder)
         {
@@ -92,11 +82,6 @@ namespace Application.Services.Staff
 
             switch (lowerSortOrder)
             {
-                // "Priority" sort: by capacity descending, then by name ascending
-                case "priority":
-                    return query.OrderByDescending(s => s.Capacity).ThenBy(s => s.Name);
-
-                // Default: fall back to the base class logic (sorts by the provided string or by Id)
                 default:
                     return base.ApplySort(query, sortOrder);
             }

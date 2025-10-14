@@ -73,21 +73,67 @@ namespace Application.Services.Base
 
         protected virtual IQueryable<TEntity> ApplyFilter(IQueryable<TEntity> query, string filterField, string filterValue)
         {
-            return query.Where($"{filterField}.Contains(@0)", filterValue);
+            // Tìm property theo tên (không phân biệt hoa thường)
+            var prop = typeof(TEntity).GetProperty(
+                filterField!,
+                System.Reflection.BindingFlags.IgnoreCase |
+                System.Reflection.BindingFlags.Public |
+                System.Reflection.BindingFlags.Instance
+            );
+
+            if (prop == null)
+                throw new ArgumentException($"Property '{filterField}' not found on type {typeof(TEntity).Name}");
+
+            // Lấy kiểu dữ liệu thực tế (nếu có nullable thì bỏ nullable wrapper)
+            var propType = Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType;
+
+            if (propType == typeof(string))
+            {
+                // ✅ string: dùng Contains + null-check
+                return query.Where($"{filterField} != null && {filterField}.Contains(@0)", filterValue);
+            }
+            else if (propType == typeof(bool))
+            {
+                // ✅ bool: parse sang bool và so sánh trực tiếp
+                if (!bool.TryParse(filterValue, out var boolVal))
+                    throw new ArgumentException($"'{filterValue}' không thể chuyển sang kiểu bool.");
+                return query.Where($"{filterField} == @0", boolVal);
+            }
+            else if (propType.IsEnum)
+            {
+                // ✅ Enum: parse enum từ string
+                var enumValue = Enum.Parse(propType, filterValue, ignoreCase: true);
+                return query.Where($"{filterField} == @0", enumValue);
+            }
+            else
+            {
+                // ✅ Số hoặc kiểu khác: convert và so sánh bằng ==
+                var typedValue = Convert.ChangeType(filterValue, propType);
+                return query.Where($"{filterField} == @0", typedValue);
+            }
         }
 
         protected virtual IQueryable<TEntity> ApplySort(IQueryable<TEntity> query, string? sortOrder)
         {
             if (!string.IsNullOrWhiteSpace(sortOrder))
             {
-                return query.OrderBy(sortOrder);
+
+                var validSortOrder = sortOrder.Replace("_asc", " asc").Replace("_desc", " desc");
+
+                try
+                {
+                    return query.OrderBy(validSortOrder);
+                }
+                catch (System.Linq.Dynamic.Core.Exceptions.ParseException)
+                {
+                    return query.OrderBy("Id");
+                }
             }
             else
             {
                 return query.OrderBy("Id");
             }
         }
-
         public async Task<TDto> CreateAsync(TDto dto, CancellationToken ct = default)
         {
             var entity = _mapper.Map<TEntity>(dto);
