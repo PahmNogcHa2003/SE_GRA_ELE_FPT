@@ -36,50 +36,56 @@ namespace Application.Services.Base
         }
 
         public async Task<Application.Common.PagedResult<TDto>> GetPagedAsync(
-            int page,
-            int pageSize,
-            string? searchQuery = null,
-            string? filterField = null,
-            string? filterValue = null,
-            string? sortOrder = null,
-            CancellationToken ct = default)
+         int page,
+         int pageSize,
+         string? searchQuery = null,
+         string? filterField = null,
+         string? filterValue = null,
+         string? sortOrder = null,
+         CancellationToken ct = default)
+            {
+                var query = _repo.Query().AsNoTracking();
+
+                // 1. Apply Search (Search)
+                if (!string.IsNullOrWhiteSpace(searchQuery))
+                {
+                    query = ApplySearch(query, searchQuery);
+                }
+
+                // 2. Apply Filter (Filter)
+                if (!string.IsNullOrWhiteSpace(filterField) && !string.IsNullOrWhiteSpace(filterValue))
+                {
+                    query = ApplyFilter(query, filterField, filterValue);
+                }
+
+                // 3. Apply Sort (Sort)
+                query = ApplySort(query, sortOrder);
+
+                var projectedQuery = query.ProjectTo<TDto>(_mapper.ConfigurationProvider);
+
+                return await Application.Common.PagedResult<TDto>.FromQueryableAsync(projectedQuery, page, pageSize, ct);
+            }
+
+        protected virtual IQueryable<TEntity> ApplySearch(IQueryable<TEntity> query, string searchQuery)
         {
-            var query = _repo.Query().AsNoTracking();
+            return query;
+        }
 
-            // 1. Áp dụng tìm kiếm chung (Search)
-            if (!string.IsNullOrWhiteSpace(searchQuery))
-            {
-                query = ApplySearch(query, searchQuery);
-            }
+        protected virtual IQueryable<TEntity> ApplyFilter(IQueryable<TEntity> query, string filterField, string filterValue)
+        {
+            return query.Where($"{filterField}.Contains(@0)", filterValue);
+        }
 
-            // 2. Áp dụng bộ lọc (Filter)
-            if (!string.IsNullOrWhiteSpace(filterField) && !string.IsNullOrWhiteSpace(filterValue))
-            {
-                query = query.Where($"{filterField}.Contains(@0)", filterValue);
-            }
-
-            // 3. Áp dụng sắp xếp (Sort)
+        protected virtual IQueryable<TEntity> ApplySort(IQueryable<TEntity> query, string? sortOrder)
+        {
             if (!string.IsNullOrWhiteSpace(sortOrder))
             {
-                query = query.OrderBy(sortOrder);
+                return query.OrderBy(sortOrder);
             }
             else
             {
-                query = query.OrderBy("Id");
+                return query.OrderBy("Id");
             }
-
-            var projectedQuery = query.ProjectTo<TDto>(_mapper.ConfigurationProvider);
-
-            return await Application.Common.PagedResult<TDto>.FromQueryableAsync(projectedQuery, page, pageSize, ct);
-        }
-
-        /// <summary>
-        /// Phương thức ảo để các lớp service con có thể override và định nghĩa logic search riêng.
-        /// </summary>
-        protected virtual IQueryable<TEntity> ApplySearch(IQueryable<TEntity> query, string searchQuery)
-        {
-            // Logic mặc định không làm gì cả. Các lớp con sẽ triển khai logic cụ thể.
-            return query;
         }
 
         public async Task<TDto> CreateAsync(TDto dto, CancellationToken ct = default)
