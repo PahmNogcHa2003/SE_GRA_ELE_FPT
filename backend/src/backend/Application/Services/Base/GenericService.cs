@@ -27,7 +27,7 @@ namespace Application.Services.Base
             _uow = uow;
         }
 
-        public async Task<TDto?> GetAsync(TKey id, CancellationToken ct = default)
+        public virtual async Task<TDto?> GetAsync(TKey id, CancellationToken ct = default)
         {
             var entity = await _repo.Query()
                                     .AsNoTracking()
@@ -134,7 +134,7 @@ namespace Application.Services.Base
                 return query.OrderBy("Id");
             }
         }
-        public async Task<TDto> CreateAsync(TDto dto, CancellationToken ct = default)
+        public virtual async Task<TDto> CreateAsync(TDto dto, CancellationToken ct = default)
         {
             var entity = _mapper.Map<TEntity>(dto);
             await _repo.AddAsync(entity, ct);
@@ -142,7 +142,7 @@ namespace Application.Services.Base
             return _mapper.Map<TDto>(entity);
         }
 
-        public async Task UpdateAsync(TKey id, TDto dto, CancellationToken ct = default)
+        public virtual async Task UpdateAsync(TKey id, TDto dto, CancellationToken ct = default)
         {
             var entity = await _repo.Query().FirstOrDefaultAsync(e => EF.Property<TKey>(e, "Id")!.Equals(id), ct);
 
@@ -153,7 +153,7 @@ namespace Application.Services.Base
             await _uow.SaveChangesAsync(ct);
         }
 
-        public async Task DeleteAsync(TKey id, CancellationToken ct = default)
+        public virtual async Task DeleteAsync(TKey id, CancellationToken ct = default)
         {
             var entity = await _repo.Query().FirstOrDefaultAsync(e => EF.Property<TKey>(e, "Id")!.Equals(id), ct);
 

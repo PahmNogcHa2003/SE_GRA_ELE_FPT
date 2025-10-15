@@ -1,6 +1,7 @@
 ﻿using Application.Interfaces;
 using Application.Interfaces.Base;
 using Application.Interfaces.Identity;
+using Application.Interfaces.Staff.Repository;
 using Application.Interfaces.Staff.Service;
 using Application.Mapping;
 using Application.Services.Base;
@@ -28,12 +29,20 @@ namespace Infrastructure.Dependency_Injection
             services.AddScoped(typeof(IRepository<,>), typeof(BaseRepository<,>));
             //services.AddScoped<IRepository<AspNetUser, long>, UserRepository>();
             services.AddScoped<IRepository<Station, long>, StationsRepository>();
+            services.AddScoped<IRepository<CategoriesVehicle, long>, CategoriesVehicleRepository>();
+            services.AddScoped<IRepository<Vehicle, long>, VehicleRepository>();
+            services.AddScoped<IRepository<Tag, long>, TagRepository>();
+            services.AddScoped<INewsRepository, NewsRepository>();
 
 
             // --- Services (application layer) ---
             services.AddScoped(typeof(IService<,,>), typeof(GenericService<,,>));
             //services.AddScoped<IUserService, UserService>();
             services.AddScoped<IStationsService, StationsService>();
+            services.AddScoped<ICategoriesVehicleService, CategoriesVehicleService>();
+            services.AddScoped<IVehicleService, VehiclesService>();
+            services.AddScoped<INewsService, NewsService>();
+            services.AddScoped<ITagService, TagService>();
 
 
             // --- AutoMapper ---
