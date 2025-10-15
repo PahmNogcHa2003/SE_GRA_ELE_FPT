@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:hola_bike_app/core/constants/locations.dart';
 import 'package:hola_bike_app/presentation/widgets/station_info_dialog.dart';
 import 'package:hola_bike_app/theme/app_colors.dart';
@@ -13,6 +14,8 @@ class StationMap extends StatefulWidget {
 }
 
 class _StationMapState extends State<StationMap> {
+  final MapController _mapController = MapController();
+
   final Set<VehicleType> selectedTypes = {
     VehicleType.bike,
     VehicleType.electric,
@@ -30,6 +33,7 @@ class _StationMapState extends State<StationMap> {
     return Stack(
       children: [
         FlutterMap(
+          mapController: _mapController,
           options: MapOptions(
             center: center,
             zoom: 14,
@@ -65,7 +69,7 @@ class _StationMapState extends State<StationMap> {
           ],
         ),
 
-        // ✅ Bộ lọc tick ở đầu màn hình
+        // ✅ Bộ lọc loại xe ở góc trái dưới
         Positioned(
           bottom: 16,
           left: 16,
@@ -84,23 +88,41 @@ class _StationMapState extends State<StationMap> {
                 const SizedBox(height: 6),
                 _buildCheckbox('Xe điện', VehicleType.electric),
                 const SizedBox(height: 6),
+                _buildCheckbox('Xe ô tô', VehicleType.car),
               ],
             ),
           ),
         ),
 
-        // ⚙️ Nút tròn hỗ trợ ở góc phải dưới
+        // ✅ Nút tròn hỗ trợ ở góc phải dưới
         Positioned(
           bottom: 16,
           right: 16,
           child: Column(
             children: [
-              _buildCircleButton(Icons.my_location, 'Vị trí hiện tại', () {
-                // TODO: xử lý định vị
-              }),
+              _buildCircleButton(
+                Icons.my_location,
+                'Vị trí hiện tại',
+                () async {
+                  LocationPermission permission =
+                      await Geolocator.checkPermission();
+                  if (permission == LocationPermission.denied) {
+                    permission = await Geolocator.requestPermission();
+                    if (permission == LocationPermission.denied) return;
+                  }
+
+                  final position = await Geolocator.getCurrentPosition();
+                  final currentLatLng = LatLng(
+                    position.latitude,
+                    position.longitude,
+                  );
+
+                  _mapController.move(currentLatLng, 16);
+                },
+              ),
               const SizedBox(height: 12),
               _buildCircleButton(Icons.refresh, 'Làm mới', () {
-                setState(() {}); // đơn giản là reload lại
+                setState(() {});
               }),
             ],
           ),
@@ -133,7 +155,7 @@ class _StationMapState extends State<StationMap> {
             visualDensity: VisualDensity.compact,
           ),
         ),
-        const SizedBox(width: 4),
+        const SizedBox(width: 6),
         Text(label, style: const TextStyle(fontSize: 12)),
       ],
     );
