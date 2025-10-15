@@ -15,6 +15,7 @@ class BottomNavBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
+        color: Colors.white,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.08),
@@ -23,52 +24,92 @@ class BottomNavBar extends StatelessWidget {
           ),
         ],
       ),
-      child: BottomAppBar(
-        shape: const CircularNotchedRectangle(),
-        notchMargin: 8,
-        elevation: 0,
-        color: Colors.white,
-        child: SafeArea(
-          child: SizedBox(
-            height: 64,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildNavIcon(Icons.home, "Trang chủ", 0),
-                _buildNavIcon(Icons.pedal_bike, "Trạm xe", 1),
-                const SizedBox(width: 40), // chừa chỗ cho FAB
-                _buildNavIcon(Icons.notifications, "Thông báo", 2),
-                _buildNavIcon(Icons.menu, "Mở rộng", 3),
-              ],
-            ),
+      child: SafeArea(
+        child: SizedBox(
+          height: 64,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildNavItem(Icons.home, "Trang chủ", 0),
+              _buildNavItem(Icons.pedal_bike, "Trạm xe", 1),
+              _buildNavItem(Icons.qr_code_scanner, "", 99, isQr: true),
+              _buildNavItem(Icons.notifications, "Thông báo", 2),
+              _buildNavItem(Icons.menu_open, "Mở rộng", 3),
+            ],
           ),
         ),
       ),
     );
   }
 
-  Widget _buildNavIcon(IconData icon, String label, int index) {
-    final isSelected = currentIndex == index;
-    final color = isSelected ? AppColors.primary : AppColors.textSecondary;
+  Widget _buildNavItem(
+    IconData icon,
+    String label,
+    int index, {
+    bool isQr = false,
+  }) {
+    final bool isSelected = currentIndex == index;
+    final Color iconColor = isSelected
+        ? AppColors.primary
+        : AppColors.textSecondary;
+    final double iconSize = isQr ? 26 : 22;
 
     return Expanded(
-      child: GestureDetector(
+      child: InkWell(
         onTap: () => onTap(index),
+        splashColor: AppColors.primary.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4),
+          padding: const EdgeInsets.symmetric(vertical: 6),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, color: color, size: 22),
-              const SizedBox(height: 2),
-              Text(
-                label,
-                style: TextStyle(
-                  color: color,
-                  fontSize: 11,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                ),
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  if (isQr)
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 300),
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.circular(12), // bo nhẹ góc
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.primary.withOpacity(0.4),
+                            blurRadius: 10,
+                            spreadRadius: 2,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: const Center(
+                        child: Icon(
+                          Icons.qr_code_scanner,
+                          color: Colors.white,
+                          size: 26,
+                        ),
+                      ),
+                    )
+                  else
+                    Icon(icon, color: iconColor, size: iconSize),
+                ],
               ),
+              if (label.isNotEmpty) ...[
+                const SizedBox(height: 2),
+                AnimatedDefaultTextStyle(
+                  duration: const Duration(milliseconds: 200),
+                  style: TextStyle(
+                    color: iconColor,
+                    fontSize: 11,
+                    fontWeight: isSelected
+                        ? FontWeight.w600
+                        : FontWeight.normal,
+                  ),
+                  child: Text(label),
+                ),
+              ],
             ],
           ),
         ),
