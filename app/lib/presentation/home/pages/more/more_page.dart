@@ -19,7 +19,7 @@ class MorePage extends StatelessWidget {
       ("Hướng dẫn sử dụng", Icons.help_outline),
       ("Điều khoản sử dụng", Icons.article),
       ("Quy định chính sách", Icons.policy),
-      ("Hola Bike Website", Icons.language),
+      ("Website Hola Bike", Icons.language),
       ("Hỗ trợ", Icons.support_agent),
     ];
 
@@ -27,6 +27,7 @@ class MorePage extends StatelessWidget {
       backgroundColor: AppColors.background,
       body: SafeArea(
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
             // 🔷 Header
             Container(
@@ -83,12 +84,7 @@ class MorePage extends StatelessWidget {
 
             // 🔷 Phiên bản
             const SizedBox(height: 8),
-            Center(
-              child: Text(
-                "Phiên bản 2.6.4/1",
-                style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
-              ),
-            ),
+
             const SizedBox(height: 8),
           ],
         ),
