@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:hola_bike_app/presentation/home/home_page.dart';
+import 'package:hola_bike_app/presentation/home/home_screen.dart';
+
 import '../../theme/app_colors.dart';
 
 class LoginScreen extends StatelessWidget {
@@ -51,7 +52,7 @@ class LoginScreen extends StatelessWidget {
               onPressed: () {
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (_) => const HomeScreen()),
+                  MaterialPageRoute(builder: (_) => HomeScreen()),
                 );
               },
               child: const Text(
