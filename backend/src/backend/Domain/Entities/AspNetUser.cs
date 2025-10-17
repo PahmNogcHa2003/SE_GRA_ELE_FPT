@@ -35,9 +35,6 @@ namespace Domain.Entities
         public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
 
         [InverseProperty("User")]
-        public virtual ICollection<UserAddress> UserAddresses { get; set; } = new List<UserAddress>();
-
-        [InverseProperty("User")]
         public virtual ICollection<UserDevice> UserDevices { get; set; } = new List<UserDevice>();
 
         [InverseProperty("User")]
