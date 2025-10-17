@@ -50,6 +50,14 @@ namespace Infrastructure.Persistence
             _dbSet.Update(entity);
         }
 
+        // THÊM PHƯƠNG THỨC NÀY VÀO
+        public void Attach(TEntity entity)
+        {
+            // Dòng này báo cho DbContext biết rằng entity đã tồn tại trong DB,
+            // đừng theo dõi nó như một entity mới.
+            _dbSet.Attach(entity);
+        }
+
         public void Remove(TEntity entity)
         {
             _dbSet.Remove(entity);
