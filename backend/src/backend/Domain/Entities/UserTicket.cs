@@ -7,19 +7,41 @@ using Microsoft.EntityFrameworkCore;
 namespace Domain.Entities;
 
 [Table("UserTicket")]
-[Microsoft.EntityFrameworkCore.Index(nameof(PlanPriceId), Name = "IX_UserTicket_PlanPriceId")]
-[Microsoft.EntityFrameworkCore.Index(nameof(UserId), Name = "IX_UserTicket_UserId")]
 public partial class UserTicket : BaseEntity<long>
 {
+    [Required]
     public long UserId { get; set; }
 
+    [Required]
     public long PlanPriceId { get; set; }
 
-    public DateTimeOffset StartTime { get; set; }
+    [StringLength(50)]
+    public string? SerialCode { get; set; }
 
-    public DateTimeOffset EndTime { get; set; }
+    [Column(TypeName = "decimal(18, 2)")]
+    public decimal? PurchasedPrice { get; set; }
 
-    public bool IsUsed { get; set; }
+    [Required]
+    [StringLength(20)]
+    [Unicode(false)]
+    public string Status { get; set; } = "Ready";
+
+    [Precision(0)]
+    public DateTimeOffset? ActivatedAt { get; set; }
+
+    [Precision(0)]
+    public DateTimeOffset? ExpiresAt { get; set; }
+
+    public int? RemainingMinutes { get; set; }
+
+    public int? RemainingRides { get; set; }
+
+    [Required]
+    [Precision(0)]
+    public DateTimeOffset CreatedAt { get; set; }
+
+    [Timestamp]
+    public byte[]? RowVer { get; set; }
 
     [InverseProperty(nameof(BookingTicket.UserTicket))]
     public virtual ICollection<BookingTicket> BookingTickets { get; set; } = new List<BookingTicket>();

@@ -14,8 +14,7 @@ public partial class CategoriesVehicle : BaseEntity<long>
 
     [StringLength(255)]
     public string? Description { get; set; }
-
-    public bool IsActive { get; set; }
+    public bool IsActive { get; set; } = true;
 
     [InverseProperty("Category")]
     public virtual ICollection<Vehicle> Vehicles { get; set; } = new List<Vehicle>();
