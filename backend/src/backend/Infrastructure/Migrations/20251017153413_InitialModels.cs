@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialProject : Migration
+    public partial class InitialModels : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -32,8 +32,7 @@ namespace Infrastructure.Migrations
                 {
                     Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    UpdatedDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    CreatedDate = table.Column<DateTimeOffset>(type: "datetimeoffset(0)", precision: 0, nullable: false),
                     UserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     Email = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
@@ -62,11 +61,11 @@ namespace Infrastructure.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
                     Description = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true),
-                    IsActive = table.Column<bool>(type: "bit", nullable: false, defaultValue: true)
+                    IsActive = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK__Categori__3214EC07D4E0FA58", x => x.Id);
+                    table.PrimaryKey("PK_CategoriesVehicle", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -80,12 +79,12 @@ namespace Infrastructure.Migrations
                     Capacity = table.Column<int>(type: "int", nullable: true),
                     Lat = table.Column<decimal>(type: "decimal(9,6)", nullable: true),
                     Lng = table.Column<decimal>(type: "decimal(9,6)", nullable: true),
-                    IsActive = table.Column<bool>(type: "bit", nullable: false, defaultValue: true),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false),
                     Image = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK__Station__3214EC07C295B181", x => x.Id);
+                    table.PrimaryKey("PK_Station", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -98,7 +97,7 @@ namespace Infrastructure.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK__Tags__3214EC07D6927A00", x => x.Id);
+                    table.PrimaryKey("PK_Tags", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -107,14 +106,15 @@ namespace Infrastructure.Migrations
                 {
                     Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    Code = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
+                    Name = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: true),
                     Description = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true),
-                    DurationMinutes = table.Column<int>(type: "int", nullable: false),
-                    IsActive = table.Column<bool>(type: "bit", nullable: false, defaultValue: true)
+                    IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset(0)", precision: 0, nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK__TicketPl__3214EC07F7F4A069", x => x.Id);
+                    table.PrimaryKey("PK_TicketPlan", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -134,6 +134,28 @@ namespace Infrastructure.Migrations
                         name: "FK_AspNetRoleClaims_AspNetRoles_RoleId",
                         column: x => x.RoleId,
                         principalTable: "AspNetRoles",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "AdminProfile",
+                columns: table => new
+                {
+                    UserId = table.Column<long>(type: "bigint", nullable: false),
+                    FullName = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: true),
+                    Position = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    AvatarUrl = table.Column<string>(type: "nvarchar(250)", maxLength: 250, nullable: true),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset(0)", precision: 0, nullable: false),
+                    UpdatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset(0)", precision: 0, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AdminProfile", x => x.UserId);
+                    table.ForeignKey(
+                        name: "FK_AdminProfile_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -229,39 +251,66 @@ namespace Infrastructure.Migrations
                 {
                     Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    UserId = table.Column<long>(type: "bigint", nullable: false),
-                    Message = table.Column<string>(type: "varchar(500)", unicode: false, maxLength: 500, nullable: true),
-                    CreatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset(0)", precision: 0, nullable: false, defaultValueSql: "(sysdatetimeoffset())")
+                    UserId = table.Column<long>(type: "bigint", nullable: true),
+                    Email = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true),
+                    PhoneNumber = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
+                    Title = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: false),
+                    Content = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: false),
+                    Status = table.Column<string>(type: "varchar(20)", unicode: false, maxLength: 20, nullable: false),
+                    AssignedTo = table.Column<long>(type: "bigint", nullable: true),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset(0)", precision: 0, nullable: false),
+                    ClosedAt = table.Column<DateTimeOffset>(type: "datetimeoffset(0)", precision: 0, nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK__Contact__3214EC07DE2F6868", x => x.Id);
+                    table.PrimaryKey("PK_Contact", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Contact_User",
+                        name: "FK_Contact_AspNetUsers_AssignedTo",
+                        column: x => x.AssignedTo,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_Contact_AspNetUsers_UserId",
                         column: x => x.UserId,
                         principalTable: "AspNetUsers",
                         principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
-                name: "KycSubmission",
+                name: "KycForm",
                 columns: table => new
                 {
                     Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     UserId = table.Column<long>(type: "bigint", nullable: false),
-                    Status = table.Column<string>(type: "varchar(50)", unicode: false, maxLength: 50, nullable: false, defaultValue: "Pending"),
-                    SubmittedAt = table.Column<DateTimeOffset>(type: "datetimeoffset(0)", precision: 0, nullable: false, defaultValueSql: "(sysdatetimeoffset())"),
-                    ReviewedAt = table.Column<DateTimeOffset>(type: "datetimeoffset(0)", precision: 0, nullable: true)
+                    FullName = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: true),
+                    Dob = table.Column<DateTime>(type: "date", nullable: true),
+                    Gender = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: true),
+                    NumberCard = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    PlaceOfOrigin = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: true),
+                    PlaceOfResidence = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: true),
+                    IssuedDate = table.Column<DateTimeOffset>(type: "datetimeoffset(7)", precision: 7, nullable: true),
+                    ExpiryDate = table.Column<DateTimeOffset>(type: "datetimeoffset(7)", precision: 7, nullable: true),
+                    IssuedBy = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    IdFrontUrl = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true),
+                    IdBackUrl = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true),
+                    SelfieUrl = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true),
+                    Status = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
+                    RejectReason = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true),
+                    SubmittedAt = table.Column<DateTimeOffset>(type: "datetimeoffset(0)", precision: 0, nullable: true),
+                    ReviewedAt = table.Column<DateTimeOffset>(type: "datetimeoffset(0)", precision: 0, nullable: true),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset(0)", precision: 0, nullable: false),
+                    UpdatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset(0)", precision: 0, nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK__KycSubmi__3214EC075C41B76A", x => x.Id);
+                    table.PrimaryKey("PK_KycForm", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_KycSubmission_User",
+                        name: "FK_KycForm_AspNetUsers_UserId",
                         column: x => x.UserId,
                         principalTable: "AspNetUsers",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -271,19 +320,30 @@ namespace Infrastructure.Migrations
                     Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Title = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    Content = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    AuthorId = table.Column<long>(type: "bigint", nullable: false),
-                    CreatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false, defaultValueSql: "(sysdatetimeoffset())"),
-                    IsActive = table.Column<bool>(type: "bit", nullable: false, defaultValue: true)
+                    Slug = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    Banner = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true),
+                    Content = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Status = table.Column<string>(type: "varchar(20)", unicode: false, maxLength: 20, nullable: false),
+                    PublishedAt = table.Column<DateTimeOffset>(type: "datetimeoffset(0)", precision: 0, nullable: true),
+                    PublishedBy = table.Column<long>(type: "bigint", nullable: true),
+                    ScheduledAt = table.Column<DateTimeOffset>(type: "datetimeoffset(0)", precision: 0, nullable: true),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset(0)", precision: 0, nullable: false),
+                    UserId = table.Column<long>(type: "bigint", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK__News__3214EC0717F784AE", x => x.Id);
+                    table.PrimaryKey("PK_News", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_News_Author",
-                        column: x => x.AuthorId,
+                        name: "FK_News_AspNetUsers_PublishedBy",
+                        column: x => x.PublishedBy,
                         principalTable: "AspNetUsers",
                         principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_News_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -293,39 +353,52 @@ namespace Infrastructure.Migrations
                     Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     UserId = table.Column<long>(type: "bigint", nullable: false),
-                    OrderNo = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    Status = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false, defaultValue: "Pending"),
-                    CreatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false, defaultValueSql: "(sysdatetimeoffset())")
+                    OrderNo = table.Column<string>(type: "nvarchar(30)", maxLength: 30, nullable: true),
+                    OrderType = table.Column<string>(type: "varchar(30)", unicode: false, maxLength: 30, nullable: false),
+                    Status = table.Column<string>(type: "varchar(30)", unicode: false, maxLength: 30, nullable: false),
+                    Subtotal = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    Discount = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    Total = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    Currency = table.Column<string>(type: "char(3)", maxLength: 3, nullable: false),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset(0)", precision: 0, nullable: false),
+                    PaidAt = table.Column<DateTimeOffset>(type: "datetimeoffset(0)", precision: 0, nullable: true),
+                    CancelReason = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK__Order__3214EC07970C734A", x => x.Id);
+                    table.PrimaryKey("PK_Order", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Order_User",
+                        name: "FK_Order_AspNetUsers_UserId",
                         column: x => x.UserId,
                         principalTable: "AspNetUsers",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
                 name: "UserAddress",
                 columns: table => new
                 {
-                    Id = table.Column<long>(type: "bigint", nullable: false)
+                    AddressId = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     UserId = table.Column<long>(type: "bigint", nullable: false),
-                    Address = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true),
-                    City = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
-                    Country = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true)
+                    Line1 = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true),
+                    ProvinceCode = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
+                    DistrictCode = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
+                    WardCode = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
+                    WardName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    Country = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset(0)", precision: 0, nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK__UserAddr__3214EC07F13D6185", x => x.Id);
+                    table.PrimaryKey("PK_UserAddress", x => x.AddressId);
                     table.ForeignKey(
-                        name: "FK_UserAddress_User",
+                        name: "FK_UserAddress_AspNetUsers_UserId",
                         column: x => x.UserId,
                         principalTable: "AspNetUsers",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -335,39 +408,53 @@ namespace Infrastructure.Migrations
                     Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     UserId = table.Column<long>(type: "bigint", nullable: false),
-                    DeviceId = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
-                    DeviceType = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
-                    LastLogin = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true)
+                    DeviceId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Platform = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
+                    PushToken = table.Column<string>(type: "nvarchar(1024)", maxLength: 1024, nullable: true),
+                    LastLoginAt = table.Column<DateTimeOffset>(type: "datetimeoffset(0)", precision: 0, nullable: true),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset(0)", precision: 0, nullable: false),
+                    UpdatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset(0)", precision: 0, nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK__UserDevi__3214EC07D3C6E212", x => x.Id);
+                    table.PrimaryKey("PK_UserDevice", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_UserDevice_User",
+                        name: "FK_UserDevice_AspNetUsers_UserId",
                         column: x => x.UserId,
                         principalTable: "AspNetUsers",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
                 name: "UserProfile",
                 columns: table => new
                 {
-                    Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
                     UserId = table.Column<long>(type: "bigint", nullable: false),
                     FullName = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: true),
-                    Dob = table.Column<DateOnly>(type: "date", nullable: true),
-                    Gender = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true)
+                    Dob = table.Column<DateTime>(type: "date", nullable: true),
+                    Gender = table.Column<string>(type: "varchar(10)", unicode: false, maxLength: 10, nullable: true),
+                    AvatarUrl = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true),
+                    EmergencyName = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: true),
+                    EmergencyPhone = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
+                    NumberCard = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    PlaceOfOrigin = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: true),
+                    PlaceOfResidence = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: true),
+                    IssuedDate = table.Column<DateTimeOffset>(type: "datetimeoffset(7)", precision: 7, nullable: true),
+                    ExpiryDate = table.Column<DateTimeOffset>(type: "datetimeoffset(7)", precision: 7, nullable: true),
+                    IssuedBy = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset(0)", precision: 0, nullable: false),
+                    UpdatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset(0)", precision: 0, nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK__UserProf__3214EC070F6A0589", x => x.Id);
+                    table.PrimaryKey("PK_UserProfile", x => x.UserId);
                     table.ForeignKey(
-                        name: "FK_UserProfile_User",
+                        name: "FK_UserProfile_AspNetUsers_UserId",
                         column: x => x.UserId,
                         principalTable: "AspNetUsers",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -382,32 +469,36 @@ namespace Infrastructure.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK__UserSess__3214EC07FD5AF48C", x => x.Id);
+                    table.PrimaryKey("PK_UserSession", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_UserSession_User",
+                        name: "FK_UserSession_AspNetUsers_UserId",
                         column: x => x.UserId,
                         principalTable: "AspNetUsers",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
                 name: "Wallet",
                 columns: table => new
                 {
-                    Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
                     UserId = table.Column<long>(type: "bigint", nullable: false),
                     Balance = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    UpdatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false, defaultValueSql: "(sysdatetimeoffset())")
+                    Currency = table.Column<string>(type: "char(3)", maxLength: 3, nullable: false),
+                    Status = table.Column<string>(type: "varchar(20)", unicode: false, maxLength: 20, nullable: false),
+                    TotalDebt = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    RowVer = table.Column<byte[]>(type: "rowversion", rowVersion: true, nullable: true),
+                    UpdatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset(0)", precision: 0, nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK__Wallet__3214EC0718574291", x => x.Id);
+                    table.PrimaryKey("PK_Wallet", x => x.UserId);
                     table.ForeignKey(
-                        name: "FK_Wallet_User",
+                        name: "FK_Wallet_AspNetUsers_UserId",
                         column: x => x.UserId,
                         principalTable: "AspNetUsers",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -417,17 +508,19 @@ namespace Infrastructure.Migrations
                     Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     StationId = table.Column<long>(type: "bigint", nullable: false),
-                    Action = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    Timestamp = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false, defaultValueSql: "(sysdatetimeoffset())")
+                    ChangeType = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
+                    Quantity = table.Column<int>(type: "int", nullable: true),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset(0)", precision: 0, nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK__StationL__3214EC07C48CFD68", x => x.Id);
+                    table.PrimaryKey("PK_StationLogs", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_StationLog_Station",
+                        name: "FK_StationLogs_Station_StationId",
                         column: x => x.StationId,
                         principalTable: "Station",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -440,20 +533,20 @@ namespace Infrastructure.Migrations
                     BikeCode = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     BatteryLevel = table.Column<int>(type: "int", nullable: true),
                     ChargingStatus = table.Column<bool>(type: "bit", nullable: true),
-                    Status = table.Column<string>(type: "varchar(20)", unicode: false, maxLength: 20, nullable: false, defaultValue: "Available"),
+                    Status = table.Column<string>(type: "varchar(20)", unicode: false, maxLength: 20, nullable: false),
                     StationId = table.Column<long>(type: "bigint", nullable: true),
-                    CreatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset(0)", precision: 0, nullable: false, defaultValueSql: "(sysdatetimeoffset())")
+                    CreatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset(0)", precision: 0, nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK__Vehicle__3214EC0734EACA34", x => x.Id);
+                    table.PrimaryKey("PK_Vehicle", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Vehicle_Category",
+                        name: "FK_Vehicle_CategoriesVehicle_CategoryId",
                         column: x => x.CategoryId,
                         principalTable: "CategoriesVehicle",
                         principalColumn: "Id");
                     table.ForeignKey(
-                        name: "FK_Vehicle_Station",
+                        name: "FK_Vehicle_Station_StationId",
                         column: x => x.StationId,
                         principalTable: "Station",
                         principalColumn: "Id");
@@ -467,102 +560,50 @@ namespace Infrastructure.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     PlanId = table.Column<long>(type: "bigint", nullable: false),
                     VehicleType = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
-                    Price = table.Column<decimal>(type: "decimal(18,2)", nullable: false)
+                    Price = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    DurationLimitMinutes = table.Column<int>(type: "int", nullable: true),
+                    DailyFreeDurationMinutes = table.Column<int>(type: "int", nullable: true),
+                    ValidityDays = table.Column<int>(type: "int", nullable: true),
+                    OverageFeePer15Min = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    ValidFrom = table.Column<DateTimeOffset>(type: "datetimeoffset(0)", precision: 0, nullable: true),
+                    ValidTo = table.Column<DateTimeOffset>(type: "datetimeoffset(0)", precision: 0, nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK__TicketPl__3214EC075961CEE6", x => x.Id);
+                    table.PrimaryKey("PK_TicketPlanPrice", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_TicketPlanPrice_Plan",
+                        name: "FK_TicketPlanPrice_TicketPlan_PlanId",
                         column: x => x.PlanId,
                         principalTable: "TicketPlan",
-                        principalColumn: "Id");
-                });
-
-            migrationBuilder.CreateTable(
-                name: "KycDocument",
-                columns: table => new
-                {
-                    Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    SubmissionId = table.Column<long>(type: "bigint", nullable: false),
-                    DocType = table.Column<string>(type: "varchar(50)", unicode: false, maxLength: 50, nullable: true),
-                    DocPath = table.Column<string>(type: "varchar(255)", unicode: false, maxLength: 255, nullable: true),
-                    UploadedAt = table.Column<DateTimeOffset>(type: "datetimeoffset(0)", precision: 0, nullable: false, defaultValueSql: "(sysdatetimeoffset())")
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK__KycDocum__3214EC076BC33163", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_KycDocument_Submission",
-                        column: x => x.SubmissionId,
-                        principalTable: "KycSubmission",
-                        principalColumn: "Id");
-                });
-
-            migrationBuilder.CreateTable(
-                name: "KycProfile",
-                columns: table => new
-                {
-                    Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    SubmissionId = table.Column<long>(type: "bigint", nullable: false),
-                    VerifiedName = table.Column<string>(type: "varchar(150)", unicode: false, maxLength: 150, nullable: true),
-                    VerifiedDob = table.Column<DateOnly>(type: "date", nullable: true),
-                    VerifiedGender = table.Column<string>(type: "varchar(20)", unicode: false, maxLength: 20, nullable: true),
-                    VerifiedAt = table.Column<DateTimeOffset>(type: "datetimeoffset(0)", precision: 0, nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK__KycProfi__3214EC0728C9BBF2", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_KycProfile_Submission",
-                        column: x => x.SubmissionId,
-                        principalTable: "KycSubmission",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
                 name: "TagNew",
                 columns: table => new
                 {
-                    TagId = table.Column<long>(type: "bigint", nullable: false),
-                    NewsId = table.Column<long>(type: "bigint", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK__TagNew__4C28127383B3AF5F", x => new { x.TagId, x.NewsId });
-                    table.ForeignKey(
-                        name: "FK_TagNew_News",
-                        column: x => x.NewsId,
-                        principalTable: "News",
-                        principalColumn: "Id");
-                    table.ForeignKey(
-                        name: "FK_TagNew_Tag",
-                        column: x => x.TagId,
-                        principalTable: "Tags",
-                        principalColumn: "Id");
-                });
-
-            migrationBuilder.CreateTable(
-                name: "OrderItem",
-                columns: table => new
-                {
                     Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    OrderId = table.Column<long>(type: "bigint", nullable: false),
-                    ProductName = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: true),
-                    Quantity = table.Column<int>(type: "int", nullable: false, defaultValue: 1),
-                    Price = table.Column<decimal>(type: "decimal(18,2)", nullable: false)
+                    NewId = table.Column<long>(type: "bigint", nullable: false),
+                    TagId = table.Column<long>(type: "bigint", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK__OrderIte__3214EC0775FA8447", x => x.Id);
+                    table.PrimaryKey("PK_TagNew", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_OrderItem_Order",
-                        column: x => x.OrderId,
-                        principalTable: "Order",
-                        principalColumn: "Id");
+                        name: "FK_TagNew_News_NewId",
+                        column: x => x.NewId,
+                        principalTable: "News",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_TagNew_Tags_TagId",
+                        column: x => x.TagId,
+                        principalTable: "Tags",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -572,16 +613,56 @@ namespace Infrastructure.Migrations
                     Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     OrderId = table.Column<long>(type: "bigint", nullable: false),
+                    Provider = table.Column<string>(type: "varchar(30)", unicode: false, maxLength: 30, nullable: false),
                     Amount = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    Method = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    Status = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false, defaultValue: "Pending"),
-                    CreatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false, defaultValueSql: "(sysdatetimeoffset())")
+                    Currency = table.Column<string>(type: "char(3)", maxLength: 3, nullable: false),
+                    Status = table.Column<string>(type: "varchar(20)", unicode: false, maxLength: 20, nullable: false),
+                    ProviderTxnRef = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    CheckoutUrl = table.Column<string>(type: "nvarchar(1024)", maxLength: 1024, nullable: true),
+                    GatewayTxnId = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    IdempotencyKey = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    RawRequest = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    RawResponse = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    FailureReason = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset(0)", precision: 0, nullable: false),
+                    PaidAt = table.Column<DateTimeOffset>(type: "datetimeoffset(0)", precision: 0, nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK__Payment__3214EC07EE32C633", x => x.Id);
+                    table.PrimaryKey("PK_Payment", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Payment_Order",
+                        name: "FK_Payment_Order_OrderId",
+                        column: x => x.OrderId,
+                        principalTable: "Order",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "WalletDebt",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    UserId = table.Column<long>(type: "bigint", nullable: false),
+                    OrderId = table.Column<long>(type: "bigint", nullable: true),
+                    Amount = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    Remaining = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    Status = table.Column<string>(type: "varchar(20)", unicode: false, maxLength: 20, nullable: false),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset(0)", precision: 0, nullable: false),
+                    PaidAt = table.Column<DateTimeOffset>(type: "datetimeoffset(0)", precision: 0, nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_WalletDebt", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_WalletDebt_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_WalletDebt_Order_OrderId",
                         column: x => x.OrderId,
                         principalTable: "Order",
                         principalColumn: "Id");
@@ -594,18 +675,21 @@ namespace Infrastructure.Migrations
                     Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     WalletId = table.Column<long>(type: "bigint", nullable: false),
+                    Direction = table.Column<string>(type: "varchar(6)", unicode: false, maxLength: 6, nullable: false),
+                    Source = table.Column<string>(type: "varchar(30)", unicode: false, maxLength: 30, nullable: false),
                     Amount = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    Type = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    CreatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false, defaultValueSql: "(sysdatetimeoffset())")
+                    BalanceAfter = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset(0)", precision: 0, nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK__WalletTr__3214EC0730F16E79", x => x.Id);
+                    table.PrimaryKey("PK_WalletTransaction", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_WalletTransaction_Wallet",
+                        name: "FK_WalletTransaction_Wallet_WalletId",
                         column: x => x.WalletId,
                         principalTable: "Wallet",
-                        principalColumn: "Id");
+                        principalColumn: "UserId",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -619,32 +703,52 @@ namespace Infrastructure.Migrations
                     StartStationId = table.Column<long>(type: "bigint", nullable: false),
                     EndStationId = table.Column<long>(type: "bigint", nullable: true),
                     BookingTime = table.Column<DateTimeOffset>(type: "datetimeoffset(0)", precision: 0, nullable: false),
-                    Status = table.Column<string>(type: "varchar(20)", unicode: false, maxLength: 20, nullable: false, defaultValue: "Reserved"),
-                    CreatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset(0)", precision: 0, nullable: false, defaultValueSql: "(sysdatetimeoffset())")
+                    Status = table.Column<string>(type: "varchar(20)", unicode: false, maxLength: 20, nullable: false),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset(0)", precision: 0, nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK__Booking__3214EC0770A0BD14", x => x.Id);
+                    table.PrimaryKey("PK_Booking", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Booking_EndStation",
-                        column: x => x.EndStationId,
-                        principalTable: "Station",
-                        principalColumn: "Id");
+                        name: "FK_Booking_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_Booking_StartStation",
-                        column: x => x.StartStationId,
-                        principalTable: "Station",
-                        principalColumn: "Id");
+                        name: "FK_Booking_Vehicle_VehicleId",
+                        column: x => x.VehicleId,
+                        principalTable: "Vehicle",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "VehicleUsageLogs",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    VehicleId = table.Column<long>(type: "bigint", nullable: false),
+                    UserId = table.Column<long>(type: "bigint", nullable: true),
+                    ChangeType = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
+                    Note = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset(0)", precision: 0, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_VehicleUsageLogs", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Booking_User",
+                        name: "FK_VehicleUsageLogs_AspNetUsers_UserId",
                         column: x => x.UserId,
                         principalTable: "AspNetUsers",
                         principalColumn: "Id");
                     table.ForeignKey(
-                        name: "FK_Booking_Vehicle",
+                        name: "FK_VehicleUsageLogs_Vehicle_VehicleId",
                         column: x => x.VehicleId,
                         principalTable: "Vehicle",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -655,23 +759,31 @@ namespace Infrastructure.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     UserId = table.Column<long>(type: "bigint", nullable: false),
                     PlanPriceId = table.Column<long>(type: "bigint", nullable: false),
-                    StartTime = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
-                    EndTime = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
-                    IsUsed = table.Column<bool>(type: "bit", nullable: false)
+                    SerialCode = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
+                    PurchasedPrice = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
+                    Status = table.Column<string>(type: "varchar(20)", unicode: false, maxLength: 20, nullable: false),
+                    ActivatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset(0)", precision: 0, nullable: true),
+                    ExpiresAt = table.Column<DateTimeOffset>(type: "datetimeoffset(0)", precision: 0, nullable: true),
+                    RemainingMinutes = table.Column<int>(type: "int", nullable: true),
+                    RemainingRides = table.Column<int>(type: "int", nullable: true),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset(0)", precision: 0, nullable: false),
+                    RowVer = table.Column<byte[]>(type: "rowversion", rowVersion: true, nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK__UserTick__3214EC07A55923E8", x => x.Id);
+                    table.PrimaryKey("PK_UserTicket", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_UserTicket_Price",
-                        column: x => x.PlanPriceId,
-                        principalTable: "TicketPlanPrice",
-                        principalColumn: "Id");
-                    table.ForeignKey(
-                        name: "FK_UserTicket_User",
+                        name: "FK_UserTicket_AspNetUsers_UserId",
                         column: x => x.UserId,
                         principalTable: "AspNetUsers",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_UserTicket_TicketPlanPrice_PlanPriceId",
+                        column: x => x.PlanPriceId,
+                        principalTable: "TicketPlanPrice",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -681,45 +793,22 @@ namespace Infrastructure.Migrations
                     Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     BookingId = table.Column<long>(type: "bigint", nullable: false),
-                    StartTime = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
-                    EndTime = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
-                    Distance = table.Column<decimal>(type: "decimal(10,2)", nullable: true),
-                    Status = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false, defaultValue: "Ongoing")
+                    StartStationId = table.Column<long>(type: "bigint", nullable: false),
+                    EndStationId = table.Column<long>(type: "bigint", nullable: true),
+                    StartTime = table.Column<DateTimeOffset>(type: "datetimeoffset(0)", precision: 0, nullable: false),
+                    EndTime = table.Column<DateTimeOffset>(type: "datetimeoffset(0)", precision: 0, nullable: true),
+                    TotalCost = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
+                    Status = table.Column<string>(type: "varchar(20)", unicode: false, maxLength: 20, nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK__Rentals__3214EC0788FA21F4", x => x.Id);
+                    table.PrimaryKey("PK_Rentals", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Rentals_Booking",
+                        name: "FK_Rentals_Booking_BookingId",
                         column: x => x.BookingId,
                         principalTable: "Booking",
-                        principalColumn: "Id");
-                });
-
-            migrationBuilder.CreateTable(
-                name: "VehicleUsageLogs",
-                columns: table => new
-                {
-                    Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    VehicleId = table.Column<long>(type: "bigint", nullable: false),
-                    BookingId = table.Column<long>(type: "bigint", nullable: false),
-                    Status = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
-                    Timestamp = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false, defaultValueSql: "(sysdatetimeoffset())")
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK__VehicleU__3214EC07E37D2CE1", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_UsageLog_Booking",
-                        column: x => x.BookingId,
-                        principalTable: "Booking",
-                        principalColumn: "Id");
-                    table.ForeignKey(
-                        name: "FK_UsageLog_Vehicle",
-                        column: x => x.VehicleId,
-                        principalTable: "Vehicle",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -730,29 +819,26 @@ namespace Infrastructure.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     BookingId = table.Column<long>(type: "bigint", nullable: false),
                     UserTicketId = table.Column<long>(type: "bigint", nullable: false),
-                    PlanPriceId = table.Column<long>(type: "bigint", nullable: false),
-                    VehicleType = table.Column<string>(type: "varchar(50)", unicode: false, maxLength: 50, nullable: true),
+                    PlanPrice = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    VehicleType = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
                     UsedMinutes = table.Column<int>(type: "int", nullable: true),
                     AppliedAt = table.Column<DateTimeOffset>(type: "datetimeoffset(0)", precision: 0, nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK__BookingT__3214EC071E4FB2B5", x => x.Id);
+                    table.PrimaryKey("PK_BookingTicket", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_BookingTicket_Booking",
+                        name: "FK_BookingTicket_Booking_BookingId",
                         column: x => x.BookingId,
                         principalTable: "Booking",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_BookingTicket_TPP",
-                        column: x => x.PlanPriceId,
-                        principalTable: "TicketPlanPrice",
-                        principalColumn: "Id");
-                    table.ForeignKey(
-                        name: "FK_BookingTicket_UserTicket",
+                        name: "FK_BookingTicket_UserTicket_UserTicketId",
                         column: x => x.UserTicketId,
                         principalTable: "UserTicket",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateIndex(
@@ -795,16 +881,6 @@ namespace Infrastructure.Migrations
                 filter: "[NormalizedUserName] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Booking_EndStationId",
-                table: "Booking",
-                column: "EndStationId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Booking_StartStationId",
-                table: "Booking",
-                column: "StartStationId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Booking_UserId",
                 table: "Booking",
                 column: "UserId");
@@ -820,14 +896,14 @@ namespace Infrastructure.Migrations
                 column: "BookingId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_BookingTicket_PlanPriceId",
-                table: "BookingTicket",
-                column: "PlanPriceId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_BookingTicket_UserTicketId",
                 table: "BookingTicket",
                 column: "UserTicketId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Contact_AssignedTo",
+                table: "Contact",
+                column: "AssignedTo");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Contact_UserId",
@@ -835,24 +911,26 @@ namespace Infrastructure.Migrations
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_KycDocument_SubmissionId",
-                table: "KycDocument",
-                column: "SubmissionId");
+                name: "UQ_KycForm_User",
+                table: "KycForm",
+                column: "UserId",
+                unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_KycProfile_SubmissionId",
-                table: "KycProfile",
-                column: "SubmissionId");
+                name: "IX_News_PublishedBy",
+                table: "News",
+                column: "PublishedBy");
 
             migrationBuilder.CreateIndex(
-                name: "IX_KycSubmission_UserId",
-                table: "KycSubmission",
+                name: "IX_News_UserId",
+                table: "News",
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_News_AuthorId",
+                name: "UQ_News_Slug",
                 table: "News",
-                column: "AuthorId");
+                column: "Slug",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Order_UserId",
@@ -860,24 +938,28 @@ namespace Infrastructure.Migrations
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_OrderItem_OrderId",
-                table: "OrderItem",
-                column: "OrderId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Payment_OrderId",
                 table: "Payment",
                 column: "OrderId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Rental_BookingId",
-                table: "Rentals",
-                column: "BookingId");
+                name: "UQ_Payment_GatewayTxnId",
+                table: "Payment",
+                column: "GatewayTxnId",
+                unique: true,
+                filter: "[GatewayTxnId] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Rentals_BookingId",
+                name: "UQ_Payment_ProviderTxnRef",
+                table: "Payment",
+                columns: new[] { "Provider", "ProviderTxnRef" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "UQ_Rentals_Booking",
                 table: "Rentals",
-                column: "BookingId");
+                column: "BookingId",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_StationLogs_StationId",
@@ -885,9 +967,15 @@ namespace Infrastructure.Migrations
                 column: "StationId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_TagNew_NewsId",
+                name: "IX_TagNew_TagId",
                 table: "TagNew",
-                column: "NewsId");
+                column: "TagId");
+
+            migrationBuilder.CreateIndex(
+                name: "UQ_TagNew",
+                table: "TagNew",
+                columns: new[] { "NewId", "TagId" },
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_TicketPlanPrice_PlanId",
@@ -900,14 +988,17 @@ namespace Infrastructure.Migrations
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_UserDevice_UserId",
+                name: "UQ_UserDevice_User_Device",
                 table: "UserDevice",
-                column: "UserId");
+                columns: new[] { "UserId", "DeviceId" },
+                unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_UserProfile_UserId",
+                name: "UQ_UserProfile_NumberCard",
                 table: "UserProfile",
-                column: "UserId");
+                column: "NumberCard",
+                unique: true,
+                filter: "[NumberCard] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
                 name: "IX_UserSession_UserId",
@@ -925,12 +1016,6 @@ namespace Infrastructure.Migrations
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Vehicle_BikeCode",
-                table: "Vehicle",
-                column: "BikeCode",
-                unique: true);
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Vehicle_CategoryId",
                 table: "Vehicle",
                 column: "CategoryId");
@@ -941,9 +1026,9 @@ namespace Infrastructure.Migrations
                 column: "StationId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_VehicleUsageLogs_BookingId",
+                name: "IX_VehicleUsageLogs_UserId",
                 table: "VehicleUsageLogs",
-                column: "BookingId");
+                column: "UserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_VehicleUsageLogs_VehicleId",
@@ -951,9 +1036,16 @@ namespace Infrastructure.Migrations
                 column: "VehicleId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Wallet_UserId",
-                table: "Wallet",
-                column: "UserId");
+                name: "IX_WalletDebt_OrderId",
+                table: "WalletDebt",
+                column: "OrderId");
+
+            migrationBuilder.CreateIndex(
+                name: "UQ_WalletDebt_User_Order",
+                table: "WalletDebt",
+                columns: new[] { "UserId", "OrderId" },
+                unique: true,
+                filter: "[OrderId] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
                 name: "IX_WalletTransaction_WalletId",
@@ -964,6 +1056,9 @@ namespace Infrastructure.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropTable(
+                name: "AdminProfile");
+
             migrationBuilder.DropTable(
                 name: "AspNetRoleClaims");
 
@@ -986,13 +1081,7 @@ namespace Infrastructure.Migrations
                 name: "Contact");
 
             migrationBuilder.DropTable(
-                name: "KycDocument");
-
-            migrationBuilder.DropTable(
-                name: "KycProfile");
-
-            migrationBuilder.DropTable(
-                name: "OrderItem");
+                name: "KycForm");
 
             migrationBuilder.DropTable(
                 name: "Payment");
@@ -1022,6 +1111,9 @@ namespace Infrastructure.Migrations
                 name: "VehicleUsageLogs");
 
             migrationBuilder.DropTable(
+                name: "WalletDebt");
+
+            migrationBuilder.DropTable(
                 name: "WalletTransaction");
 
             migrationBuilder.DropTable(
@@ -1031,10 +1123,7 @@ namespace Infrastructure.Migrations
                 name: "UserTicket");
 
             migrationBuilder.DropTable(
-                name: "KycSubmission");
-
-            migrationBuilder.DropTable(
-                name: "Order");
+                name: "Booking");
 
             migrationBuilder.DropTable(
                 name: "News");
@@ -1043,7 +1132,7 @@ namespace Infrastructure.Migrations
                 name: "Tags");
 
             migrationBuilder.DropTable(
-                name: "Booking");
+                name: "Order");
 
             migrationBuilder.DropTable(
                 name: "Wallet");
