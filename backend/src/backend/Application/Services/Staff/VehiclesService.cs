@@ -44,16 +44,23 @@ namespace Application.Services.Staff
                 // Filter by exact Status (supports "true"/"false" and "1"/"0")
                 case "status":
                     {
-                        if (bool.TryParse(filterValue, out bool isActive))
+                        if (!string.IsNullOrEmpty(filterValue))
                         {
-                            // Assuming "Status" is a string, compare it with string representations of boolean values
-                            return query.Where(s => s.Status.ToLower() == (isActive ? "true" : "false"));
+                            // Normalize giá trị để tránh lỗi do chữ hoa/thường
+                            var normalized = filterValue.Trim().ToLower();
+
+                            // Chỉ lọc nếu giá trị nằm trong danh sách trạng thái hợp lệ
+                            var validStatuses = new[] { "available", "inuse", "maintenance", "unavailable" };
+                            if (validStatuses.Contains(normalized))
+                            {
+                                return query.Where(s => s.Status.ToLower() == normalized);
+                            }
                         }
 
-                        if (filterValue == "1") return query.Where(s => s.Status.ToLower() == "true");
-                        if (filterValue == "0") return query.Where(s => s.Status.ToLower() == "false");
+                        // Nếu filterValue null hoặc không hợp lệ → không lọc
                         return query;
                     }
+
 
                 case "chargingstatus":
                     {
