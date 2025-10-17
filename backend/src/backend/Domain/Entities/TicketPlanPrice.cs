@@ -7,21 +7,37 @@ using Microsoft.EntityFrameworkCore;
 namespace Domain.Entities;
 
 [Table("TicketPlanPrice")]
-[Microsoft.EntityFrameworkCore.Index(nameof(PlanId), Name = "IX_TicketPlanPrice_PlanId")]
+[Index(nameof(PlanId), Name = "IX_TicketPlanPrice_PlanId")]
 public partial class TicketPlanPrice : BaseEntity<long>
 {
+    [Required]
     public long PlanId { get; set; }
 
     [StringLength(50)]
     public string? VehicleType { get; set; }
 
+    [Required]
     [Column(TypeName = "decimal(18, 2)")]
     public decimal Price { get; set; }
 
-    [InverseProperty("PlanPrice")]
-    public virtual ICollection<BookingTicket> BookingTickets { get; set; } = new List<BookingTicket>();
+    public int? DurationLimitMinutes { get; set; }
 
-    [ForeignKey("PlanId")]
+    public int? DailyFreeDurationMinutes { get; set; }
+
+    public int? ValidityDays { get; set; }
+
+    [Column(TypeName = "decimal(18, 2)")]
+    public decimal? OverageFeePer15Min { get; set; }
+
+    public bool IsActive { get; set; } = true;
+
+    [Precision(0)]
+    public DateTimeOffset? ValidFrom { get; set; }
+
+    [Precision(0)]
+    public DateTimeOffset? ValidTo { get; set; }
+
+    [ForeignKey(nameof(PlanId))]
     [InverseProperty("TicketPlanPrices")]
     public virtual TicketPlan Plan { get; set; } = null!;
 

@@ -1,20 +1,35 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
 
 namespace Domain.Entities
 {
+    [Table("AdminProfile")]
     public class AdminProfile
     {
-        public long UserId { get; set; }               
-        public string? FullName { get; set; }          
-        public string? Position { get; set; }           
-        public string? AvatarUrl { get; set; }         
-        public DateTimeOffset CreatedAt { get; set; }   
-        public DateTimeOffset UpdatedAt { get; set; }   
+        [Key]
+        public long UserId { get; set; }
 
+        [StringLength(150)]
+        public string? FullName { get; set; }
+
+        [StringLength(100)]
+        public string? Position { get; set; }
+
+        [StringLength(250)]
+        public string? AvatarUrl { get; set; }
+
+        [Required]
+        [Precision(0)]
+        public DateTimeOffset CreatedAt { get; set; }
+
+        [Required]
+        [Precision(0)]
+        public DateTimeOffset UpdatedAt { get; set; }
+
+        [ForeignKey(nameof(UserId))]
+        [InverseProperty("AdminProfile")]
         public virtual AspNetUser User { get; set; } = null!;
     }
 }

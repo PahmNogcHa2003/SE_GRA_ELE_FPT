@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
@@ -7,18 +6,31 @@ using Microsoft.EntityFrameworkCore;
 namespace Domain.Entities;
 
 [Table("UserDevice")]
-[Microsoft.EntityFrameworkCore.Index(nameof(UserId), Name = "IX_UserDevice_UserId")]
+[Index(nameof(UserId), nameof(DeviceId), IsUnique = true, Name = "UQ_UserDevice_User_Device")]
 public partial class UserDevice : BaseEntity<long>
 {
+    [Required]
     public long UserId { get; set; }
 
-    [StringLength(100)]
-    public string? DeviceId { get; set; }
+    [Required]
+    public Guid DeviceId { get; set; }
 
     [StringLength(50)]
-    public string? DeviceType { get; set; }
+    public string? Platform { get; set; }
 
-    public DateTimeOffset? LastLogin { get; set; }
+    [StringLength(1024)]
+    public string? PushToken { get; set; }
+
+    [Precision(0)]
+    public DateTimeOffset? LastLoginAt { get; set; }
+
+    [Required]
+    [Precision(0)]
+    public DateTimeOffset CreatedAt { get; set; }
+
+    [Required]
+    [Precision(0)]
+    public DateTimeOffset UpdatedAt { get; set; }
 
     [ForeignKey(nameof(UserId))]
     [InverseProperty(nameof(AspNetUser.UserDevices))]

@@ -23,8 +23,7 @@ namespace Infrastructure.Repositories.Staff
             // Dùng AsNoTracking() vì đây là thao tác đọc để tối ưu hiệu suất.
             // Include() cả Author và Tags để có đầy đủ thông tin chi tiết.
             return await _dbSet.AsNoTracking()
-                .Include(n => n.Author)
-                .Include(n => n.Tags)
+                .Include(n => n.User)
                 .FirstOrDefaultAsync(n => n.Id == id);
         }
 
@@ -35,7 +34,6 @@ namespace Infrastructure.Repositories.Staff
         {
             // Entity được trả về sẽ được DbContext theo dõi (tracking).
             return await _dbSet
-                .Include(n => n.Tags)
                 .FirstOrDefaultAsync(n => n.Id == id);
         }
     }

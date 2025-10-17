@@ -28,13 +28,13 @@ namespace Application.Mapping
             // Chiều từ Entity -> DTO (Khi lấy dữ liệu ra)
             CreateMap<Domain.Entities.News, DTOs.NewsDTO>()
                 .ForMember(dest => dest.TagIds,
-                           opt => opt.MapFrom(src => src.Tags.Select(t => t.Id).ToList()));
+                           opt => opt.MapFrom(src => src.TagNews.Select(t => t.Id).ToList()));
 
             // === DÒNG QUAN TRỌNG NHẤT ĐỂ SỬA LỖI ===
             // Chiều từ DTO -> Entity (Khi tạo mới/cập nhật)
             // BẮT BUỘC Bỏ qua (Ignore) việc map thuộc tính Tags.
             CreateMap<DTOs.NewsDTO, Domain.Entities.News>()
-                .ForMember(dest => dest.Tags, opt => opt.Ignore());
+                .ForMember(dest => dest.TagNews, opt => opt.Ignore());
         }
     }
 }

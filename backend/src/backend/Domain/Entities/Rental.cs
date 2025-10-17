@@ -6,23 +6,34 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Domain.Entities;
 
-[Microsoft.EntityFrameworkCore.Index(nameof(BookingId), Name = "IX_Rental_BookingId")]
+[Index(nameof(BookingId), Name = "UQ_Rentals_Booking", IsUnique = true)]
 public partial class Rental : BaseEntity<long>
 {
-
+    [Required]
     public long BookingId { get; set; }
 
+    [Required]
+    public long StartStationId { get; set; }
+
+    public long? EndStationId { get; set; }
+
+    [Required]
+    [Precision(0)]
     public DateTimeOffset StartTime { get; set; }
 
+    [Precision(0)]
     public DateTimeOffset? EndTime { get; set; }
 
-    [Column(TypeName = "decimal(10, 2)")]
-    public decimal? Distance { get; set; }
+    [Column(TypeName = "decimal(18, 2)")]
+    public decimal? TotalCost { get; set; }
 
+    [Required]
     [StringLength(20)]
-    public string Status { get; set; } = null!;
+    [Unicode(false)]
+    public string Status { get; set; } = "Ongoing";
 
-    [ForeignKey("BookingId")]
+    [ForeignKey(nameof(BookingId))]
     [InverseProperty("Rentals")]
     public virtual Booking Booking { get; set; } = null!;
+
 }

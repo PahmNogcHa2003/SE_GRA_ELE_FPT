@@ -61,8 +61,7 @@ namespace Application.Services.Staff
                 foreach (var tag in tagsToAttach)
                 {
                     _tagRepo.Attach(tag);
-                }
-                entity.Tags = tagsToAttach;
+                }           
             }
 
             await _repo.AddAsync(entity, ct);
@@ -85,9 +84,7 @@ namespace Application.Services.Staff
             // Xử lý logic cập nhật Tags một cách hiệu quả
             if (dto.TagIds != null)
             {
-                // Xóa hết các tag cũ đang được liên kết với bài news này.
-                entity.Tags.Clear();
-
+               
                 if (dto.TagIds.Any())
                 {
                     // Tạo các "stub entity" chỉ chứa Id cho các tag mới
@@ -99,8 +96,7 @@ namespace Application.Services.Staff
                         _tagRepo.Attach(tag);
                     }
 
-                    // Gán danh sách tag mới vào entity.
-                    entity.Tags = tagsToAttach;
+                
                 }
             }
 
@@ -116,7 +112,7 @@ namespace Application.Services.Staff
 
             // Câu lệnh này giờ đã an toàn vì query đã được Include Author ở GetPagedAsync
             return query.Where(s =>
-                s.Author.UserName.ToLower().Contains(lowerCaseSearchQuery) ||
+                s.User.UserName.ToLower().Contains(lowerCaseSearchQuery) ||
                 s.Content.ToLower().Contains(lowerCaseSearchQuery)
             );
         }
@@ -128,10 +124,9 @@ namespace Application.Services.Staff
             {
                 if (bool.TryParse(filterValue, out bool isActive))
                 {
-                    return query.Where(s => s.IsActive == isActive);
+                    return query.Where(s => s.Status.Equals(isActive));
                 }
-                if (filterValue == "1") return query.Where(s => s.IsActive == true);
-                if (filterValue == "0") return query.Where(s => s.IsActive == false);
+               
                 return query;
             }
 
