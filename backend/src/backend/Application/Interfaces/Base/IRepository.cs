@@ -20,5 +20,6 @@ namespace Application.Interfaces.Base
         void Update(TEntity entity);
 
         void Remove(TEntity entity);
+        void Attach(TEntity entity);
     }
 }

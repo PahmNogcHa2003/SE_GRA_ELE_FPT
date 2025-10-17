@@ -9,6 +9,7 @@ using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -31,8 +32,11 @@ namespace Application.Services.Staff
             _tagRepo = tagRepo;
         }
 
-        // === GHI ĐÈ CÁC PHƯƠNG THỨC CRUD ĐỂ XỬ LÝ LOGIC RIÊNG ===
+        // === CÁC PHƯƠNG THỨC CRUD ĐÃ ĐƯỢC TỐI ƯU HÓA ===
 
+        /// <summary>
+        /// Lấy chi tiết một bài News, bao gồm cả Author và Tags để hiển thị.
+        /// </summary>
         public override async Task<NewsDTO> GetAsync(long id, CancellationToken ct = default)
         {
             var entity = await _newsRepo.GetNewsDetailsAsync(id);
@@ -40,6 +44,9 @@ namespace Application.Services.Staff
             return _mapper.Map<NewsDTO>(entity);
         }
 
+        /// <summary>
+        /// Tạo một bài News mới. Các Tags được liên kết bằng phương pháp Attach để tối ưu hiệu suất.
+        /// </summary>
         public override async Task<NewsDTO> CreateAsync(NewsDTO dto, CancellationToken ct = default)
         {
             var entity = _mapper.Map<News>(dto);
@@ -47,8 +54,15 @@ namespace Application.Services.Staff
 
             if (dto.TagIds != null && dto.TagIds.Any())
             {
-                var tags = await _tagRepo.Query().Where(t => dto.TagIds.Contains(t.Id)).ToListAsync(ct);
-                entity.Tags = tags;
+                // Tạo các "stub entity" chỉ chứa Id
+                var tagsToAttach = dto.TagIds.Select(tagId => new Tag { Id = tagId }).ToList();
+
+                // Attach chúng vào DbContext. EF sẽ hiểu rằng chúng đã tồn tại và chỉ tạo mối quan hệ.
+                foreach (var tag in tagsToAttach)
+                {
+                    _tagRepo.Attach(tag);
+                }
+                entity.Tags = tagsToAttach;
             }
 
             await _repo.AddAsync(entity, ct);
@@ -56,39 +70,51 @@ namespace Application.Services.Staff
             return _mapper.Map<NewsDTO>(entity);
         }
 
+        /// <summary>
+        /// Cập nhật một bài News. Quan hệ với Tags được xử lý hiệu quả bằng cách xóa liên kết cũ và tạo lại liên kết mới.
+        /// </summary>
         public override async Task UpdateAsync(long id, NewsDTO dto, CancellationToken ct = default)
         {
+            // Lấy entity gốc kèm theo danh sách Tags hiện tại của nó.
             var entity = await _newsRepo.GetNewsForUpdateAsync(id);
             if (entity == null) throw new KeyNotFoundException($"News with id {id} not found.");
 
+            // Map các thuộc tính đơn giản (Title, Content...) từ DTO sang entity
             _mapper.Map(dto, entity);
 
+            // Xử lý logic cập nhật Tags một cách hiệu quả
             if (dto.TagIds != null)
             {
-                var tags = await _tagRepo.Query().Where(t => dto.TagIds.Contains(t.Id)).ToListAsync(ct);
-                entity.Tags = tags;
+                // Xóa hết các tag cũ đang được liên kết với bài news này.
+                entity.Tags.Clear();
+
+                if (dto.TagIds.Any())
+                {
+                    // Tạo các "stub entity" chỉ chứa Id cho các tag mới
+                    var tagsToAttach = dto.TagIds.Select(tagId => new Tag { Id = tagId }).ToList();
+
+                    // Attach chúng vào DbContext để EF biết chúng đã tồn tại
+                    foreach (var tag in tagsToAttach)
+                    {
+                        _tagRepo.Attach(tag);
+                    }
+
+                    // Gán danh sách tag mới vào entity.
+                    entity.Tags = tagsToAttach;
+                }
             }
 
             await _uow.SaveChangesAsync(ct);
         }
 
-        public override async Task DeleteAsync(long id, CancellationToken ct = default)
-        {
-            var entity = await _newsRepo.GetNewsForUpdateAsync(id);
-            if (entity == null) throw new KeyNotFoundException($"News with id {id} not found.");
-
-            _repo.Remove(entity);
-            await _uow.SaveChangesAsync(ct);
-        }
-
-        // === CÁC PHƯƠNG THỨC APPLY... VẪN GIỮ NGUYÊN ===
+        // === CÁC PHƯƠNG THỨC APPLY... CHO SEARCH, FILTER, SORT ===
 
         protected override IQueryable<News> ApplySearch(IQueryable<News> query, string searchQuery)
         {
             if (string.IsNullOrWhiteSpace(searchQuery)) return query;
             var lowerCaseSearchQuery = searchQuery.Trim().ToLower();
 
-            // Câu lệnh này giờ đã an toàn và hiệu quả vì query đã được Include Author ở trên
+            // Câu lệnh này giờ đã an toàn vì query đã được Include Author ở GetPagedAsync
             return query.Where(s =>
                 s.Author.UserName.ToLower().Contains(lowerCaseSearchQuery) ||
                 s.Content.ToLower().Contains(lowerCaseSearchQuery)
@@ -97,29 +123,20 @@ namespace Application.Services.Staff
 
         protected override IQueryable<News> ApplyFilter(IQueryable<News> query, string filterField, string filterValue)
         {
-            var lowerFilterField = filterField.ToLower();
-
-            switch (lowerFilterField)
+            // Logic filter riêng cho 'isactive'
+            if (filterField.Equals("isactive", System.StringComparison.OrdinalIgnoreCase))
             {
-                case "isactive":
-                    {
-                        if (bool.TryParse(filterValue, out bool isActive))
-                        {
-                            return query.Where(s => s.IsActive == isActive);
-                        }
-                        if (filterValue == "1") return query.Where(s => s.IsActive == true);
-                        if (filterValue == "0") return query.Where(s => s.IsActive == false);
-                        return query;
-                    }
-
-                default:
-                    return base.ApplyFilter(query, filterField, filterValue);
+                if (bool.TryParse(filterValue, out bool isActive))
+                {
+                    return query.Where(s => s.IsActive == isActive);
+                }
+                if (filterValue == "1") return query.Where(s => s.IsActive == true);
+                if (filterValue == "0") return query.Where(s => s.IsActive == false);
+                return query;
             }
-        }
 
-        protected override IQueryable<News> ApplySort(IQueryable<News> query, string? sortOrder)
-        {
-            return base.ApplySort(query, sortOrder);
+            // Với các trường filter khác, gọi về cho base xử lý
+            return base.ApplyFilter(query, filterField, filterValue);
         }
     }
 }
