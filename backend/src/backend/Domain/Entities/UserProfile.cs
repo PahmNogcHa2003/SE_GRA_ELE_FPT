@@ -6,9 +6,9 @@ using Microsoft.EntityFrameworkCore;
 namespace Domain.Entities;
 
 [Table("UserProfile")]
-public partial class UserProfile
+public partial class UserProfile : BaseEntity<long>
 {
-    [Key]
+
     [ForeignKey(nameof(User))]
     public long UserId { get; set; }
 
@@ -25,14 +25,26 @@ public partial class UserProfile
     [StringLength(255)]
     public string? AvatarUrl { get; set; }
 
+    public int? ProvinceCode { get; set; }
+    [StringLength(50)]
+    public string? ProvinceName { get; set; }
+    public int? WardCode { get; set; }
+
+    [StringLength(100)]
+    public string? WardName { get; set; }
+
+    public string? AddressDetail { get; set; }
+
     [StringLength(150)]
     public string? EmergencyName { get; set; }
 
-    [StringLength(50)]
-    public string? EmergencyPhone { get; set; }
+    [Required]
+    [StringLength(15)]
+    public string EmergencyPhone { get; set; } // ĐÃ SỬA: string
 
-    [StringLength(100)]
-    public string? NumberCard { get; set; }
+    [Required]
+    [StringLength(15)]
+    public string NumberCard { get; set; } // ĐÃ SỬA: string
 
     [StringLength(150)]
     public string? PlaceOfOrigin { get; set; }

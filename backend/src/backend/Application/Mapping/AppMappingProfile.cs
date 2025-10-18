@@ -18,6 +18,10 @@ namespace Application.Mapping
             CreateMap<Domain.Entities.CategoriesVehicle, DTOs.CategoriesVehicleDTO>().ReverseMap();
             CreateMap<Domain.Entities.Vehicle, DTOs.VehicleDTO>().ReverseMap();
             CreateMap<Domain.Entities.Tag, DTOs.TagDTO>().ReverseMap();
+            CreateMap<Domain.Entities.UserProfile, DTOs.UserProfileDTO>().ReverseMap();
+            CreateMap<Domain.Entities.Province, DTOs.Location.LocationDTO>().ReverseMap();
+            CreateMap<Domain.Entities.Ward, DTOs.Location.LocationDTO>().ReverseMap();
+
 
             ConfigureNewsMapping();
 
