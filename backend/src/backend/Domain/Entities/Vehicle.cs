@@ -30,8 +30,8 @@ public partial class Vehicle : BaseEntity<long>
     [Precision(0)]
     public DateTimeOffset CreatedAt { get; set; }
 
-    [InverseProperty(nameof(Booking.Vehicle))]
-    public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
+    [InverseProperty(nameof(Rental.Vehicle))]
+    public virtual ICollection<Rental> Bookings { get; set; } = new List<Rental>();
 
     [ForeignKey(nameof(CategoryId))]
     [InverseProperty(nameof(CategoriesVehicle.Vehicles))]
