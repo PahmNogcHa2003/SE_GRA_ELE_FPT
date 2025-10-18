@@ -6,11 +6,14 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Domain.Entities;
 
-[Index(nameof(BookingId), Name = "UQ_Rentals_Booking", IsUnique = true)]
-public partial class Rental : BaseEntity<long>
+[Table("Rental")]
+public class Rental : BaseEntity<long>
 {
     [Required]
-    public long BookingId { get; set; }
+    public long UserId { get; set; }
+
+    [Required]
+    public long VehicleId { get; set; }
 
     [Required]
     public long StartStationId { get; set; }
@@ -24,16 +27,25 @@ public partial class Rental : BaseEntity<long>
     [Precision(0)]
     public DateTimeOffset? EndTime { get; set; }
 
-    [Column(TypeName = "decimal(18, 2)")]
-    public decimal? TotalCost { get; set; }
-
     [Required]
     [StringLength(20)]
     [Unicode(false)]
     public string Status { get; set; } = "Ongoing";
+    [Required]
+    [Precision(0)]
+    public DateTimeOffset CreatedAt { get; set; }
 
-    [ForeignKey(nameof(BookingId))]
-    [InverseProperty("Rentals")]
-    public virtual Booking Booking { get; set; } = null!;
+    [ForeignKey(nameof(UserId))]
+    [InverseProperty(nameof(AspNetUser.Rentals))]
+    public AspNetUser User { get; set; } = null!;
+
+    [ForeignKey(nameof(VehicleId))]
+    [InverseProperty(nameof(Vehicle.Bookings))]
+    public Vehicle Vehicle { get; set; } = null!;
+
+    [InverseProperty(nameof(BookingTicket.Booking))]
+    public ICollection<BookingTicket> BookingTickets { get; set; } = new List<BookingTicket>();
+
 
 }
+
