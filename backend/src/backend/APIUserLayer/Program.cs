@@ -8,11 +8,17 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using System.Reflection; // ✅ 1. THÊM USING CHO MEDIATR
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// ✅✅✅ 2. ĐĂNG KÝ MEDIATR - DÒNG QUAN TRỌNG NHẤT ĐỂ SỬA LỖI ✅✅✅
+// Dòng này phải được thêm vào để hệ thống biết về các Query, Command, Handler.
+builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(Assembly.Load("Application")));
+
 // -------------------- Infrastructure Layer --------------------
+// Dòng này gọi vào file DependencyInjection.cs để đăng ký DbContext, Repositories, Services, HttpClient, AutoMapper...
 builder.Services.AddInfrastructure(builder.Configuration);
 
 // -------------------- Identity Config (Web Layer) --------------------
@@ -27,10 +33,8 @@ builder.Services.AddIdentity<AspNetUser, IdentityRole<long>>(options =>
 .AddEntityFrameworkStores<HolaBikeContext>()
 .AddDefaultTokenProviders();
 
-// -------------------- ApiBehaviorOptions  --------------------
-
-
-builder.Services.AddControllers()
+// -------------------- Controllers, ApiBehaviorOptions & Swagger --------------------
+builder.Services.AddControllers() // (Đã gộp 2 lệnh AddControllers() làm một)
     .ConfigureApiBehaviorOptions(options =>
     {
         options.InvalidModelStateResponseFactory = context =>
@@ -48,6 +52,9 @@ builder.Services.AddControllers()
             return new BadRequestObjectResult(errorResponse);
         };
     });
+
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 
 // -------------------- Authentication & JWT --------------------
 builder.Services.AddAuthentication(options =>
@@ -68,24 +75,20 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-// -------------------- Controllers & Swagger --------------------
-builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer(); // ✅ cần để Swagger hoạt động
-builder.Services.AddSwaggerGen();            // ✅ cần để tạo giao diện Swagger
 
 var app = builder.Build();
 
-// -------------------- Middleware --------------------
+// -------------------- Middleware Pipeline --------------------
 if (app.Environment.IsDevelopment())
 {
-    // ✅ bật swagger ở môi trường dev
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-app.UseMiddleware<ValidationMiddleware>(); // ✅ middleware validate global
-app.UseMiddleware<ResponseMiddleware>();   // ✅ middleware format JSON (bắt exception)
+// Thứ tự Middleware rất quan trọng
 app.UseMiddleware<ExceptionHandlingMiddleware>();
+app.UseMiddleware<ValidationMiddleware>();
+app.UseMiddleware<ResponseMiddleware>();
 
 app.UseHttpsRedirection();
 app.UseRouting();

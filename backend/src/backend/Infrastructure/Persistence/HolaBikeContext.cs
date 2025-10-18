@@ -15,7 +15,6 @@ public partial class HolaBikeContext : IdentityDbContext<AspNetUser, IdentityRol
     public DbSet<AdminProfile> AdminProfiles { get; set; }
     public DbSet<UserProfile> UserProfiles { get; set; }
     public DbSet<KycForm> KycForms { get; set; }
-    public DbSet<UserAddress> UserAddresses { get; set; }
     public DbSet<UserDevice> UserDevices { get; set; }
 
     // --- NGHIỆP VỤ ĐẶT XE ---
