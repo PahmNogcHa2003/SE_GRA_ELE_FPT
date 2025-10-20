@@ -16,20 +16,29 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _index = 0;
 
-  final Map<int, Widget> pages = {
-    0: const HomeContent(),
-    1: const StationPage(),
-    99: const QrPage(),
-    2: const NotificationPage(),
-    3: const MorePage(),
-  };
+  final List<Widget> mainPages = [];
+
+  @override
+  void initState() {
+    super.initState();
+    mainPages.addAll([
+      HomeContent(onItemSelected: _handleMenuSelection),
+      const StationPage(),
+      const NotificationPage(),
+      const MorePage(),
+    ]);
+  }
+
+  void _handleMenuSelection(int index) {
+    setState(() => _index = index);
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: AnimatedSwitcher(
         duration: const Duration(milliseconds: 300),
-        child: pages[_index] ?? const SizedBox(),
+        child: mainPages[_index],
       ),
       bottomNavigationBar: BottomNavBar(
         currentIndex: _index,

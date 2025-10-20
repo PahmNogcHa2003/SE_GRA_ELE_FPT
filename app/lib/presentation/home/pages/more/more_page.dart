@@ -6,7 +6,7 @@ class MorePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final List<(String, IconData)> items = [
+    final List<(String, IconData)> accountItems = [
       ("Xác thực tài khoản", Icons.verified_user),
       ("Bảo mật", Icons.lock),
       ("Đổi mật khẩu", Icons.password),
@@ -14,8 +14,10 @@ class MorePage extends StatelessWidget {
       ("Vô hiệu hoá tài khoản", Icons.block),
       ("Xoá tài khoản", Icons.delete_forever),
       ("Đăng xuất", Icons.logout),
+    ];
+
+    final List<(String, IconData)> infoItems = [
       ("Bảng giá", Icons.price_change),
-      ("Về Hola Bike", Icons.info_outline),
       ("Hướng dẫn sử dụng", Icons.help_outline),
       ("Điều khoản sử dụng", Icons.article),
       ("Quy định chính sách", Icons.policy),
@@ -27,68 +29,119 @@ class MorePage extends StatelessWidget {
       backgroundColor: AppColors.background,
       body: SafeArea(
         child: Column(
-          mainAxisSize: MainAxisSize.min,
           children: [
-            // 🔷 Header
+            // 🔷 Header người dùng
             Container(
-              color: AppColors.primary.withOpacity(0.1),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 28),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withOpacity(0.1),
+                border: const Border(bottom: BorderSide(color: Colors.black12)),
+              ),
               child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   const CircleAvatar(
-                    radius: 24,
+                    radius: 32,
                     backgroundColor: AppColors.primary,
-                    child: Icon(Icons.person, color: Colors.white),
+                    child: Icon(Icons.person, color: Colors.white, size: 32),
                   ),
-                  const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
-                      Text(
-                        "Nguyễn Quang Bích",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: const [
+                        Text(
+                          "Hola Bike",
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
-                      ),
-                      SizedBox(height: 4),
-                      Text(
-                        "0944254867",
-                        style: TextStyle(color: AppColors.textSecondary),
-                      ),
-                    ],
+                        SizedBox(height: 6),
+                        Text(
+                          "0987654321",
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.edit, color: AppColors.primary),
+                    tooltip: "Chỉnh sửa thông tin",
+                    onPressed: () {
+                      // TODO: mở trang chỉnh sửa thông tin
+                    },
                   ),
                 ],
               ),
             ),
 
-            // 🔷 Menu
+            // 🔷 Danh sách chức năng tài khoản
             Expanded(
-              child: ListView.separated(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                itemCount: items.length,
-                separatorBuilder: (_, __) => const Divider(height: 1),
-                itemBuilder: (context, index) {
-                  final (label, icon) = items[index];
-                  return ListTile(
-                    leading: Icon(icon, color: AppColors.primary),
-                    title: Text(label),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () {
-                      // TODO: xử lý chức năng khi nhấn
-                    },
-                  );
-                },
+              child: ListView(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                children: [
+                  ...accountItems.map((item) => _buildItem(item)),
+
+                  // 🔷 Ngăn cách
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    child: Container(
+                      color: AppColors.primary.withOpacity(0.05),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      child: const Text(
+                        "Về Hola Bike",
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // 🔷 Danh sách thông tin ứng dụng
+                  ...infoItems.map((item) => _buildItem(item)),
+                ],
               ),
             ),
 
-            // 🔷 Phiên bản
-            const SizedBox(height: 8),
-
-            const SizedBox(height: 8),
+            // 🔷 Phiên bản app
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              alignment: Alignment.center,
+              child: const Text(
+                "Phiên bản 1.0.0",
+                style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+              ),
+            ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildItem((String, IconData) item) {
+    final (label, icon) = item;
+    return Column(
+      children: [
+        ListTile(
+          leading: Icon(icon, color: AppColors.primary),
+          title: Text(label, style: const TextStyle(fontSize: 14)),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () {
+            // TODO: xử lý chức năng khi nhấn
+          },
+        ),
+        const Divider(height: 1),
+      ],
     );
   }
 }
