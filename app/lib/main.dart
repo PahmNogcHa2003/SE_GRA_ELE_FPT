@@ -1,29 +1,26 @@
-// import 'package:flutter/material.dart';
-// import 'presentation/screens/bike_rental_screen.dart';
-
-// void main() {
-//   runApp(BikeRentalApp());
-// }
-
-// class BikeRentalApp extends StatelessWidget {
-//   const BikeRentalApp({super.key});
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return MaterialApp(
-//       debugShowCheckedModeBanner: false,
-//       title: 'Bike Rental',
-//       theme: ThemeData(primarySwatch: Colors.blue),
-//       home: BikeRentalScreen(),
-//     );
-//   }
-// }
 import 'package:flutter/material.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:hola_bike_app/presentation/navigation/router.dart';
 import 'package:hola_bike_app/presentation/splash/splash_page.dart';
-import 'theme/app_colors.dart';
+import 'package:hola_bike_app/theme/app_colors.dart';
 
 void main() {
+  _setupLoading();
   runApp(const MyApp());
+}
+
+void _setupLoading() {
+  EasyLoading.instance
+    ..indicatorType = EasyLoadingIndicatorType.fadingCircle
+    ..animationStyle = EasyLoadingAnimationStyle.scale
+    ..loadingStyle = EasyLoadingStyle.custom
+    ..backgroundColor = Colors.black87
+    ..indicatorColor = Colors.white
+    ..textColor = Colors.white
+    ..maskColor = Colors.blueGrey
+    ..userInteractions = false
+    ..dismissOnTap = false
+    ..displayDuration = const Duration(milliseconds: 2000);
 }
 
 class MyApp extends StatelessWidget {
@@ -32,8 +29,9 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      title: 'Hola Bike',
       debugShowCheckedModeBanner: false,
-      title: 'Elegant App',
+      builder: EasyLoading.init(),
       theme: ThemeData(
         fontFamily: 'Arial',
         scaffoldBackgroundColor: AppColors.background,
@@ -42,8 +40,24 @@ class MyApp extends StatelessWidget {
           primary: AppColors.primary,
           background: AppColors.background,
         ),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: AppColors.primary,
+          foregroundColor: Colors.white,
+          elevation: 0,
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.primary,
+            foregroundColor: Colors.white,
+            textStyle: const TextStyle(fontSize: 16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        ),
       ),
       home: const SplashScreen(),
+      routes: appRoutes,
     );
   }
 }
