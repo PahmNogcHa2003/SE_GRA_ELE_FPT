@@ -3,13 +3,16 @@ using Application.Interfaces.Base;
 using Application.Interfaces.Identity;
 using Application.Interfaces.Staff.Repository;
 using Application.Interfaces.Staff.Service;
+using Application.Interfaces.User.Service;
 using Application.Mapping;
 using Application.Services.Base;
 using Application.Services.Staff;
+using Application.Services.User;
 using Domain.Entities;
 using Infrastructure.Persistence;
 using Infrastructure.Repositories.Staff;
 using Infrastructure.Services.Identity;
+using Infrastructure.VNPay;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -43,8 +46,9 @@ namespace Infrastructure.Dependency_Injection
             services.AddScoped<IVehicleService, VehiclesService>();
             services.AddScoped<INewsService, NewsService>();
             services.AddScoped<ITagService, TagService>();
-
-
+            services.AddScoped<IPaymentService, PaymentService>(); 
+            services.AddScoped<IWalletService, WalletService>();
+            services.AddScoped<IPaymentGatewayService, VnPayService>();
             // --- AutoMapper ---
             services.AddAutoMapper(typeof(AppMappingProfile).Assembly);
 

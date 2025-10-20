@@ -3,12 +3,14 @@ using Domain.Entities;
 using Infrastructure.Dependency_Injection;
 using Infrastructure.Middlewares;
 using Infrastructure.Persistence;
+using Infrastructure.Setting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -72,7 +74,7 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer(); // ✅ cần để Swagger hoạt động
 builder.Services.AddSwaggerGen();            // ✅ cần để tạo giao diện Swagger
-
+builder.Services.Configure<VnPaySettings>(builder.Configuration.GetSection("VnPaySettings"));
 var app = builder.Build();
 
 // -------------------- Middleware --------------------
