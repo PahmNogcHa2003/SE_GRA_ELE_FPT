@@ -3,13 +3,24 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Application.Interfaces.Staff.Repository;
+using Application.Interfaces.User.Repository;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace Application.Interfaces
 {
     // Application/Interfaces/IUnitOfWork.cs
     public interface IUnitOfWork
     {
+        IPaymentRepository Payments { get; }
+        IOrderRepository Orders { get; }
+        IWalletRepository Wallets { get; }
+        IWalletDebtRepository WalletDebts { get; }
+        IWalletTransactionRepository WalletTransactions { get; }
         Task<int> SaveChangesAsync(CancellationToken ct = default);
+        Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default);
+        Task CommitTransactionAsync(IDbContextTransaction transaction, CancellationToken cancellationToken = default);
+        Task RollbackTransactionAsync(IDbContextTransaction transaction, CancellationToken cancellationToken = default);
     }
 
 }

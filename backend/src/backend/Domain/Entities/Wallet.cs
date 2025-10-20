@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Domain.Entities;
 
 [Table("Wallet")]
-public partial class Wallet
+public partial class Wallet : BaseEntity<long>
 {
     [Key]
     public long UserId { get; set; }

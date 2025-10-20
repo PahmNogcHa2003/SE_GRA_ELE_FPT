@@ -14,7 +14,6 @@
   <ItemGroup>
     <Folder Include="Authentication\" />
     <Folder Include="Repositories\Admin\" />
-    <Folder Include="Repositories\User\" />
   </ItemGroup>
 
   <ItemGroup>
