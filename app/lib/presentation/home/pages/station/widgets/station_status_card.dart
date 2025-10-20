@@ -28,7 +28,7 @@ class StationStatusCard extends StatelessWidget {
         'battery': 'Pin 65%',
         'icon': Icons.directions_car,
       },
-    ];
+    ].reversed.toList(); // 👈 Đảo ngược danh sách
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -71,7 +71,13 @@ class StationStatusCard extends StatelessWidget {
                   padding: const EdgeInsets.all(12),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment:
+                        MainAxisAlignment.end, // 👈 Hiển thị từ dưới lên
                     children: [
+                      Text("Pin: ${item['battery']}"),
+                      Text("Sẵn có: ${item['available']} xe"),
+                      Text("Loại xe: ${item['type']}"),
+                      const SizedBox(height: 8),
                       Row(
                         children: [
                           Icon(
@@ -91,10 +97,6 @@ class StationStatusCard extends StatelessWidget {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 8),
-                      Text("Loại xe: ${item['type']}"),
-                      Text("Sẵn có: ${item['available']} xe"),
-                      Text("Pin: ${item['battery']}"),
                     ],
                   ),
                 ),

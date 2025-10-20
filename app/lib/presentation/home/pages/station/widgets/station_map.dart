@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:hola_bike_app/core/constants/locations.dart';
-import 'package:hola_bike_app/presentation/widgets/station_info_dialog.dart';
+import 'package:hola_bike_app/presentation/home/pages/station/widgets/station_card.dart';
 import 'package:hola_bike_app/theme/app_colors.dart';
 import 'package:latlong2/latlong.dart';
 
@@ -15,17 +15,41 @@ class StationMap extends StatefulWidget {
 
 class _StationMapState extends State<StationMap> {
   final MapController _mapController = MapController();
-
   final Set<VehicleType> selectedTypes = {
     VehicleType.bike,
     VehicleType.electric,
     VehicleType.car,
   };
 
+  OverlayEntry? _stationOverlay;
+
+  void _showStationOverlay(BuildContext context, Station station) {
+    _stationOverlay?.remove();
+
+    _stationOverlay = OverlayEntry(
+      builder: (_) => Positioned(
+        bottom: 70,
+        left: 16,
+        right: 16,
+        child: Material(
+          color: Colors.transparent,
+          child: StationCard(
+            station: station,
+            onClose: () {
+              _stationOverlay?.remove();
+              _stationOverlay = null;
+            },
+          ),
+        ),
+      ),
+    );
+
+    Overlay.of(context).insert(_stationOverlay!);
+  }
+
   @override
   Widget build(BuildContext context) {
     final center = AppLocations.stations.first.latLng;
-
     final filteredStations = AppLocations.stations
         .where((s) => selectedTypes.contains(s.type))
         .toList();
@@ -54,9 +78,10 @@ class _StationMapState extends State<StationMap> {
                     onTap: () {
                       showDialog(
                         context: context,
-                        builder: (_) => StationInfoDialog(station: s),
+                        builder: (_) => StationCard(station: s),
                       );
                     },
+
                     child: const Icon(
                       Icons.location_pin,
                       color: Colors.red,
@@ -69,7 +94,32 @@ class _StationMapState extends State<StationMap> {
           ],
         ),
 
-        // ✅ Bộ lọc loại xe ở góc trái dưới
+        // 🔍 Thanh tìm kiếm
+        Positioned(
+          top: MediaQuery.of(context).padding.top + 12,
+          left: 16,
+          right: 16,
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4)],
+            ),
+            child: TextField(
+              decoration: InputDecoration(
+                hintText: 'Tìm kiếm trạm xe...',
+                prefixIcon: const Icon(Icons.search, color: AppColors.primary),
+                border: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(vertical: 12),
+              ),
+              onChanged: (query) {
+                // TODO: xử lý tìm kiếm theo tên trạm hoặc vị trí
+              },
+            ),
+          ),
+        ),
+
+        // ✅ Bộ lọc loại xe
         Positioned(
           bottom: 16,
           left: 16,
@@ -88,13 +138,13 @@ class _StationMapState extends State<StationMap> {
                 const SizedBox(height: 6),
                 _buildCheckbox('Xe điện', VehicleType.electric),
                 const SizedBox(height: 6),
-                _buildCheckbox('Xe ô tô', VehicleType.car),
+                _buildCheckbox('Ô tô', VehicleType.car),
               ],
             ),
           ),
         ),
 
-        // ✅ Nút tròn hỗ trợ ở góc phải dưới
+        // ✅ Nút hỗ trợ
         Positioned(
           bottom: 16,
           right: 16,
