@@ -130,22 +130,28 @@ public class AuthService : IAuthService
     {
         var user = await _userManager.FindByEmailAsync(model.Email);
         if (user == null)
+        {
             return new AuthResponseDTO { IsSuccess = false, Message = "Invalid credentials" };
+        }
 
         var checkPassword = await _signInManager.CheckPasswordSignInAsync(user, model.Password, false);
         if (!checkPassword.Succeeded)
+        {
             return new AuthResponseDTO { IsSuccess = false, Message = "Invalid credentials" };
-
-        // ... (Xử lý UserDevice nếu có) ...
-        var userDeviceDto = new UserDeviceDTO
+        }
+        
+        //user device
+        var userDeviceDto = new CreateUserDeviceDTO
         {
             UserId = user.Id,
             DeviceId = model.DeviceId,
-            LastLoginAt = DateTimeOffset.UtcNow
+            PushToken = model.PushToken,
+            Platform = model.Platform
         };
-        var resultUserDice = await _userDevicesService.CreateAsync(userDeviceDto);
 
-        //jwt token generation
+        await _userDevicesService.HandleDeviceLoginAsync(userDeviceDto);
+
+        // 3. Tạo JWT Token
         var jwt = await _tokenService.GenerateJwtTokenAsync(user);
 
         return new AuthResponseDTO

@@ -16,7 +16,7 @@ public partial class UserDevice : BaseEntity<long>
     public Guid DeviceId { get; set; }
 
     [StringLength(50)]
-    public string? Platform { get; set; }
+    public string? Platform { get; set; } = "ANDROID";
 
     [StringLength(1024)]
     public string? PushToken { get; set; }
