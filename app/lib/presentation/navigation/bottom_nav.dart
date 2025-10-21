@@ -4,11 +4,12 @@ import 'package:hola_bike_app/theme/app_colors.dart';
 class BottomNavBar extends StatelessWidget {
   final int currentIndex;
   final Function(int) onTap;
-
+  final Function() onQrTap;
   const BottomNavBar({
     super.key,
     required this.currentIndex,
     required this.onTap,
+    required this.onQrTap,
   });
 
   @override
@@ -56,7 +57,7 @@ class BottomNavBar extends StatelessWidget {
 
     return Expanded(
       child: InkWell(
-        onTap: () => onTap(index),
+        onTap: () => isQr ? onQrTap() : onTap(index),
         splashColor: AppColors.primary.withOpacity(0.2),
         borderRadius: BorderRadius.circular(12),
         child: Padding(

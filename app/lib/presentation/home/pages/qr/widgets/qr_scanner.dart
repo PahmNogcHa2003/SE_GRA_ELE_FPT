@@ -28,15 +28,26 @@ class _QrScannerState extends State<QrScanner> {
     final screenSize = MediaQuery.of(context).size;
 
     return Scaffold(
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
       body: Stack(
         children: [
           // Camera toàn màn hình
-          MobileScanner(
-            fit: BoxFit.cover,
-            onDetect: (capture) {
-              final barcode = capture.barcodes.first;
-              _handleDetection(barcode.rawValue);
-            },
+          Positioned.fill(
+            child: MobileScanner(
+              fit: BoxFit.cover,
+              onDetect: (capture) {
+                final barcode = capture.barcodes.first;
+                _handleDetection(barcode.rawValue);
+              },
+            ),
           ),
 
           // Overlay tối có lỗ ở giữa
