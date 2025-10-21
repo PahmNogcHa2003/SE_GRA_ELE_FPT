@@ -9,6 +9,6 @@ namespace Application.Interfaces.Identity
 {
     public interface IJwtTokenService
     {
-        string GenerateJwtToken(AspNetUser user);
+        Task<string> GenerateJwtTokenAsync(AspNetUser user);
     }
 }
