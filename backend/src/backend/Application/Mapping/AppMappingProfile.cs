@@ -21,6 +21,8 @@ namespace Application.Mapping
             CreateMap<Domain.Entities.UserProfile, DTOs.UserProfileDTO>().ReverseMap();
             CreateMap<Domain.Entities.Province, DTOs.Location.LocationDTO>().ReverseMap();
             CreateMap<Domain.Entities.Ward, DTOs.Location.LocationDTO>().ReverseMap();
+            CreateMap<Domain.Entities.Rental, DTOs.RentalDTO>().ReverseMap();
+
 
 
             ConfigureNewsMapping();

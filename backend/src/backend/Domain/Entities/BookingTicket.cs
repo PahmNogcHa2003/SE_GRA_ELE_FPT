@@ -10,7 +10,7 @@ namespace Domain.Entities;
 public class BookingTicket : BaseEntity<long>
 {
     [Required]
-    public long BookingId { get; set; }
+    public long RentalId { get; set; }
 
     [Required]
     public long UserTicketId { get; set; }
@@ -27,9 +27,9 @@ public class BookingTicket : BaseEntity<long>
     [Precision(0)]
     public DateTimeOffset? AppliedAt { get; set; }
 
-    [ForeignKey(nameof(BookingId))]
-    [InverseProperty(nameof(Booking.BookingTickets))]
-    public Booking Booking { get; set; } = null!;
+    [ForeignKey(nameof(RentalId))]
+    [InverseProperty(nameof(Rental.BookingTickets))]
+    public Rental Rental { get; set; } = null!;
 
     [ForeignKey(nameof(UserTicketId))]
     [InverseProperty(nameof(UserTicket.BookingTickets))]

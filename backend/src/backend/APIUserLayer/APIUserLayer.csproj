@@ -27,11 +27,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Controllers\Base\" />
-    <Folder Include="Controllers\User\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <None Include="appsettings.json" />
   </ItemGroup>
 

@@ -40,10 +40,10 @@ public class Rental : BaseEntity<long>
     public AspNetUser User { get; set; } = null!;
 
     [ForeignKey(nameof(VehicleId))]
-    [InverseProperty(nameof(Vehicle.Bookings))]
+    [InverseProperty(nameof(Vehicle.Rentals))]
     public Vehicle Vehicle { get; set; } = null!;
 
-    [InverseProperty(nameof(BookingTicket.Booking))]
+    [InverseProperty(nameof(BookingTicket.Rental))]
     public ICollection<BookingTicket> BookingTickets { get; set; } = new List<BookingTicket>();
 
 
