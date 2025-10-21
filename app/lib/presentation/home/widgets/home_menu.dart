@@ -27,6 +27,12 @@ class HomeMenu extends StatelessWidget {
         'label': 'Tin nhắn',
         'route': '/messages',
       },
+      {'icon': Icons.newspaper, 'label': 'Tin tức', 'route': '/news'},
+      {
+        'icon': Icons.personal_injury_outlined,
+        'label': 'Hồ sơ',
+        'route': '/profile',
+      },
     ];
 
     return Container(
