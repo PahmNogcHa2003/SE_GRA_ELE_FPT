@@ -37,6 +37,15 @@ namespace Application.Mapping
             CreateMap<UserTicket, ManageUserTicketDTO>()
                 .ForMember(dest => dest.UserEmail, opt => opt.MapFrom(src => src.User.Email)) 
                 .ForMember(dest => dest.PlanName, opt => opt.MapFrom(src => $"{src.PlanPrice.Plan.Name} - {src.PlanPrice.VehicleType}"));
+            CreateMap<Domain.Entities.UserProfile, DTOs.UserProfileDTO>().ReverseMap();
+            CreateMap<Domain.Entities.Province, DTOs.Location.LocationDTO>().ReverseMap();
+            CreateMap<Domain.Entities.Ward, DTOs.Location.LocationDTO>().ReverseMap();
+            CreateMap<Domain.Entities.Rental, DTOs.RentalDTO>().ReverseMap();
+            CreateMap<Domain.Entities.UserDevice, DTOs.UserDevice.UserDeviceDTO>().ReverseMap();
+
+
+
+
             ConfigureNewsMapping();
 
         }

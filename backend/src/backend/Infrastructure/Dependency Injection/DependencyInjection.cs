@@ -1,16 +1,19 @@
 ﻿using Application.Interfaces;
 using Application.Interfaces.Base;
 using Application.Interfaces.Identity;
+using Application.Interfaces.Location;
 using Application.Interfaces.Staff.Repository;
 using Application.Interfaces.Staff.Service;
 using Application.Interfaces.User.Repository;
 using Application.Interfaces.User.Service;
 using Application.Mapping;
 using Application.Services.Base;
+using Application.Services.Identity;
 using Application.Services.Staff;
 using Application.Services.User;
 using Domain.Entities;
 using Infrastructure.Persistence;
+using Infrastructure.Repositories.Location;
 using Infrastructure.Repositories.Staff;
 using Infrastructure.Repositories.User;
 using Infrastructure.Services.Identity;
@@ -47,6 +50,19 @@ namespace Infrastructure.Dependency_Injection
             services.AddScoped<ITicketPlanPriceRepository, TicketPlanPriceRepository>();
             services.AddScoped<IUserTicketRepository, UserTicketRepository>();
             services.AddScoped<IManageUserTicketRepository, ManageUserTicketRepository>();
+            services.AddScoped<IRepository<Rental, long>, RentalsRepository>();
+            services.AddScoped<IRepository<UserDevice, long>, UserDevicesRepository>();
+
+
+            // --- Location API ---
+            services.AddHttpClient("ProvincesAPI", client =>
+            {
+                client.BaseAddress = new Uri("https://provinces.open-api.vn/api/v2/");
+            });
+            //  cache
+            services.AddMemoryCache();
+            //LocationRepository
+            services.AddScoped<ILocationRepository, LocationRepository>();
 
             // --- Services (application layer) ---
             services.AddScoped(typeof(IService<,,>), typeof(GenericService<,,>));
@@ -65,6 +81,15 @@ namespace Infrastructure.Dependency_Injection
             services.AddScoped<ITicketPlanPriceService, TicketPlanPriceService>();
             services.AddScoped<IUserTicketService, UserTicketService>();
             services.AddScoped<IManageUserTicketService, ManageUserTicketService>();
+            services.AddScoped<IUserProfilesService, UserProfilesService>();
+            services.AddScoped<IRentalsService, RentalsService>();
+            services.AddScoped<IRentalsService, RentalsService>();
+            services.AddScoped<IUserDevicesService, UserDevicesService>();
+            services.AddScoped<IJwtTokenService, JwtTokenService>();
+
+
+
+
             // --- AutoMapper ---
             services.AddAutoMapper(typeof(AppMappingProfile).Assembly);
 

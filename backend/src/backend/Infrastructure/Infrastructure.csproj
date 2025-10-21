@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <Folder Include="Authentication\" />
+    <Folder Include="Identity\" />
     <Folder Include="Repositories\Admin\" />
   </ItemGroup>
 
@@ -32,6 +33,7 @@
     </PackageReference>
     <PackageReference Include="Microsoft.Extensions.Configuration.FileExtensions" Version="9.0.9" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.9" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="9.0.10" />
     <PackageReference Include="Microsoft.Extensions.Identity.Stores" Version="9.0.9" />
     <PackageReference Include="System.Linq.Dynamic.Core" Version="1.6.9" />
   </ItemGroup>

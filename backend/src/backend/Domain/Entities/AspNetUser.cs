@@ -14,7 +14,7 @@ namespace Domain.Entities
         public DateTimeOffset CreatedDate { get; set; }
 
         [InverseProperty("User")]
-        public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
+        public virtual ICollection<Rental> Rentals { get; set; } = new List<Rental>();
 
         [InverseProperty("User")]
         public virtual ICollection<Contact> Contacts { get; set; } = new List<Contact>();
@@ -33,9 +33,6 @@ namespace Domain.Entities
 
         [InverseProperty("User")]
         public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
-
-        [InverseProperty("User")]
-        public virtual ICollection<UserAddress> UserAddresses { get; set; } = new List<UserAddress>();
 
         [InverseProperty("User")]
         public virtual ICollection<UserDevice> UserDevices { get; set; } = new List<UserDevice>();

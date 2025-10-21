@@ -1,6 +1,7 @@
 ﻿using Application.Common;
 using Application.DTOs;
 using Application.Interfaces.Staff.Service;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 
@@ -8,6 +9,7 @@ namespace AdminLayer.Controllers.Staff
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(Policy = "AdminOnly")]
     public class TagsController : ControllerBase
     {
         private readonly ITagService _tagService;
