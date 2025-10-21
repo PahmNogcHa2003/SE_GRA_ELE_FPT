@@ -1,5 +1,6 @@
 ﻿using Application.Interfaces.Identity;
 using Domain.Entities;
+using Microsoft.AspNetCore.Identity; // Thêm using cho UserManager
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System;
@@ -15,22 +16,29 @@ namespace Application.Services.Identity
     public class JwtTokenService : IJwtTokenService
     {
         private readonly IConfiguration _configuration;
+        // 1. Inject UserManager để có thể truy vấn Roles
+        private readonly UserManager<AspNetUser> _userManager;
 
-        public JwtTokenService(IConfiguration configuration)
+        public JwtTokenService(IConfiguration configuration, UserManager<AspNetUser> userManager)
         {
             _configuration = configuration;
+            _userManager = userManager;
         }
 
-        public string GenerateJwtToken(AspNetUser user)
+        public async Task<string> GenerateJwtTokenAsync(AspNetUser user)
         {
-            var claims = new[]
-            {
-            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-            new Claim(ClaimTypes.Email, user.Email ?? string.Empty),
-            // Thêm các claims khác nếu cần (ví dụ: Role, FullName)
-        };
+            var roles = await _userManager.GetRolesAsync(user);
 
-            // Đọc Key từ cấu hình và đảm bảo nó tồn tại
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.Email, user.Email ?? string.Empty),
+                
+            };
+
+            
+            claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
+
             var keyString = _configuration["Jwt:Key"] ?? throw new InvalidOperationException("Jwt:Key is missing in configuration.");
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(keyString));
@@ -40,7 +48,7 @@ namespace Application.Services.Identity
                 issuer: _configuration["Jwt:Issuer"],
                 audience: _configuration["Jwt:Audience"],
                 claims: claims,
-                expires: DateTime.UtcNow.AddHours(3),
+                expires: DateTime.UtcNow.AddHours(3), 
                 signingCredentials: creds
             );
 

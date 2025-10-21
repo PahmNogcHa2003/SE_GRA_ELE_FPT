@@ -8,14 +8,21 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
+using System.Reflection;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// -------------------- Infrastructure Layer --------------------
+// --- Service Registration ---
+
+// Add MediatR
+builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(Assembly.Load("Application")));
+
+// Add Infrastructure Layer (DbContext, Repositories, Services...)
 builder.Services.AddInfrastructure(builder.Configuration);
 
-// -------------------- Identity Config (Web Layer) --------------------
+// Add Identity
 builder.Services.AddIdentity<AspNetUser, IdentityRole<long>>(options =>
 {
     options.Password.RequireDigit = true;
@@ -25,11 +32,10 @@ builder.Services.AddIdentity<AspNetUser, IdentityRole<long>>(options =>
     options.Password.RequiredLength = 6;
 })
 .AddEntityFrameworkStores<HolaBikeContext>()
-.AddDefaultTokenProviders();
+.AddDefaultTokenProviders()
+.AddRoleManager<RoleManager<IdentityRole<long>>>();
 
-// -------------------- ApiBehaviorOptions  --------------------
-
-
+// Add Controllers & Custom Validation Error Response
 builder.Services.AddControllers()
     .ConfigureApiBehaviorOptions(options =>
     {
@@ -49,7 +55,54 @@ builder.Services.AddControllers()
         };
     });
 
-// -------------------- Authentication & JWT --------------------
+// Add CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll",
+        builder => builder.AllowAnyOrigin()
+                          .AllowAnyMethod()
+                          .AllowAnyHeader());
+});
+
+builder.Services.AddEndpointsApiExplorer();
+
+// Add SwaggerGen with JWT Authentication support
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "HolaBike API", Version = "v1" });
+
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Description = @"JWT Authorization header using the Bearer scheme. 
+                      Enter 'Bearer' [space] and then your token in the text input below.
+                      Example: 'Bearer 12345abcdef'",
+        Name = "Authorization",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer"
+    });
+
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement()
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                },
+                Scheme = "oauth2",
+                Name = "Bearer",
+                In = ParameterLocation.Header,
+            },
+            new List<string>()
+        }
+    });
+});
+
+
+// Add Authentication & JWT
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -68,35 +121,67 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-// -------------------- Controllers & Swagger --------------------
-builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer(); // ✅ cần để Swagger hoạt động
-builder.Services.AddSwaggerGen();            // ✅ cần để tạo giao diện Swagger
-builder.Services.AddCors(o => o.AddPolicy("frontend", p =>
-    p.WithOrigins("http://localhost:5173")
-     .AllowAnyHeader().AllowAnyMethod().AllowCredentials()
-));
+// Add Authorization Policies
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
+    options.AddPolicy("StaffOrAdmin", policy => policy.RequireRole("Admin", "Staff"));
+    options.AddPolicy("UserOnly", policy => policy.RequireRole("User"));
+});
+
+
 var app = builder.Build();
-app.UseCors("frontend");
-// -------------------- Middleware --------------------
+
+// --- Seed Roles to Database ---
+// This block ensures the roles "Admin", "Staff", and "User" exist in the database.
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        var roleManager = services.GetRequiredService<RoleManager<IdentityRole<long>>>();
+        string[] roleNames = { "Admin", "Staff", "User" };
+        foreach (var roleName in roleNames)
+        {
+            // Use await directly because of top-level statements
+            var roleExist = await roleManager.RoleExistsAsync(roleName);
+            if (!roleExist)
+            {
+                await roleManager.CreateAsync(new IdentityRole<long>(roleName));
+            }
+        }
+    }
+    catch (Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "An error occurred while seeding the database roles.");
+    }
+}
+
+
+// --- Middleware Pipeline Configuration ---
+
 if (app.Environment.IsDevelopment())
 {
-    // ✅ bật swagger ở môi trường dev
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-app.UseMiddleware<ValidationMiddleware>(); // ✅ middleware validate global
-app.UseMiddleware<ResponseMiddleware>();   // ✅ middleware format JSON (bắt exception)
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 app.UseHttpsRedirection();
+
 app.UseRouting();
-app.UseAuthentication();
+
+app.UseCors("AllowAll"); // Use CORS Policy
+
+app.UseAuthentication(); // This must come before UseAuthorization
 app.UseAuthorization();
 
 app.MapControllers();
 
 app.Run();
 
+// ✅ FIX: Make the auto-generated Program class public so test projects can access it.
 public partial class Program { }
+
