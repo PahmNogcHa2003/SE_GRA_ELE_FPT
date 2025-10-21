@@ -22,6 +22,8 @@ namespace Application.Mapping
             CreateMap<Domain.Entities.Province, DTOs.Location.LocationDTO>().ReverseMap();
             CreateMap<Domain.Entities.Ward, DTOs.Location.LocationDTO>().ReverseMap();
             CreateMap<Domain.Entities.Rental, DTOs.RentalDTO>().ReverseMap();
+            CreateMap<Domain.Entities.UserDevice, DTOs.UserDevice.UserDeviceDTO>().ReverseMap();
+
 
 
 

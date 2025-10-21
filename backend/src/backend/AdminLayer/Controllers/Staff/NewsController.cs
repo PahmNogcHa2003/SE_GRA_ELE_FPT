@@ -1,6 +1,7 @@
 ﻿using Application.Common;
 using Application.DTOs;
 using Application.Interfaces.Staff.Service;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic; // Cần cho KeyNotFoundException
@@ -10,6 +11,7 @@ namespace AdminLayer.Controllers.Staff
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(Policy = "AdminOnly")]
     public class NewsController : ControllerBase
     {
         private readonly INewsService _newsService;

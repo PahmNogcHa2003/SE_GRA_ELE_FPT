@@ -40,6 +40,8 @@ namespace Infrastructure.Dependency_Injection
             services.AddScoped<IRepository<Tag, long>, TagRepository>();
             services.AddScoped<INewsRepository, NewsRepository>();
             services.AddScoped<IRepository<Rental, long>, RentalsRepository>();
+            services.AddScoped<IRepository<UserDevice, long>, UserDevicesRepository>();
+
 
             // --- Location API ---
             services.AddHttpClient("ProvincesAPI", client =>
@@ -61,6 +63,8 @@ namespace Infrastructure.Dependency_Injection
             services.AddScoped<ITagService, TagService>();
             services.AddScoped<IUserProfilesService, UserProfilesService>();
             services.AddScoped<IRentalsService, RentalsService>();
+            services.AddScoped<IRentalsService, RentalsService>();
+            services.AddScoped<IUserDevicesService, UserDevicesService>();
             services.AddScoped<IJwtTokenService, JwtTokenService>();
 
 
