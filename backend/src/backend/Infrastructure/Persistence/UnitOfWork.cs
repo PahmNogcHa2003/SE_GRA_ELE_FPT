@@ -16,17 +16,7 @@ namespace Infrastructure.Persistence
     public class UnitOfWork : IUnitOfWork
     {
         private readonly HolaBikeContext _context;
-        private IPaymentRepository? _payments;
-        private IOrderRepository? _orders;
-        private IWalletRepository? _wallets;
-        private IWalletDebtRepository? _walletDebts;
-        private IWalletTransactionRepository? _walletTransactions;
         public UnitOfWork(HolaBikeContext context) => _context = context;
-        public IPaymentRepository Payments => _payments ??= new PaymentRepository(_context);
-        public IOrderRepository Orders => _orders ??= new OrderRepository(_context);
-        public IWalletRepository Wallets => _wallets ??= new WalletRepository(_context);
-        public IWalletDebtRepository WalletDebts => _walletDebts ??= new WalletDebtRepository(_context);
-        public IWalletTransactionRepository WalletTransactions => _walletTransactions ??= new WalletTransactionRepository(_context);
         public Task<int> SaveChangesAsync(CancellationToken ct = default)
             => _context.SaveChangesAsync(ct);
 

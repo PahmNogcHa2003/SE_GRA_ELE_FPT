@@ -18,8 +18,7 @@ namespace Infrastructure.Repositories.User
 
         public async Task<Wallet?> GetByUserIdAsync(long userId, CancellationToken cancellationToken)
         {
-            // Vì UserId cũng là PK, GetByIdAsync cũng hoạt động.
-            // Nhưng có một phương thức riêng tường minh hơn.
+
             return await _dbContext.Wallets.FirstOrDefaultAsync(w => w.UserId == userId, cancellationToken);
         }
     }
