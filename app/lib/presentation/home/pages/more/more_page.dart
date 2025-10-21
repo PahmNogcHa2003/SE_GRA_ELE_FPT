@@ -8,9 +8,7 @@ class MorePage extends StatelessWidget {
   Widget build(BuildContext context) {
     final List<(String, IconData)> accountItems = [
       ("Xác thực tài khoản", Icons.verified_user),
-      ("Bảo mật", Icons.lock),
       ("Đổi mật khẩu", Icons.password),
-      ("Vô hiệu hoá tài khoản", Icons.block),
       ("Xoá tài khoản", Icons.delete_forever),
       ("Đăng xuất", Icons.logout),
     ];
@@ -18,7 +16,6 @@ class MorePage extends StatelessWidget {
     final List<(String, IconData)> infoItems = [
       ("Bảng giá", Icons.price_change),
       ("Hướng dẫn sử dụng", Icons.help_outline),
-      ("Điều khoản sử dụng", Icons.article),
       ("Quy định chính sách", Icons.policy),
       ("Website Hola Bike", Icons.language),
       ("Hỗ trợ", Icons.support_agent),
