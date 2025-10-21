@@ -8,14 +8,15 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// -------------------- Infrastructure Layer --------------------
+// --- Service Registration ---
+
 builder.Services.AddInfrastructure(builder.Configuration);
 
-// -------------------- Identity Config (Web Layer) --------------------
 builder.Services.AddIdentity<AspNetUser, IdentityRole<long>>(options =>
 {
     options.Password.RequireDigit = true;
@@ -25,10 +26,8 @@ builder.Services.AddIdentity<AspNetUser, IdentityRole<long>>(options =>
     options.Password.RequiredLength = 6;
 })
 .AddEntityFrameworkStores<HolaBikeContext>()
-.AddDefaultTokenProviders();
-
-// -------------------- ApiBehaviorOptions  --------------------
-
+.AddDefaultTokenProviders()
+.AddRoleManager<RoleManager<IdentityRole<long>>>(); 
 
 builder.Services.AddControllers()
     .ConfigureApiBehaviorOptions(options =>
@@ -49,7 +48,6 @@ builder.Services.AddControllers()
         };
     });
 
-// -------------------- Authentication & JWT --------------------
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -68,30 +66,117 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-// -------------------- Controllers & Swagger --------------------
-builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer(); // ✅ cần để Swagger hoạt động
-builder.Services.AddSwaggerGen();            // ✅ cần để tạo giao diện Swagger
+// Add CORS
 builder.Services.AddCors(o => o.AddPolicy("frontend", p =>
     p.WithOrigins("http://localhost:5173")
      .AllowAnyHeader().AllowAnyMethod().AllowCredentials()
 ));
+
+// Add Swagger with Auth support
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "HolaBike API", Version = "v1" });
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "JWT Authorization header using the Bearer scheme."
+    });
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            new string[] {}
+        }
+    });
+});
+
+// Add Authorization Policies
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
+    options.AddPolicy("StaffOrAdmin", policy => policy.RequireRole("Admin", "Staff"));
+    options.AddPolicy("UserOnly", policy => policy.RequireRole("User"));
+});
+
 var app = builder.Build();
-app.UseCors("frontend");
-// -------------------- Middleware --------------------
+
+// ✅ --- SEED DATABASE ON STARTUP ---
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    var logger = services.GetRequiredService<ILogger<Program>>();
+    try
+    {
+        var roleManager = services.GetRequiredService<RoleManager<IdentityRole<long>>>();
+        var userManager = services.GetRequiredService<UserManager<AspNetUser>>();
+
+        // 1. Seed Roles
+        string[] roleNames = { "Admin", "Staff", "User" };
+        foreach (var roleName in roleNames)
+        {
+            if (!await roleManager.RoleExistsAsync(roleName))
+            {
+                await roleManager.CreateAsync(new IdentityRole<long>(roleName));
+                logger.LogInformation("Role '{RoleName}' created.", roleName);
+            }
+        }
+
+        // 2. Seed Admin User
+        var adminEmail = "admin@gmail.com";
+        var adminUser = await userManager.FindByEmailAsync(adminEmail);
+        if (adminUser == null)
+        {
+            adminUser = new AspNetUser
+            {
+                UserName = adminEmail,
+                Email = adminEmail,
+                EmailConfirmed = true, // Tự động xác thực email cho admin
+                CreatedDate = DateTimeOffset.UtcNow
+            };
+            var result = await userManager.CreateAsync(adminUser, "Admin123");
+            if (result.Succeeded)
+            {
+                // Gán cả 2 quyền Admin và Staff cho tài khoản này
+                await userManager.AddToRolesAsync(adminUser, new[] { "Admin", "Staff" });
+                logger.LogInformation("Admin user created and assigned Admin/Staff roles.");
+            }
+        }
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "An error occurred while seeding the database.");
+    }
+}
+
+
+// --- Middleware Pipeline Configuration ---
 if (app.Environment.IsDevelopment())
 {
-    // ✅ bật swagger ở môi trường dev
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-app.UseMiddleware<ValidationMiddleware>(); // ✅ middleware validate global
-app.UseMiddleware<ResponseMiddleware>();   // ✅ middleware format JSON (bắt exception)
 app.UseMiddleware<ExceptionHandlingMiddleware>();
+app.UseMiddleware<ValidationMiddleware>();
+app.UseMiddleware<ResponseMiddleware>();
 
 app.UseHttpsRedirection();
 app.UseRouting();
+
+app.UseCors("frontend");
+
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -99,4 +184,5 @@ app.MapControllers();
 
 app.Run();
 
+// Make the Program class public so it can be accessed from test projects
 public partial class Program { }
