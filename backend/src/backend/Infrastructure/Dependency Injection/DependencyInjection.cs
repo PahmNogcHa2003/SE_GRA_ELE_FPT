@@ -39,8 +39,7 @@ namespace Infrastructure.Dependency_Injection
             services.AddScoped<IRepository<Vehicle, long>, VehicleRepository>();
             services.AddScoped<IRepository<Tag, long>, TagRepository>();
             services.AddScoped<INewsRepository, NewsRepository>();
-            services.AddScoped<IRepository<UserProfile, long>, UserProfileRepository>();
-
+            services.AddScoped<IRepository<Rental, long>, RentalsRepository>();
 
             // --- Location API ---
             services.AddHttpClient("ProvincesAPI", client =>
@@ -51,7 +50,7 @@ namespace Infrastructure.Dependency_Injection
             services.AddMemoryCache();
             //LocationRepository
             services.AddScoped<ILocationRepository, LocationRepository>();
-         
+
             // --- Services (application layer) ---
             services.AddScoped(typeof(IService<,,>), typeof(GenericService<,,>));
             //services.AddScoped<IUserService, UserService>();
@@ -61,6 +60,7 @@ namespace Infrastructure.Dependency_Injection
             services.AddScoped<INewsService, NewsService>();
             services.AddScoped<ITagService, TagService>();
             services.AddScoped<IUserProfilesService, UserProfilesService>();
+            services.AddScoped<IRentalsService, RentalsService>();
             services.AddScoped<IJwtTokenService, JwtTokenService>();
 
 

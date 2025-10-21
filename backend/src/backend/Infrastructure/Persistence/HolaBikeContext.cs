@@ -23,7 +23,6 @@ public partial class HolaBikeContext : IdentityDbContext<AspNetUser, IdentityRol
     public DbSet<Vehicle> Vehicles { get; set; }
     public DbSet<CategoriesVehicle> CategoriesVehicles { get; set; }
     public DbSet<VehicleUsageLog> VehicleUsageLogs { get; set; }
-    public DbSet<Booking> Bookings { get; set; }
     public DbSet<Rental> Rentals { get; set; }
 
     // --- VÉ & THANH TOÁN ---
@@ -50,22 +49,19 @@ public partial class HolaBikeContext : IdentityDbContext<AspNetUser, IdentityRol
         // =================================================================
         // SỬA LỖI: PHÁ VỠ CHU TRÌNH XÓA TỰ ĐỘNG (CASCADE DELETE CYCLE)
         // =================================================================
-        // Cấu hình mối quan hệ từ BookingTicket đến UserTicket
         builder.Entity<BookingTicket>()
             .HasOne(bt => bt.UserTicket)
             .WithMany(ut => ut.BookingTickets)
             .HasForeignKey(bt => bt.UserTicketId)
-            .OnDelete(DeleteBehavior.Restrict); // Ngăn chặn xóa dây chuyền
+            .OnDelete(DeleteBehavior.Restrict); 
 
-        // Cấu hình mối quan hệ từ BookingTicket đến Booking
         builder.Entity<BookingTicket>()
-            .HasOne(bt => bt.Booking)
-            .WithMany(b => b.BookingTickets)
-            .HasForeignKey(bt => bt.BookingId)
-            .OnDelete(DeleteBehavior.Restrict); // Ngăn chặn xóa dây chuyền
+            .HasOne(bt => bt.Rental)
+            .WithMany(r => r.BookingTickets) 
+            .HasForeignKey(bt => bt.RentalId)
+            .OnDelete(DeleteBehavior.Restrict);
         // =================================================================
 
-        // Các cấu hình Fluent API khác (giữ nguyên)
         builder.Entity<Payment>()
             .HasIndex(p => p.GatewayTxnId, "UQ_Payment_GatewayTxnId")
             .IsUnique()
