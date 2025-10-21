@@ -42,7 +42,7 @@ namespace Infrastructure.Persistence
             _context.Dispose();
             GC.SuppressFinalize(this);
         }
-    }
+
 
         public IDbContextTransaction BeginTransaction()
         {
@@ -89,11 +89,6 @@ namespace Infrastructure.Persistence
             }
         }
 
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
 
         protected virtual void Dispose(bool disposing)
         {

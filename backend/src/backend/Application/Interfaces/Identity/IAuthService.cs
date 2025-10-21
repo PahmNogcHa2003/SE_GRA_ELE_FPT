@@ -9,7 +9,7 @@ namespace Application.Interfaces.Identity
 {
     public interface IAuthService
     {
-        Task<AuthResponseDTO> RegisterAsync(RegisterDTO model);
-        Task<AuthResponseDTO> LoginAsync(LoginDTO model);
+        Task<AuthResponseDTO> RegisterAsync(RegisterDTO model, CancellationToken ct = default);
+        Task<AuthResponseDTO> LoginAsync(LoginDTO model, CancellationToken ct = default);
     }
 }

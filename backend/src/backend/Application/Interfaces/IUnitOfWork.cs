@@ -6,7 +6,6 @@ using System.Text;
 using System.Threading.Tasks;
 using Application.Interfaces.Staff.Repository;
 using Application.Interfaces.User.Repository;
-using Microsoft.EntityFrameworkCore.Storage;
 
 namespace Application.Interfaces
 {
@@ -17,7 +16,6 @@ namespace Application.Interfaces
         Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default);
         Task CommitTransactionAsync(IDbContextTransaction transaction, CancellationToken cancellationToken = default);
         Task RollbackTransactionAsync(IDbContextTransaction transaction, CancellationToken cancellationToken = default);
-
     }
 
 }
