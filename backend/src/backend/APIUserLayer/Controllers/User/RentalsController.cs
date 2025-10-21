@@ -1,15 +1,18 @@
-﻿using Application.Common;
+﻿using APIUserLayer.Controllers.Base;
+using Application.Common;
 using Application.DTOs;
 using Application.Interfaces.Staff.Service;
 using Application.Interfaces.User.Service;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace APIUserLayer.Controllers.User
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class RentalsController : ControllerBase
+    public class RentalsController : UserBaseController
     {
         private readonly IRentalsService _rentalsService;
 

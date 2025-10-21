@@ -1,16 +1,16 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
-namespace Application.DTOs.Auth
+namespace Application.DTOs.UserDevice
 {
-    public class LoginDTO
+    public class CreateUserDeviceDTO : BaseDTO<long>
     {
         [Required]
-        [EmailAddress]
-        public string Email { get; set; }
-
-        [Required]
-        public string Password { get; set; }
+        public long UserId { get; set; }
 
         [Required]
         public Guid DeviceId { get; set; }

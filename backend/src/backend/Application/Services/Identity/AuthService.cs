@@ -1,5 +1,6 @@
 ﻿using Application.DTOs;
 using Application.DTOs.Auth;
+using Application.DTOs.UserDevice;
 using Application.Interfaces;
 using Application.Interfaces.Identity;
 using Application.Interfaces.User.Service; 
@@ -16,14 +17,17 @@ public class AuthService : IAuthService
     private readonly UserManager<AspNetUser> _userManager;
     private readonly SignInManager<AspNetUser> _signInManager;
     private readonly IJwtTokenService _tokenService;
-    private readonly IUserProfilesService _profileService; // Đã thay bằng Service
+    private readonly IUserProfilesService _profileService; 
+    private readonly IUserDevicesService _userDevicesService;
     private readonly IUnitOfWork _unitOfWork;
+   
 
     public AuthService(
         UserManager<AspNetUser> userManager,
         SignInManager<AspNetUser> signInManager,
         IJwtTokenService tokenService,
         IUserProfilesService userProfilesService,
+        IUserDevicesService userDevicesService,
         IUnitOfWork unitOfWork
     )
     {
@@ -31,6 +35,7 @@ public class AuthService : IAuthService
         _signInManager = signInManager;
         _tokenService = tokenService;
         _profileService = userProfilesService;
+        _userDevicesService = userDevicesService;
         _unitOfWork = unitOfWork;
     }
 
@@ -53,7 +58,6 @@ public class AuthService : IAuthService
         {
             Email = model.Email,
             UserName = model.Email,
-            // SỬA: Giả định RegisterDTO.PhoneNumber đã được sửa thành string
             PhoneNumber = model.PhoneNumber.ToString(),
             CreatedDate = DateTimeOffset.UtcNow
         };
@@ -99,6 +103,8 @@ public class AuthService : IAuthService
                 UpdatedAt = DateTimeOffset.UtcNow,
             };
 
+            await _userManager.AddToRoleAsync(user, "User");
+
             // 6. Tạo UserProfile thông qua Service
             await _profileService.CreateAsync(userProfileDto);
 
@@ -120,8 +126,6 @@ public class AuthService : IAuthService
         }
     }
 
-    // --- Phương thức ĐĂNG NHẬP ---
-    // (Giữ nguyên vì đã chuẩn)
     public async Task<AuthResponseDTO> LoginAsync(LoginDTO model)
     {
         var user = await _userManager.FindByEmailAsync(model.Email);
@@ -132,7 +136,17 @@ public class AuthService : IAuthService
         if (!checkPassword.Succeeded)
             return new AuthResponseDTO { IsSuccess = false, Message = "Invalid credentials" };
 
-        var jwt = _tokenService.GenerateJwtToken(user);
+        // ... (Xử lý UserDevice nếu có) ...
+        var userDeviceDto = new UserDeviceDTO
+        {
+            UserId = user.Id,
+            DeviceId = model.DeviceId,
+            LastLoginAt = DateTimeOffset.UtcNow
+        };
+        var resultUserDice = await _userDevicesService.CreateAsync(userDeviceDto);
+
+        //jwt token generation
+        var jwt = await _tokenService.GenerateJwtTokenAsync(user);
 
         return new AuthResponseDTO
         {

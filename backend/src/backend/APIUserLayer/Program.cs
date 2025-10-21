@@ -8,20 +8,21 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using System.Reflection; // ✅ 1. THÊM USING CHO MEDIATR
+using Microsoft.OpenApi.Models;
+using System.Reflection;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ✅✅✅ 2. ĐĂNG KÝ MEDIATR - DÒNG QUAN TRỌNG NHẤT ĐỂ SỬA LỖI ✅✅✅
-// Dòng này phải được thêm vào để hệ thống biết về các Query, Command, Handler.
+// --- Service Registration ---
+
+// Add MediatR
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(Assembly.Load("Application")));
 
-// -------------------- Infrastructure Layer --------------------
-// Dòng này gọi vào file DependencyInjection.cs để đăng ký DbContext, Repositories, Services, HttpClient, AutoMapper...
+// Add Infrastructure Layer (DbContext, Repositories, Services...)
 builder.Services.AddInfrastructure(builder.Configuration);
 
-// -------------------- Identity Config (Web Layer) --------------------
+// Add Identity
 builder.Services.AddIdentity<AspNetUser, IdentityRole<long>>(options =>
 {
     options.Password.RequireDigit = true;
@@ -31,10 +32,11 @@ builder.Services.AddIdentity<AspNetUser, IdentityRole<long>>(options =>
     options.Password.RequiredLength = 6;
 })
 .AddEntityFrameworkStores<HolaBikeContext>()
-.AddDefaultTokenProviders();
+.AddDefaultTokenProviders()
+.AddRoleManager<RoleManager<IdentityRole<long>>>();
 
-// -------------------- Controllers, ApiBehaviorOptions & Swagger --------------------
-builder.Services.AddControllers() // (Đã gộp 2 lệnh AddControllers() làm một)
+// Add Controllers & Custom Validation Error Response
+builder.Services.AddControllers()
     .ConfigureApiBehaviorOptions(options =>
     {
         options.InvalidModelStateResponseFactory = context =>
@@ -53,10 +55,54 @@ builder.Services.AddControllers() // (Đã gộp 2 lệnh AddControllers() làm 
         };
     });
 
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+// Add CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll",
+        builder => builder.AllowAnyOrigin()
+                          .AllowAnyMethod()
+                          .AllowAnyHeader());
+});
 
-// -------------------- Authentication & JWT --------------------
+builder.Services.AddEndpointsApiExplorer();
+
+// Add SwaggerGen with JWT Authentication support
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "HolaBike API", Version = "v1" });
+
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Description = @"JWT Authorization header using the Bearer scheme. 
+                      Enter 'Bearer' [space] and then your token in the text input below.
+                      Example: 'Bearer 12345abcdef'",
+        Name = "Authorization",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer"
+    });
+
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement()
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                },
+                Scheme = "oauth2",
+                Name = "Bearer",
+                In = ParameterLocation.Header,
+            },
+            new List<string>()
+        }
+    });
+});
+
+
+// Add Authentication & JWT
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -75,26 +121,67 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
+// Add Authorization Policies
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
+    options.AddPolicy("StaffOrAdmin", policy => policy.RequireRole("Admin", "Staff"));
+    options.AddPolicy("UserOnly", policy => policy.RequireRole("User"));
+});
+
 
 var app = builder.Build();
 
-// -------------------- Middleware Pipeline --------------------
+// --- Seed Roles to Database ---
+// This block ensures the roles "Admin", "Staff", and "User" exist in the database.
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        var roleManager = services.GetRequiredService<RoleManager<IdentityRole<long>>>();
+        string[] roleNames = { "Admin", "Staff", "User" };
+        foreach (var roleName in roleNames)
+        {
+            // Use await directly because of top-level statements
+            var roleExist = await roleManager.RoleExistsAsync(roleName);
+            if (!roleExist)
+            {
+                await roleManager.CreateAsync(new IdentityRole<long>(roleName));
+            }
+        }
+    }
+    catch (Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "An error occurred while seeding the database roles.");
+    }
+}
+
+
+// --- Middleware Pipeline Configuration ---
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-// Thứ tự Middleware rất quan trọng
 app.UseMiddleware<ExceptionHandlingMiddleware>();
-app.UseMiddleware<ValidationMiddleware>();
-app.UseMiddleware<ResponseMiddleware>();
 
 app.UseHttpsRedirection();
+
 app.UseRouting();
-app.UseAuthentication();
+
+app.UseCors("AllowAll"); // Use CORS Policy
+
+app.UseAuthentication(); // This must come before UseAuthorization
 app.UseAuthorization();
 
 app.MapControllers();
 
 app.Run();
+
+// ✅ FIX: Make the auto-generated Program class public so test projects can access it.
+public partial class Program { }
+
