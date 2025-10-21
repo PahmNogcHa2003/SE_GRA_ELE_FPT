@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Application.Interfaces;
+using Application.Interfaces.User.Repository;
 using Application.Interfaces.User.Service;
 using Domain.Entities;
 
@@ -12,24 +13,33 @@ namespace Application.Services.User
     public class WalletService : IWalletService
     {
         private readonly IUnitOfWork _unitOfWork;
-        public WalletService(IUnitOfWork unitOfWork)
+        private readonly IWalletDebtRepository _walletDebtRepository;
+        private readonly IWalletRepository _walletRepository;
+        private readonly IWalletTransactionRepository _walletTransactionRepository;
+        public WalletService(IUnitOfWork unitOfWork, 
+            IWalletDebtRepository walletDebtRepository,
+            IWalletRepository walletRepository,
+            IWalletTransactionRepository walletTransactionRepository)
         {
             _unitOfWork = unitOfWork;
+            _walletDebtRepository = walletDebtRepository;
+            _walletRepository = walletRepository;
+            _walletTransactionRepository = walletTransactionRepository;
         }
         public async Task CreditAsync(long userId, decimal amount, string source, long? orderId, CancellationToken cancellationToken)
         {
-            var wallet = await _unitOfWork.Wallets.GetByUserIdAsync(userId, cancellationToken);
+            var wallet = await _walletRepository.GetByUserIdAsync(userId, cancellationToken);
 
             if (wallet == null)
             {
                 wallet = new Wallet { UserId = userId, Status = "Active" };
-                await _unitOfWork.Wallets.AddAsync(wallet, cancellationToken);
+                await _walletRepository.AddAsync(wallet, cancellationToken);
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
             }
 
             decimal remainingAmount = amount;
 
-            var unpaidDebts = await _unitOfWork.WalletDebts.GetUnpaidDebtsByUserIdAsync(userId, cancellationToken);
+            var unpaidDebts = await _walletDebtRepository.GetUnpaidDebtsByUserIdAsync(userId, cancellationToken);
 
             foreach (var debt in unpaidDebts)
             {
@@ -46,11 +56,11 @@ namespace Application.Services.User
                     debt.Status = "Paid";
                     debt.PaidAt = DateTimeOffset.UtcNow;
                 }
-                _unitOfWork.WalletDebts.Update(debt);
+                _walletDebtRepository.Update(debt);
 
-                await _unitOfWork.WalletTransactions.AddAsync(new WalletTransaction
+                await _walletTransactionRepository.AddAsync(new WalletTransaction
                 {
-                    WalletId = wallet.UserId,
+                    WalletId = wallet.Id,
                     Direction = "In",
                     Source = $"DebtRepayment_Order_{debt.OrderId}",
                     Amount = amountToPay,
@@ -62,9 +72,9 @@ namespace Application.Services.User
             if (remainingAmount > 0)
             {
                 wallet.Balance += remainingAmount;
-                await _unitOfWork.WalletTransactions.AddAsync(new WalletTransaction
+                await _walletTransactionRepository.AddAsync(new WalletTransaction
                 {
-                    WalletId = wallet.UserId,
+                    WalletId = wallet.Id,
                     Direction = "In",
                     Source = source,
                     Amount = remainingAmount,
@@ -74,7 +84,7 @@ namespace Application.Services.User
             }
 
             wallet.UpdatedAt = DateTimeOffset.UtcNow;
-            _unitOfWork.Wallets.Update(wallet);
+            _walletRepository.Update(wallet);
             // Không savechange(), service gọi nó (PaymentService) sẽ chịu trách nhiệm commit transaction.
         }
        

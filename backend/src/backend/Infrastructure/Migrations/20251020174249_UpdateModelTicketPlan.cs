@@ -5,25 +5,25 @@
 namespace Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class UpdateModelChanges : Migration
+    public partial class UpdateModelTicketPlan : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<long>(
-                name: "Id",
-                table: "Wallet",
-                type: "bigint",
-                nullable: false,
-                defaultValue: 0L);
+            migrationBuilder.AddColumn<string>(
+                name: "Type",
+                table: "TicketPlan",
+                type: "nvarchar(50)",
+                maxLength: 50,
+                nullable: true);
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropColumn(
-                name: "Id",
-                table: "Wallet");
+                name: "Type",
+                table: "TicketPlan");
         }
     }
 }

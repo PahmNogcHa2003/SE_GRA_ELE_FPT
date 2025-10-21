@@ -5,6 +5,8 @@ using Domain.Entities;
 using Microsoft.AspNetCore.Http;
 using static Application.Interfaces.User.Service.IPaymentGatewayService;
 using Domain.Enums;
+using Application.Interfaces.User.Repository;
+using Application.Interfaces.Staff.Repository;
 
 namespace Application.Services.User
 {
@@ -13,20 +15,25 @@ namespace Application.Services.User
         private readonly IUnitOfWork _unitOfWork;
         private readonly IWalletService _walletService;
         private readonly IPaymentGatewayService _paymentGatewayService;
+        private readonly IPaymentRepository _paymentRepository;
+        private readonly IOrderRepository _orderRepository;
 
         public PaymentService(
             IUnitOfWork unitOfWork,
         IWalletService walletService,
-        IPaymentGatewayService paymentGatewayService)
+        IPaymentGatewayService paymentGatewayService,
+        IPaymentRepository paymentRepository,
+        IOrderRepository orderRepository)
         {
             _unitOfWork = unitOfWork;
             _walletService = walletService;
             _paymentGatewayService = paymentGatewayService;
+            _paymentRepository = paymentRepository;
+            _orderRepository = orderRepository;
         }
 
         public async Task<PaymentUrlResponseDTO> CreateVnPayPaymentUrlAsync(CreatePaymentRequestDTO request, HttpContext httpContext, CancellationToken cancellationToken)
         {
-            // Bước 1: Khởi tạo các đối tượng trong bộ nhớ (chưa lưu vào DB)
             var order = new Order
             {
                 UserId = request.UserId,
@@ -47,17 +54,13 @@ namespace Application.Services.User
                 CreatedAt = DateTimeOffset.UtcNow,
             };
 
-            // Bước 2: Lưu tạm vào DB để lấy OrderId
-            // Đây là cách tiếp cận đơn giản và hiệu quả nhất
-            await _unitOfWork.Orders.AddAsync(order, cancellationToken);
-            await _unitOfWork.SaveChangesAsync(cancellationToken); // Lấy Order.Id
+            await _orderRepository.AddAsync(order, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-            payment.OrderId = order.Id; // Gán OrderId cho payment
-
-            // Bước 3: Chuẩn bị thông tin và gọi Gateway Service
+            payment.OrderId = order.Id; 
             var paymentInfo = new PaymentInfo
             {
-                OrderId = order.Id, // Dùng Id vừa được tạo
+                OrderId = order.Id, 
                 Amount = payment.Amount,
                 OrderInfo = $"Nap tien {payment.Amount:N0} VND vao vi",
                 IpAddress = httpContext.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1"
@@ -66,16 +69,14 @@ namespace Application.Services.User
 
             payment.CheckoutUrl = paymentUrl;
 
-            // Bước 4: Thêm payment và lưu tất cả thay đổi còn lại
-            await _unitOfWork.Payments.AddAsync(payment, cancellationToken);
+            await _paymentRepository.AddAsync(payment, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             return new PaymentUrlResponseDTO { PaymentUrl = paymentUrl };
         }
 
         public async Task<PaymentResultDTO> ProcessVnPayCallbackAsync(IQueryCollection collections, CancellationToken cancellationToken)
-        {
-            // Bước 1: Ra lệnh cho "thợ kỹ thuật" (VnPayService) xác thực chữ ký
+        {         
             if (!_paymentGatewayService.ValidateSignature(collections))
             {
                 return new PaymentResultDTO { IsSuccess = false, Message = "Invalid signature.", RspCode = "97" };
@@ -96,7 +97,7 @@ namespace Application.Services.User
                 return new PaymentResultDTO { IsSuccess = false, Message = "Invalid transaction reference format.", RspCode = "01" };
             }
             // Bước 2: Xử lý nghiệp vụ chính
-            var payment = await _unitOfWork.Payments.GetByOrderIdAsync(orderId, cancellationToken);
+            var payment = await _paymentRepository.GetByOrderIdAsync(orderId, cancellationToken);
             if (payment == null)
             {
                 return new PaymentResultDTO { IsSuccess = false, Message = "Order not found.", RspCode = "01" };
@@ -128,8 +129,8 @@ namespace Application.Services.User
                     payment.Order.Status = OrderStatus.Failed;
                     payment.FailureReason = $"VNPay response code: {vnp_ResponseCode}";
                 }
-                _unitOfWork.Payments.Update(payment);
-                _unitOfWork.Orders.Update(payment.Order);
+                _paymentRepository.Update(payment);
+                _orderRepository.Update(payment.Order);
 
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
                 await _unitOfWork.CommitTransactionAsync(transaction, cancellationToken);

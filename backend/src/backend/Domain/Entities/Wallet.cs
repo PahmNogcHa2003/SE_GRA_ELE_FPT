@@ -7,30 +7,27 @@ using Microsoft.EntityFrameworkCore;
 namespace Domain.Entities;
 
 [Table("Wallet")]
+[Index(nameof(UserId), IsUnique = true)]
 public partial class Wallet : BaseEntity<long>
 {
-    [Key]
     public long UserId { get; set; }
 
-    [Required]
     [Column(TypeName = "decimal(18, 2)")]
     public decimal Balance { get; set; } = 0;
 
-    [Required]
     [StringLength(3)]
     [Column(TypeName = "char(3)")]
     public string Currency { get; set; } = "VND";
 
-    [Required]
+    [Required] 
     [StringLength(20)]
     [Unicode(false)]
     public string Status { get; set; } = "Active";
 
-    [Required]
     [Column(TypeName = "decimal(18, 2)")]
     public decimal TotalDebt { get; set; } = 0;
 
-    [Timestamp]
+    [Timestamp] 
     public byte[]? RowVer { get; set; }
 
     [Precision(0)]
@@ -43,4 +40,3 @@ public partial class Wallet : BaseEntity<long>
     [InverseProperty(nameof(WalletTransaction.Wallet))]
     public virtual ICollection<WalletTransaction> WalletTransactions { get; set; } = new List<WalletTransaction>();
 }
-
