@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore.Storage;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -16,6 +17,7 @@ namespace Application.Interfaces
         Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default);
         Task CommitTransactionAsync(IDbContextTransaction transaction, CancellationToken cancellationToken = default);
         Task RollbackTransactionAsync(IDbContextTransaction transaction, CancellationToken cancellationToken = default);
+
     }
 
 }
