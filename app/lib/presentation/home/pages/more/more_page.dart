@@ -10,7 +10,6 @@ class MorePage extends StatelessWidget {
       ("Xác thực tài khoản", Icons.verified_user),
       ("Bảo mật", Icons.lock),
       ("Đổi mật khẩu", Icons.password),
-      ("Thông báo", Icons.notifications),
       ("Vô hiệu hoá tài khoản", Icons.block),
       ("Xoá tài khoản", Icons.delete_forever),
       ("Đăng xuất", Icons.logout),
