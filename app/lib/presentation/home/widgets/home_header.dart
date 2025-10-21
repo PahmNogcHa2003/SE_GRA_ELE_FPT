@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hola_bike_app/presentation/wallet/walet_page.dart';
 import '../../../theme/app_colors.dart';
 
 class HomeHeader extends StatelessWidget {
@@ -41,7 +42,10 @@ class HomeHeader extends StatelessWidget {
           // 💰 Phần điểm bên phải (có thể nhấn)
           GestureDetector(
             onTap: () {
-              // TODO: Thêm hành động khi nhấn vào điểm
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const WalletScreen()),
+              );
             },
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
