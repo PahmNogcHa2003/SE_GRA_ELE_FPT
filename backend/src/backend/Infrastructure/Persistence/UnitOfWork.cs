@@ -1,4 +1,8 @@
 ﻿using Application.Interfaces;
+using Application.Interfaces.Staff.Repository;
+using Application.Interfaces.User.Repository;
+using Infrastructure.Repositories.Staff;
+using Infrastructure.Repositories.User;
 using Microsoft.EntityFrameworkCore.Storage;
 using System;
 using System.Threading;
@@ -18,6 +22,27 @@ namespace Infrastructure.Persistence
 
         public Task<int> SaveChangesAsync(CancellationToken ct = default)
             => _context.SaveChangesAsync(ct);
+
+        public async Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default)
+        {
+            return await _context.Database.BeginTransactionAsync(cancellationToken);
+        }
+
+        public async Task CommitTransactionAsync(IDbContextTransaction transaction, CancellationToken cancellationToken = default)
+        {
+            await transaction.CommitAsync(cancellationToken);
+        }
+
+        public async Task RollbackTransactionAsync(IDbContextTransaction transaction, CancellationToken cancellationToken = default)
+        {
+            await transaction.RollbackAsync(cancellationToken);
+        }
+        public void Dispose()
+        {
+            _context.Dispose();
+            GC.SuppressFinalize(this);
+        }
+
 
         public IDbContextTransaction BeginTransaction()
         {
@@ -64,11 +89,6 @@ namespace Infrastructure.Persistence
             }
         }
 
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
 
         protected virtual void Dispose(bool disposing)
         {

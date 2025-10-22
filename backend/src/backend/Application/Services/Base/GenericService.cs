@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 
 namespace Application.Services.Base
 {
-    public class GenericService<TEntity, TDto, TKey> : IService<TEntity, TDto, TKey>
+    public class GenericService<TEntity, TDto, TKey> : IService<TEntity, TDto, TKey>, IService3DTO<TEntity, TDto, TKey>
         where TEntity : class
     {
         protected readonly IRepository<TEntity, TKey> _repo;
@@ -34,7 +34,10 @@ namespace Application.Services.Base
                                     .FirstOrDefaultAsync(e => EF.Property<TKey>(e, "Id")!.Equals(id), ct);
             return entity == null ? default : _mapper.Map<TDto>(entity);
         }
-
+        protected virtual IQueryable<TEntity> GetQueryWithIncludes()
+        {
+            return _repo.Query().AsNoTracking();
+        }
         public async Task<Application.Common.PagedResult<TDto>> GetPagedAsync(
          int page,
          int pageSize,
@@ -44,7 +47,7 @@ namespace Application.Services.Base
          string? sortOrder = null,
          CancellationToken ct = default)
             {
-                var query = _repo.Query().AsNoTracking();
+                var query = GetQueryWithIncludes();
 
                 // 1. Apply Search (Search)
                 if (!string.IsNullOrWhiteSpace(searchQuery))
@@ -136,7 +139,7 @@ namespace Application.Services.Base
         }
         public virtual async Task<TDto> CreateAsync(TDto dto, CancellationToken ct = default)
         {
-            var entity = _mapper.Map<TEntity>(dto);
+            var entity = _mapper.Map<TEntity >(dto);
             await _repo.AddAsync(entity, ct);
             await _uow.SaveChangesAsync(ct);
             return _mapper.Map<TDto>(entity);
@@ -149,6 +152,22 @@ namespace Application.Services.Base
             if (entity == null) throw new KeyNotFoundException($"Entity with id {id} not found.");
 
             _mapper.Map(dto, entity);
+            _repo.Update(entity);
+            await _uow.SaveChangesAsync(ct);
+        }
+        public virtual async Task<TDto> CreateAsync<TCreateDto>(TCreateDto dto, CancellationToken ct = default)
+        {
+            var entity = _mapper.Map<TEntity>(dto);
+            await _repo.AddAsync(entity, ct);
+            await _uow.SaveChangesAsync(ct);
+            return _mapper.Map<TDto>(entity); 
+        }
+
+        public virtual async Task UpdateAsync<TUpdateDto>(TKey id, TUpdateDto dto, CancellationToken ct = default)
+        {
+            var entity = await _repo.Query().FirstOrDefaultAsync(e => EF.Property<TKey>(e, "Id")!.Equals(id), ct)
+                        ?? throw new KeyNotFoundException($"Entity with id {id} not found.");
+            _mapper.Map(dto, entity); 
             _repo.Update(entity);
             await _uow.SaveChangesAsync(ct);
         }

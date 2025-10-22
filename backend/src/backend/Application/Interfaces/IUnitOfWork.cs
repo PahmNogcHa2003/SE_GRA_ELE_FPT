@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Application.Interfaces.Staff.Repository;
+using Application.Interfaces.User.Repository;
 
 namespace Application.Interfaces
 {
@@ -11,9 +13,9 @@ namespace Application.Interfaces
     public interface IUnitOfWork
     {
         Task<int> SaveChangesAsync(CancellationToken ct = default);
-        IDbContextTransaction BeginTransaction();
-        Task CommitAsync();
-        Task RollbackAsync();
+        Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default);
+        Task CommitTransactionAsync(IDbContextTransaction transaction, CancellationToken cancellationToken = default);
+        Task RollbackTransactionAsync(IDbContextTransaction transaction, CancellationToken cancellationToken = default);
     }
 
 }
