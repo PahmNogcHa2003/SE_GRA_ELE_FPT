@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
-import 'package:hola_bike_app/presentation/navigation/router.dart';
+import 'package:hola_bike_app/presentation/home/pages/notification/notification_page.dart';
+import 'package:hola_bike_app/presentation/home/pages/station/station_page.dart';
+import 'package:hola_bike_app/presentation/profile/page/profile_page.dart';
 import 'package:hola_bike_app/presentation/splash/splash_page.dart';
+import 'package:hola_bike_app/presentation/wallet/walet_page.dart';
 import 'package:hola_bike_app/theme/app_colors.dart';
 
 void main() {
@@ -29,7 +32,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Hola Bike',
+      title: 'EcoJourney',
       debugShowCheckedModeBanner: false,
       builder: EasyLoading.init(),
       theme: ThemeData(
@@ -57,7 +60,12 @@ class MyApp extends StatelessWidget {
         ),
       ),
       home: const SplashScreen(),
-      routes: appRoutes,
+      routes: {
+        '/stations': (context) => const StationPage(),
+        '/notifications': (context) => const NotificationPage(),
+        '/wallet': (context) => const WalletScreen(),
+        '/profile': (context) => const ProfilePage(),
+      },
     );
   }
 }
