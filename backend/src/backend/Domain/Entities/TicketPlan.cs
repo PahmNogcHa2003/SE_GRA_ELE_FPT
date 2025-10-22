@@ -12,6 +12,9 @@ public partial class TicketPlan : BaseEntity<long>
     [StringLength(50)]
     public string? Code { get; set; }
 
+    [StringLength(50)]
+    public string? Type { get; set; }
+
     [StringLength(150)]
     public string? Name { get; set; }
 
