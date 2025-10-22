@@ -3,6 +3,7 @@ using Application.DTOs;
 using Application.Interfaces.Staff.Service;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using QRCoder;
 using System.Threading.Tasks;
 
 namespace AdminLayer.Controllers.Staff
@@ -37,6 +38,21 @@ namespace AdminLayer.Controllers.Staff
         {
             var pagedVehicles = await _vehicleService.GetPagedAsync(page, pageSize, search, filterField, filterValue, sortOrder);
             return Ok(ApiResponse<PagedResult<VehicleDTO>>.SuccessResponse(pagedVehicles, "Fetched vehicles successfully"));
+        }
+
+        // GET: api/staff/Vehicles/{id}/qrcode
+        [HttpGet("{id}/qrcode")]
+        public IActionResult GenerateQrCodeForVehicle(long id)
+        {
+           
+            string dataToEncode = id.ToString();
+
+            QRCodeGenerator qrGenerator = new QRCodeGenerator();
+            QRCodeData qrCodeData = qrGenerator.CreateQrCode(dataToEncode, QRCodeGenerator.ECCLevel.Q);
+            PngByteQRCode qrCode = new PngByteQRCode(qrCodeData);
+            byte[] qrCodeImageBytes = qrCode.GetGraphic(20); 
+
+            return File(qrCodeImageBytes, "image/png");
         }
 
         /// <summary>

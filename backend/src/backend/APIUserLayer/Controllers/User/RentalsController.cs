@@ -1,6 +1,7 @@
 ﻿using APIUserLayer.Controllers.Base;
 using Application.Common;
 using Application.DTOs;
+using Application.DTOs.Rental;
 using Application.Interfaces.Staff.Service;
 using Application.Interfaces.User.Service;
 using Microsoft.AspNetCore.Authorization;
@@ -48,6 +49,16 @@ namespace APIUserLayer.Controllers.User
             var createdStation = await _rentalsService.CreateAsync(createDto);
             var response = ApiResponse<RentalDTO>.SuccessResponse(createdStation, "rental created successfully");
             return CreatedAtAction(nameof(GetStationById), new { id = createdStation.Id }, response);
+        }
+
+        [HttpPut("{id}/end")]
+        public async Task<IActionResult> EndRental(long id, [FromBody] EndRentalRequestDTO endRentalDto)
+        {
+            // (Tùy chọn) Thêm kiểm tra để đảm bảo người dùng đang kết thúc đúng chuyến đi của mình
+            // Logic này có thể được đặt trong service
+            await _rentalsService.EndRentalAsync(id, endRentalDto);
+            return Ok(ApiResponse<object>.SuccessResponse(null, "rental ended successfully"));
+
         }
 
         // PUT: api/Rentals/5
