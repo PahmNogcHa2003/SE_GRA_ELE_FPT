@@ -2,6 +2,8 @@
 using Application.Interfaces.Base;
 using Application.Interfaces.Identity;
 using Application.Interfaces.Location;
+using Application.Interfaces.Ocr;
+using Application.Interfaces.Photo;
 using Application.Interfaces.Staff.Repository;
 using Application.Interfaces.Staff.Service;
 using Application.Interfaces.User.Repository;
@@ -14,12 +16,16 @@ using Application.Services.User;
 using Domain.Entities;
 using Infrastructure.Persistence;
 using Infrastructure.Repositories.Location;
+using Infrastructure.Repositories.Ocr;
+using Infrastructure.Repositories.Photo;
 using Infrastructure.Repositories.Staff;
 using Infrastructure.Repositories.User;
+using Infrastructure.Setting;
 using Infrastructure.VNPay;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using System;
 
 namespace Infrastructure.Dependency_Injection
 {
@@ -31,10 +37,14 @@ namespace Infrastructure.Dependency_Injection
             services.AddDbContext<HolaBikeContext>(options =>
                 options.UseSqlServer(config.GetConnectionString("DefaultConnection")));
 
+            // --- Settings / Configurations ---
+            services.Configure<CloudinarySettings>(config.GetSection("CloudinarySettings"));
+
             // --- Unit of Work & Repositories ---
             services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddScoped(typeof(IRepository<,>), typeof(BaseRepository<,>));
-            //services.AddScoped<IRepository<AspNetUser, long>, UserRepository>();
+
+            // Repositories cụ thể
             services.AddScoped<IRepository<Station, long>, StationsRepository>();
             services.AddScoped<IRepository<CategoriesVehicle, long>, CategoriesVehicleRepository>();
             services.AddScoped<IRepository<Vehicle, long>, VehicleRepository>();
@@ -51,27 +61,33 @@ namespace Infrastructure.Dependency_Injection
             services.AddScoped<IManageUserTicketRepository, ManageUserTicketRepository>();
             services.AddScoped<IRepository<Rental, long>, RentalsRepository>();
             services.AddScoped<IRepository<UserDevice, long>, UserDevicesRepository>();
+            services.AddScoped<IKycRepository, KycRepository>();
 
+            // --- Cloud Services / External Repositories ---
+            services.AddScoped<IPhotoRepository, PhotoRepository>();
 
-            // --- Location API ---
+            // === THAY ĐỔI: Chuyển sang dùng OCR.space thay vì Google Vision ===
+            // services.AddScoped<IOcrRepository, GoogleVisionOcrRepository>();
+            services.AddScoped<IOcrRepository, OcrSpaceRepository>();
+
+            // --- Location API & HTTP Client Factory ---
+            // Thêm HttpClientFactory để các service khác (như OcrSpaceRepository) có thể sử dụng
+            services.AddHttpClient();
             services.AddHttpClient("ProvincesAPI", client =>
             {
                 client.BaseAddress = new Uri("https://provinces.open-api.vn/api/v2/");
             });
-            //  cache
             services.AddMemoryCache();
-            //LocationRepository
             services.AddScoped<ILocationRepository, LocationRepository>();
 
             // --- Services (application layer) ---
             services.AddScoped(typeof(IService<,,>), typeof(GenericService<,,>));
-            //services.AddScoped<IUserService, UserService>();
             services.AddScoped<IStationsService, StationsService>();
             services.AddScoped<ICategoriesVehicleService, CategoriesVehicleService>();
             services.AddScoped<IVehicleService, VehiclesService>();
             services.AddScoped<INewsService, NewsService>();
             services.AddScoped<ITagService, TagService>();
-            services.AddScoped<IPaymentService, PaymentService>(); 
+            services.AddScoped<IPaymentService, PaymentService>();
             services.AddScoped<IWalletService, WalletService>();
             services.AddScoped<IPaymentGatewayService, VnPayService>();
             services.AddScoped<IUserWalletService, UserWalletService>();
@@ -82,21 +98,18 @@ namespace Infrastructure.Dependency_Injection
             services.AddScoped<IManageUserTicketService, ManageUserTicketService>();
             services.AddScoped<IUserProfilesService, UserProfilesService>();
             services.AddScoped<IRentalsService, RentalsService>();
-            services.AddScoped<IRentalsService, RentalsService>();
             services.AddScoped<IUserDevicesService, UserDevicesService>();
+            services.AddScoped<IKycService, KycService>();
             services.AddScoped<IJwtTokenService, JwtTokenService>();
-
-
-
 
             // --- AutoMapper ---
             services.AddAutoMapper(typeof(AppMappingProfile).Assembly);
 
-            //  Add AuthService (Identity + JWT)
+            //  --- Add AuthService (Identity + JWT) ---
             services.AddScoped<IAuthService, AuthService>();
-
 
             return services;
         }
     }
 }
+

@@ -52,7 +52,7 @@ public class KycForm : BaseEntity<long>
 
     [Required]
     [StringLength(20)]
-    public string Status { get; set; } = "Draft"; 
+    public string Status { get; set; } = "Pending"; 
 
     [StringLength(255)]
     public string? RejectReason { get; set; }

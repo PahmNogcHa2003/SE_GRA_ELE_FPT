@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Application.Interfaces.User.Repository
 {
-    public interface IUserDevicesRepository : IRepository<UserDevice, long>
+    public interface IKycRepository : IRepository<KycForm, long>
     {
     }
 }

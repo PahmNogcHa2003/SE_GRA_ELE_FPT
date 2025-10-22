@@ -1,4 +1,5 @@
 ﻿using Application.DTOs;
+using Application.DTOs.Kyc;
 using Application.DTOs.Tickets;
 using AutoMapper;
 using Domain.Entities;
@@ -16,11 +17,11 @@ namespace Application.Mapping
         {
             // Example mapping configuration
             // CreateMap<Source, Destination>();
-            CreateMap<Domain.Entities.AspNetUser, DTOs.UserDTO>().ReverseMap();
-            CreateMap<Domain.Entities.Station, DTOs.StationDTO>().ReverseMap();
-            CreateMap<Domain.Entities.CategoriesVehicle, DTOs.CategoriesVehicleDTO>().ReverseMap();
-            CreateMap<Domain.Entities.Vehicle, DTOs.VehicleDTO>().ReverseMap();
-            CreateMap<Domain.Entities.Tag, DTOs.TagDTO>().ReverseMap();
+            CreateMap<AspNetUser,UserDTO>().ReverseMap();
+            CreateMap<Station, StationDTO>().ReverseMap();
+            CreateMap<CategoriesVehicle, CategoriesVehicleDTO>().ReverseMap();
+            CreateMap<Vehicle, VehicleDTO>().ReverseMap();
+            CreateMap<Tag, TagDTO>().ReverseMap();
             CreateMap<Wallet, WalletDTO>().ReverseMap();
             CreateMap<WalletTransaction, WalletTransactionDTO>().ReverseMap();
             CreateMap<UserTicket, ManageUserTicketDTO>()
@@ -37,11 +38,14 @@ namespace Application.Mapping
             CreateMap<UserTicket, ManageUserTicketDTO>()
                 .ForMember(dest => dest.UserEmail, opt => opt.MapFrom(src => src.User.Email)) 
                 .ForMember(dest => dest.PlanName, opt => opt.MapFrom(src => $"{src.PlanPrice.Plan.Name} - {src.PlanPrice.VehicleType}"));
-            CreateMap<Domain.Entities.UserProfile, DTOs.UserProfileDTO>().ReverseMap();
-            CreateMap<Domain.Entities.Province, DTOs.Location.LocationDTO>().ReverseMap();
-            CreateMap<Domain.Entities.Ward, DTOs.Location.LocationDTO>().ReverseMap();
-            CreateMap<Domain.Entities.Rental, DTOs.RentalDTO>().ReverseMap();
-            CreateMap<Domain.Entities.UserDevice, DTOs.UserDevice.UserDeviceDTO>().ReverseMap();
+            CreateMap<  UserProfile, UserProfileDTO>().ReverseMap();
+            CreateMap<Province, DTOs.Location.LocationDTO>().ReverseMap();
+            CreateMap<Ward, DTOs.Location.LocationDTO>().ReverseMap();
+            CreateMap<Rental, RentalDTO>().ReverseMap();
+            CreateMap<UserDevice, DTOs.UserDevice.UserDeviceDTO>().ReverseMap();
+            CreateMap<KycForm, DTOs.Kyc.CreateKycRequestDTO>().ReverseMap();
+            CreateMap<KycDTO, KycForm>().ReverseMap();
+
 
 
 

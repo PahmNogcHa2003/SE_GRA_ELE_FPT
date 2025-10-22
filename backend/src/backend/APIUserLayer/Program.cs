@@ -7,24 +7,22 @@ using Infrastructure.Setting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Reflection;
 using System.Text;
 
-
 var builder = WebApplication.CreateBuilder(args);
 
-// --- Service Registration ---
+// --- Đăng ký các dịch vụ (Service Registration) ---
 
-// Add MediatR
+// Thêm MediatR
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(Assembly.Load("Application")));
 
-// Add Infrastructure Layer (DbContext, Repositories, Services...)
+// Thêm các dịch vụ từ tầng Infrastructure (DbContext, Repositories, Services...)
 builder.Services.AddInfrastructure(builder.Configuration);
 
-// Add Identity
+// Cấu hình Identity
 builder.Services.AddIdentity<AspNetUser, IdentityRole<long>>(options =>
 {
     options.Password.RequireDigit = true;
@@ -37,7 +35,7 @@ builder.Services.AddIdentity<AspNetUser, IdentityRole<long>>(options =>
 .AddDefaultTokenProviders()
 .AddRoleManager<RoleManager<IdentityRole<long>>>();
 
-// Add Controllers & Custom Validation Error Response
+// Thêm Controllers và tùy chỉnh lỗi Validation
 builder.Services.AddControllers()
     .ConfigureApiBehaviorOptions(options =>
     {
@@ -57,7 +55,7 @@ builder.Services.AddControllers()
         };
     });
 
-// Add CORS
+// Cấu hình CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll",
@@ -66,20 +64,19 @@ builder.Services.AddCors(options =>
                           .AllowAnyHeader());
 });
 
+// Cấu hình Swagger/OpenAPI
 builder.Services.AddEndpointsApiExplorer();
-
-// Add SwaggerGen with JWT Authentication support
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "HolaBike API", Version = "v1" });
 
-    // Cấu hình security scheme để Swagger hiểu JWT Bearer
+    // Cấu hình để Swagger hỗ trợ JWT Bearer
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name = "Authorization",
-        Type = SecuritySchemeType.Http, 
-        Scheme = "bearer",               
-        BearerFormat = "JWT",           
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
         In = ParameterLocation.Header,
         Description = "JWT Authorization header using the Bearer scheme. \r\n\r\n Enter your token in the text input below.\r\n\r\nExample: '12345abcdef'"
     });
@@ -101,8 +98,7 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-
-// Add Authentication & JWT
+// Cấu hình Authentication và JWT
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -121,12 +117,10 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-// -------------------- Controllers & Swagger --------------------
-builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer(); // ✅ cần để Swagger hoạt động
-builder.Services.AddSwaggerGen();            // ✅ cần để tạo giao diện Swagger
+// Đăng ký cấu hình cho VnPay
 builder.Services.Configure<VnPaySettings>(builder.Configuration.GetSection("VnPaySettings"));
-// Add Authorization Policies
+
+// Cấu hình các chính sách Authorization
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
@@ -137,8 +131,7 @@ builder.Services.AddAuthorization(options =>
 
 var app = builder.Build();
 
-// --- Seed Roles to Database ---
-// This block ensures the roles "Admin", "Staff", and "User" exist in the database.
+// --- Seed Roles vào Database khi ứng dụng khởi chạy ---
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
@@ -148,7 +141,6 @@ using (var scope = app.Services.CreateScope())
         string[] roleNames = { "Admin", "Staff", "User" };
         foreach (var roleName in roleNames)
         {
-            // Use await directly because of top-level statements
             var roleExist = await roleManager.RoleExistsAsync(roleName);
             if (!roleExist)
             {
@@ -164,7 +156,7 @@ using (var scope = app.Services.CreateScope())
 }
 
 
-// --- Middleware Pipeline Configuration ---
+// --- Cấu hình Middleware Pipeline ---
 
 if (app.Environment.IsDevelopment())
 {
@@ -178,15 +170,14 @@ app.UseHttpsRedirection();
 
 app.UseRouting();
 
-app.UseCors("AllowAll"); // Use CORS Policy
+app.UseCors("AllowAll"); // Sử dụng chính sách CORS
 
-app.UseAuthentication(); // This must come before UseAuthorization
+app.UseAuthentication(); // Bắt buộc phải có trước UseAuthorization
 app.UseAuthorization();
 
 app.MapControllers();
 
 app.Run();
 
-// ✅ FIX: Make the auto-generated Program class public so test projects can access it.
+// Dòng này rất hữu ích để các project test có thể truy cập được class Program
 public partial class Program { }
-
