@@ -13,20 +13,25 @@ class HomeMenu extends StatelessWidget {
       {
         'icon': Icons.confirmation_num_outlined,
         'label': 'Mua vé',
-        'route': '/tickets',
+        'router': '/tickets',
       },
-      {'icon': Icons.map_outlined, 'label': 'Chuyến đi', 'route': '/jouney'},
-      {'icon': Icons.help_outline, 'label': 'Hướng dẫn', 'route': '/guide'},
+      {'icon': Icons.map_outlined, 'label': 'Chuyến đi', 'router': '/jouney'},
+      {'icon': Icons.help_outline, 'label': 'Hướng dẫn', 'router': '/guide'},
       {
         'icon': Icons.message_outlined,
         'label': 'Tin nhắn',
-        'route': '/messages',
+        'router': '/messages',
       },
-      {'icon': Icons.newspaper, 'label': 'Tin tức', 'route': '/news'},
+      {'icon': Icons.newspaper, 'label': 'Tin tức', 'router': '/notifications'},
+      {
+        'icon': Icons.account_balance_wallet_outlined,
+        'label': 'Ví',
+        'router': '/wallet',
+      },
       {
         'icon': Icons.personal_injury_outlined,
         'label': 'Hồ sơ',
-        'route': '/profile',
+        'router': '/profile',
       },
     ];
 
@@ -60,8 +65,8 @@ class HomeMenu extends StatelessWidget {
             onTap: () {
               if (item.containsKey('index')) {
                 onItemSelected(item['index'] as int);
-              } else if (item.containsKey('route')) {
-                Navigator.pushNamed(context, item['route'] as String);
+              } else if (item.containsKey('router')) {
+                Navigator.pushNamed(context, item['router'] as String);
               }
             },
             child: Column(

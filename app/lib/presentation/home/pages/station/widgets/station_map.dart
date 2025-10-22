@@ -138,7 +138,6 @@ class _StationMapState extends State<StationMap> {
                 const SizedBox(height: 6),
                 _buildCheckbox('Xe điện', VehicleType.electric),
                 const SizedBox(height: 6),
-                _buildCheckbox('Ô tô', VehicleType.car),
               ],
             ),
           ),

@@ -7,9 +7,9 @@ class NotificationNews extends StatelessWidget {
   Widget build(BuildContext context) {
     final List<Map<String, String>> news = [
       {
-        "title": "Hola Bike ra mắt dịch vụ thuê xe ô tô",
+        "title": "EcoJourney ra mắt dịch vụ thuê xe ô tô",
         "summary":
-            "Từ tháng 11, người dùng có thể thuê xe ô tô trực tiếp qua ứng dụng Hola Bike.",
+            "Từ tháng 11, người dùng có thể thuê xe ô tô trực tiếp qua ứng dụng EcoJourney.",
         "date": "15/10/2025",
       },
       {
@@ -19,7 +19,7 @@ class NotificationNews extends StatelessWidget {
         "date": "14/10/2025",
       },
       {
-        "title": "Hola Bike hợp tác cùng Đại học Quốc gia",
+        "title": "EcoJourney hợp tác cùng Đại học Quốc gia",
         "summary":
             "Sinh viên được ưu đãi 30% khi sử dụng dịch vụ tại các trạm trong khuôn viên trường.",
         "date": "12/10/2025",

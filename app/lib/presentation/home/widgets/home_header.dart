@@ -29,7 +29,7 @@ class HomeHeader extends StatelessWidget {
                 ),
                 SizedBox(height: 8),
                 Text(
-                  "Hola Bike",
+                  "EcoJourney",
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 24,
