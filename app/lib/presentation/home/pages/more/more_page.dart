@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hola_bike_app/presentation/profile/page/edit_profile_page.dart';
 import 'package:hola_bike_app/theme/app_colors.dart';
 
 class MorePage extends StatelessWidget {
@@ -17,7 +18,7 @@ class MorePage extends StatelessWidget {
       ("Bảng giá", Icons.price_change),
       ("Hướng dẫn sử dụng", Icons.help_outline),
       ("Quy định chính sách", Icons.policy),
-      ("Website Hola Bike", Icons.language),
+      ("Website EcoJourney", Icons.language),
       ("Hỗ trợ", Icons.support_agent),
     ];
 
@@ -48,7 +49,7 @@ class MorePage extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: const [
                         Text(
-                          "Hola Bike",
+                          "EcoJourney",
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w600,
@@ -69,7 +70,12 @@ class MorePage extends StatelessWidget {
                     icon: const Icon(Icons.edit, color: AppColors.primary),
                     tooltip: "Chỉnh sửa thông tin",
                     onPressed: () {
-                      // TODO: mở trang chỉnh sửa thông tin
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const EditProfilePage(),
+                        ),
+                      );
                     },
                   ),
                 ],
@@ -93,7 +99,7 @@ class MorePage extends StatelessWidget {
                         vertical: 8,
                       ),
                       child: const Text(
-                        "Về Hola Bike",
+                        "Về EcoJourney",
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
