@@ -71,18 +71,19 @@ builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "HolaBike API", Version = "v1" });
 
+    // Cấu hình security scheme để Swagger hiểu JWT Bearer
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
-        Description = @"JWT Authorization header using the Bearer scheme. 
-                      Enter 'Bearer' [space] and then your token in the text input below.
-                      Example: 'Bearer 12345abcdef'",
         Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
         In = ParameterLocation.Header,
-        Type = SecuritySchemeType.ApiKey,
-        Scheme = "Bearer"
+        Description = "JWT Authorization header using the Bearer scheme. \r\n\r\n Enter your token in the text input below.\r\n\r\nExample: '12345abcdef'"
     });
 
-    c.AddSecurityRequirement(new OpenApiSecurityRequirement()
+    // Thêm yêu cầu bảo mật vào tất cả các endpoint
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
         {
             new OpenApiSecurityScheme
@@ -91,16 +92,12 @@ builder.Services.AddSwaggerGen(c =>
                 {
                     Type = ReferenceType.SecurityScheme,
                     Id = "Bearer"
-                },
-                Scheme = "oauth2",
-                Name = "Bearer",
-                In = ParameterLocation.Header,
+                }
             },
-            new List<string>()
+            new string[] {}
         }
     });
 });
-
 
 // Add Authentication & JWT
 builder.Services.AddAuthentication(options =>
@@ -129,34 +126,70 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("UserOnly", policy => policy.RequireRole("User"));
 });
 
+async Task SeedIdentityAsync(IServiceProvider services)
+{
+    var userManager = services.GetRequiredService<UserManager<AspNetUser>>();
+    var roleManager = services.GetRequiredService<RoleManager<IdentityRole<long>>>();
+
+    string[] roles = { "Admin", "Staff", "User" };
+    foreach (var r in roles)
+    {
+        if (!await roleManager.RoleExistsAsync(r))
+            await roleManager.CreateAsync(new IdentityRole<long>(r));
+    }
+
+    string adminEmail = "admin@ecojourney.com"; 
+    string adminPassword = "Admin@123";
+
+    var adminUser = await userManager.FindByEmailAsync(adminEmail);
+    if (adminUser == null)
+    {
+        adminUser = new AspNetUser
+        {
+            UserName = "admin",
+            Email = adminEmail,
+            EmailConfirmed = true,
+            PhoneNumber = "0123456789",
+            SecurityStamp = Guid.NewGuid().ToString()
+        };
+
+        var create = await userManager.CreateAsync(adminUser, adminPassword);
+        if (!create.Succeeded)
+            throw new Exception("Create admin failed: " + string.Join(", ", create.Errors.Select(e => e.Description)));
+
+        var addRole = await userManager.AddToRoleAsync(adminUser, "Admin");
+        if (!addRole.Succeeded)
+            throw new Exception("Add role failed: " + string.Join(", ", addRole.Errors.Select(e => e.Description)));
+
+        Console.WriteLine("✅ Admin user created and assigned Admin role.");
+    }
+    else
+    {
+        // đảm bảo đã có role
+        if (!await userManager.IsInRoleAsync(adminUser, "Admin"))
+            await userManager.AddToRoleAsync(adminUser, "Admin");
+
+        Console.WriteLine("ℹ️ Admin user already exists.");
+    }
+}
 
 var app = builder.Build();
 
-// --- Seed Roles to Database ---
-// This block ensures the roles "Admin", "Staff", and "User" exist in the database.
+// Seed roles + admin
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     try
     {
-        var roleManager = services.GetRequiredService<RoleManager<IdentityRole<long>>>();
-        string[] roleNames = { "Admin", "Staff", "User" };
-        foreach (var roleName in roleNames)
-        {
-            // Use await directly because of top-level statements
-            var roleExist = await roleManager.RoleExistsAsync(roleName);
-            if (!roleExist)
-            {
-                await roleManager.CreateAsync(new IdentityRole<long>(roleName));
-            }
-        }
+        await SeedIdentityAsync(services);
     }
     catch (Exception ex)
     {
         var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "An error occurred while seeding the database roles.");
+        logger.LogError(ex, "Seeding identity failed.");
     }
 }
+
 
 
 // --- Middleware Pipeline Configuration ---

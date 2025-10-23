@@ -1,11 +1,14 @@
 ﻿using Application.Common;
 using Application.DTOs.Tickets;
 using Application.Interfaces.User.Service;
+using Application.Services.Identity;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace APIUserLayer.Controllers.User
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class UserTicketController : ControllerBase
@@ -41,6 +44,7 @@ namespace APIUserLayer.Controllers.User
         }
 
         // POST: api/UserTicket/purchase
+
         [HttpPost("purchase")]
         public async Task<ActionResult<ApiResponse<UserTicketDTO>>> Purchase(
             [FromBody] PurchaseTicketRequestDTO request,
@@ -51,7 +55,8 @@ namespace APIUserLayer.Controllers.User
 
             try
             {
-                var created = await _svc.PurchaseTicketAsync(request, ct);
+                var userId = User.GetUserIdAsLong(); // 👈 lấy từ JWT
+                var created = await _svc.PurchaseTicketAsync(userId, request, ct); // 👈 truyền xuống service
                 return CreatedAtAction(nameof(GetById), new { id = created.Id },
                     ApiResponse<UserTicketDTO>.SuccessResponse(created, "Purchased ticket successfully."));
             }

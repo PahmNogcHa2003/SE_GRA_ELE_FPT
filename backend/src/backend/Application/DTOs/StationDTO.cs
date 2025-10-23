@@ -24,7 +24,7 @@ namespace Application.DTOs
         [Column(TypeName = "decimal(9, 6)")]
         public decimal? Lng { get; set; }
 
-        public bool IsActive { get; set; }
+        public bool IsActive { get; set; } = true;
 
         [StringLength(255)]
         public string? Image { get; set; }

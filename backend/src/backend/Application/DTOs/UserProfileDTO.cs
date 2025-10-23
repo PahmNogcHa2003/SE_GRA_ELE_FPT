@@ -27,6 +27,13 @@ namespace Application.DTOs
         [StringLength(255)]
         public string? AvatarUrl { get; set; }
 
+        [StringLength(150)]
+        public string? EmergencyName { get; set; }
+
+        [Required]
+        [StringLength(15)]
+        public string EmergencyPhone { get; set; }
+
         public int? ProvinceCode { get; set; }
         [StringLength(50)]
         public string? ProvinceName { get; set; }
@@ -36,13 +43,6 @@ namespace Application.DTOs
         public string? WardName { get; set; }
 
         public string? AddressDetail { get; set; }
-
-        [StringLength(150)]
-        public string? EmergencyName { get; set; }
-
-        [Required]
-        [StringLength(15)]
-        public string EmergencyPhone { get; set; } // ĐÃ SỬA: string
 
         [Required]
         [StringLength(15)]
