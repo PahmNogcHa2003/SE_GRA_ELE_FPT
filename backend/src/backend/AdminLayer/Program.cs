@@ -33,8 +33,6 @@ builder.Services.AddIdentity<AspNetUser, IdentityRole<long>>(options =>
 .AddEntityFrameworkStores<HolaBikeContext>()
 .AddDefaultTokenProviders()
 .AddRoleManager<RoleManager<IdentityRole<long>>>();
-.AddDefaultTokenProviders()
-.AddRoleManager<RoleManager<IdentityRole<long>>>(); 
 
 builder.Services.AddControllers()
     .ConfigureApiBehaviorOptions(options =>
