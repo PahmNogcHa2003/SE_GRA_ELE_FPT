@@ -7,6 +7,7 @@ using static Application.Interfaces.User.Service.IPaymentGatewayService;
 using Domain.Enums;
 using Application.Interfaces.User.Repository;
 using Application.Interfaces.Staff.Repository;
+using Application.Services.Identity;
 
 namespace Application.Services.User
 {
@@ -34,9 +35,13 @@ namespace Application.Services.User
 
         public async Task<PaymentUrlResponseDTO> CreateVnPayPaymentUrlAsync(CreatePaymentRequestDTO request, HttpContext httpContext, CancellationToken cancellationToken)
         {
+            var userId = httpContext.User.GetUserIdAsLong();
+            if (userId is null)
+                throw new UnauthorizedAccessException("Invalid or missing user id in token.");
             var order = new Order
             {
-                UserId = request.UserId,
+                UserId = userId.Value,
+                OrderNo = GenerateOrderNo(userId.Value),
                 OrderType = "WalletTopUp",
                 Status = OrderStatus.Pending,
                 Subtotal = request.Amount,
@@ -64,6 +69,7 @@ namespace Application.Services.User
                 Amount = payment.Amount,
                 OrderInfo = $"Nap tien {payment.Amount:N0} VND vao vi",
                 IpAddress = httpContext.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1"
+
             };
             var paymentUrl = _paymentGatewayService.CreatePaymentUrl(paymentInfo);
 
@@ -117,7 +123,7 @@ namespace Application.Services.User
                 if (vnp_ResponseCode == "00")
                 {
                     payment.Status = PaymentStatus.Success;
-                    payment.Order.Status = PaymentStatus.Success;
+                    payment.Order.Status = OrderStatus.Success;
                     payment.Order.PaidAt = DateTimeOffset.UtcNow;
 
                     // Gọi WalletService để xử lý logic nạp tiền và trừ nợ
@@ -142,6 +148,9 @@ namespace Application.Services.User
                 await _unitOfWork.RollbackTransactionAsync(transaction, cancellationToken);
                 return new PaymentResultDTO { IsSuccess = false, Message = "An error occurred during processing.", RspCode = "99" };
             }
+
         }
+        private static string GenerateOrderNo(long userId)
+      => $"ORD-{userId}-{DateTime.UtcNow:yyyyMMddHHmmss}";
     }
 }

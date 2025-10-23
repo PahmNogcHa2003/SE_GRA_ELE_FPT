@@ -24,7 +24,7 @@ namespace Infrastructure.Repositories.User
                     (ut.Status == "Active" || ut.Status == "Ready"), ct);
         }
 
-        public async Task<List<UserTicket>> GetActiveTicketsByUserIdAsync(long userId, CancellationToken ct = default)
+        public async Task<List<UserTicket>?> GetActiveTicketsByUserIdAsync(long? userId, CancellationToken ct = default)
         {
             return await _dbSet
                 .AsNoTracking()

@@ -13,11 +13,11 @@ namespace Application.Interfaces.User.Service
         /// <summary>
         /// Mua một vé mới. Tích hợp trừ tiền từ ví.
         /// </summary>
-        Task<UserTicketDTO> PurchaseTicketAsync(PurchaseTicketRequestDTO request, CancellationToken ct);
+        Task<UserTicketDTO?> PurchaseTicketAsync(long? userId, PurchaseTicketRequestDTO request, CancellationToken ct);
 
         /// <summary>
         /// Lấy danh sách các vé (chưa hết hạn) của một người dùng.
         /// </summary>
-        Task<List<UserTicketDTO>> GetMyActiveTicketsAsync(long userId, CancellationToken ct);
+        Task<List<UserTicketDTO>?> GetMyActiveTicketsAsync(long? userId, CancellationToken ct);
     }
 }

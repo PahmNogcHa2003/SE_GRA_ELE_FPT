@@ -27,6 +27,6 @@ namespace Application.Interfaces.User.Repository
         /// <param name="userId">ID người dùng</param>
         /// <param name="ct">Cancellation Token</param>
         /// <returns>Danh sách UserTicket.</returns>
-        Task<List<UserTicket>> GetActiveTicketsByUserIdAsync(long userId, CancellationToken ct = default);
+        Task<List<UserTicket>?> GetActiveTicketsByUserIdAsync(long? userId, CancellationToken ct = default);
     }
 }

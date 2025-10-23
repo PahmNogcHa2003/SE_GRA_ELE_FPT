@@ -7,6 +7,7 @@ using Application.Interfaces.User.Service;
 using Application.Services.Base;
 using AutoMapper;
 using Domain.Entities;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,6 +20,17 @@ namespace Application.Services.User
     {
         public UserProfilesService(IRepository<UserProfile, long> repo, IMapper mapper, IUnitOfWork uow) : base(repo, mapper, uow)
         {
+        }
+
+        public async Task<UserProfileDTO?> GetByUserIdAsync(long userId, CancellationToken ct = default)
+        {
+            var entity = await _repo.Query()
+                .AsNoTracking()
+                .Where(p => p.UserId == userId)
+                .OrderByDescending(p => p.UpdatedAt > p.CreatedAt ? p.UpdatedAt : p.CreatedAt)
+                .FirstOrDefaultAsync(ct);
+
+            return entity is null ? null : _mapper.Map<UserProfileDTO>(entity);
         }
     }
 }

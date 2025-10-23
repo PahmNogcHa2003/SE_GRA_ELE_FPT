@@ -8,6 +8,7 @@ using Domain.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
+using System.Security.Claims;
 
 namespace Application.Services.Identity
 {
@@ -87,8 +88,8 @@ namespace Application.Services.Identity
                 {
                     UserId = user.Id,
                     Dob = model.DateOfBirth,
-                    EmergencyName = model.FullName,
-                    EmergencyPhone = model.PhoneNumber,
+                    EmergencyName = model.EmergencyName,
+                    EmergencyPhone = model.EmergencyPhone,
                     NumberCard = model.IdentityNumber,
                     Gender = model.Gender,
                     FullName = model.FullName,
@@ -155,6 +156,46 @@ namespace Application.Services.Identity
                 Message = "Login successful.",
                 Token = jwt
             };
+        }
+        private long? GetUserIdAsLong(ClaimsPrincipal userPrincipal)
+        {
+            var idStr = _userManager.GetUserId(userPrincipal);
+            if (long.TryParse(idStr, out var id))
+                return id;
+            return null;
+        }
+
+        public async Task<MeDTO?> GetMeAsync(ClaimsPrincipal userPrincipal, CancellationToken ct = default)
+        {
+            // Lấy user hiện tại từ Claims
+            var userId = GetUserIdAsLong(userPrincipal);
+            if (userId == null) return null;
+
+            var user = await _userManager.Users.FirstOrDefaultAsync(u => u.Id == userId, ct);
+            if (user == null) return null;
+
+            // Lấy roles
+            var roles = await _userManager.GetRolesAsync(user);
+
+            // Lấy hồ sơ (nếu có)
+            var profile = await _profileService.GetByUserIdAsync(user.Id, ct);
+            // Giả định bạn đã có method này trong IUserProfilesService
+            // Nếu chưa có, bạn có thể thêm một method tương tự hoặc dùng Query service hiện có.
+
+            var me = new MeDTO
+            {
+                UserId = user.Id,
+                Email = user.Email!,
+                FullName = profile?.FullName,
+                AvatarUrl = profile?.AvatarUrl,
+                CreatedDate = user.CreatedDate,
+                Dob = profile?.Dob,
+                Gender = profile?.Gender,
+                AddressDetail = profile?.AddressDetail,
+                Roles = roles?.ToArray() ?? Array.Empty<string>()
+            };
+
+            return me;
         }
     }
 }

@@ -43,7 +43,7 @@ public class UserTicketService
         _walletTxnRepo = walletTxnRepo;
     }
 
-    public async Task<UserTicketDTO> PurchaseTicketAsync(PurchaseTicketRequestDTO request, CancellationToken ct)
+    public async Task<UserTicketDTO?> PurchaseTicketAsync(long? userId, PurchaseTicketRequestDTO request, CancellationToken ct)
     {
         // 1) Lấy PlanPrice (active) + tên Plan
         var planPrice = await _planPriceRepo.Query()
@@ -58,14 +58,14 @@ public class UserTicketService
         if (planPrice.ValidityDays.HasValue && planPrice.ValidityDays.Value > 0)
         {
             var hasExisting = await _userTicketRepository
-                .HasExistingSubscriptionAsync(request.UserId, request.PlanPriceId, ct);
+                .HasExistingSubscriptionAsync(userId.Value, request.PlanPriceId, ct);
             if (hasExisting)
                 throw new InvalidOperationException("Bạn đã có gói vé tương tự đang hoạt động hoặc đang chờ kích hoạt.");
         }
 
         // 3) Lấy ví của user
         var wallet = await _walletRepo.Query()
-            .FirstOrDefaultAsync(w => w.UserId == request.UserId && w.Status == "Active", ct);
+            .FirstOrDefaultAsync(w => w.UserId == userId && w.Status == "Active", ct);
         if (wallet is null)
             throw new InvalidOperationException("Ví không tồn tại hoặc không hoạt động.");
 
@@ -86,8 +86,8 @@ public class UserTicketService
             // 6) Tạo Order (Pending)
             var order = new Order
             {
-                UserId = request.UserId,
-                OrderNo = GenerateOrderNo(request.UserId),
+                UserId = userId.Value,
+                OrderNo = GenerateOrderNo(userId.Value),
                 OrderType = "TicketPurchase",
                 Status = "Pending",
                 Subtotal = subtotal,
@@ -97,7 +97,7 @@ public class UserTicketService
                 CreatedAt = now
             };
             await _orderRepo.AddAsync(order, ct);
-            await _uow.SaveChangesAsync(ct); // có order.Id
+
 
             // 7) Trừ ví (cập nhật Wallet + ghi WalletTransaction)
             wallet.Balance -= total;
@@ -118,14 +118,14 @@ public class UserTicketService
             // 8) Tạo UserTicket (Ready)
             var newUserTicket = new UserTicket
             {
-                UserId = request.UserId,
+                UserId = userId.Value,
                 PlanPriceId = planPrice.Id,
                 PurchasedPrice = total,
                 Status = "Ready",
                 CreatedAt = now,
                 RemainingMinutes = planPrice.DurationLimitMinutes,
                 RemainingRides = null,
-                SerialCode = GenerateSerialCode(request.UserId, planPrice.Id)
+                SerialCode = GenerateSerialCode(userId.Value, planPrice.Id)
                 // ActivatedAt/ExpiresAt: để null, sẽ set khi kích hoạt
             };
             await _userTicketRepository.AddAsync(newUserTicket, ct);
@@ -151,7 +151,7 @@ public class UserTicketService
         }
     }
 
-    public async Task<List<UserTicketDTO>> GetMyActiveTicketsAsync(long userId, CancellationToken ct)
+    public async Task<List<UserTicketDTO>?> GetMyActiveTicketsAsync(long? userId, CancellationToken ct)
     {
         var tickets = await _userTicketRepository.GetActiveTicketsByUserIdAsync(userId, ct);
 
