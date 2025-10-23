@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:hola_bike_app/presentation/profile/page/edit_profile_page.dart';
+import 'package:hola_bike_app/presentation/more/page/edit_profile_page.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});

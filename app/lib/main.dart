@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:hola_bike_app/presentation/home/pages/notification/notification_page.dart';
 import 'package:hola_bike_app/presentation/home/pages/station/station_page.dart';
-import 'package:hola_bike_app/presentation/profile/page/profile_page.dart';
+import 'package:hola_bike_app/presentation/login/login_page.dart';
+import 'package:hola_bike_app/presentation/more/page/change_password_page.dart';
+import 'package:hola_bike_app/presentation/more/page/profile_page.dart';
 import 'package:hola_bike_app/presentation/splash/splash_page.dart';
+import 'package:hola_bike_app/presentation/wallet/page/pricing/pricing_page.dart';
 import 'package:hola_bike_app/presentation/wallet/walet_page.dart';
 import 'package:hola_bike_app/theme/app_colors.dart';
 
@@ -65,6 +68,20 @@ class MyApp extends StatelessWidget {
         '/notifications': (context) => const NotificationPage(),
         '/wallet': (context) => const WalletScreen(),
         '/profile': (context) => const ProfilePage(),
+
+        // // Các chức năng tài khoản
+        // '/verify': (context) => const VerifyAccountPage(),
+        '/change-password': (context) => const ChangePasswordPage(),
+        // '/delete-account': (context) => const DeleteAccountPage(),
+        // // Các trang thông tin
+        '/pricing': (context) => const PricingPage(),
+        // '/guide': (context) => const GuidePage(),
+        // '/policy': (context) => const PolicyPage(),
+        // '/website': (context) => const WebsitePage(),
+        // '/support': (context) => const SupportPage(),
+
+        // Trang đăng nhập (nếu có)
+        '/login': (context) => const LoginScreen(),
       },
     );
   }
