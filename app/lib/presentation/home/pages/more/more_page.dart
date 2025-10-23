@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:hola_bike_app/presentation/profile/page/edit_profile_page.dart';
+import 'package:hola_bike_app/presentation/more/page/edit_profile_page.dart';
 import 'package:hola_bike_app/theme/app_colors.dart';
 
 class MorePage extends StatelessWidget {
@@ -7,19 +7,43 @@ class MorePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final List<(String, IconData)> accountItems = [
-      ("Xác thực tài khoản", Icons.verified_user),
-      ("Đổi mật khẩu", Icons.password),
-      ("Xoá tài khoản", Icons.delete_forever),
-      ("Đăng xuất", Icons.logout),
+    final List<Map<String, dynamic>> accountItems = [
+      {
+        'icon': Icons.verified_user,
+        'label': 'Xác thực tài khoản',
+        'router': '/verify',
+      },
+      {
+        'icon': Icons.password,
+        'label': 'Đổi mật khẩu',
+        'router': '/change-password',
+      },
+      {
+        'icon': Icons.delete_forever,
+        'label': 'Xoá tài khoản',
+        'router': '/delete-account',
+      },
+      {'icon': Icons.logout, 'label': 'Đăng xuất', 'router': '/logout'},
     ];
 
-    final List<(String, IconData)> infoItems = [
-      ("Bảng giá", Icons.price_change),
-      ("Hướng dẫn sử dụng", Icons.help_outline),
-      ("Quy định chính sách", Icons.policy),
-      ("Website EcoJourney", Icons.language),
-      ("Hỗ trợ", Icons.support_agent),
+    final List<Map<String, dynamic>> infoItems = [
+      {'icon': Icons.price_change, 'label': 'Bảng giá', 'router': '/pricing'},
+      {
+        'icon': Icons.help_outline,
+        'label': 'Hướng dẫn sử dụng',
+        'router': '/guide',
+      },
+      {
+        'icon': Icons.policy,
+        'label': 'Quy định chính sách',
+        'router': '/policy',
+      },
+      {
+        'icon': Icons.language,
+        'label': 'Website EcoJourney',
+        'router': '/website',
+      },
+      {'icon': Icons.support_agent, 'label': 'Hỗ trợ', 'router': '/support'},
     ];
 
     return Scaffold(
@@ -87,7 +111,9 @@ class MorePage extends StatelessWidget {
               child: ListView(
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 children: [
-                  ...accountItems.map((item) => _buildItem(item)),
+                  ...accountItems.map(
+                    (item) => _buildRouterItem(context, item),
+                  ),
 
                   // 🔷 Ngăn cách
                   Padding(
@@ -110,7 +136,7 @@ class MorePage extends StatelessWidget {
                   ),
 
                   // 🔷 Danh sách thông tin ứng dụng
-                  ...infoItems.map((item) => _buildItem(item)),
+                  ...infoItems.map((item) => _buildRouterItem(context, item)),
                 ],
               ),
             ),
@@ -130,20 +156,29 @@ class MorePage extends StatelessWidget {
     );
   }
 
-  Widget _buildItem((String, IconData) item) {
-    final (label, icon) = item;
+  Widget _buildRouterItem(BuildContext context, Map<String, dynamic> item) {
     return Column(
       children: [
         ListTile(
-          leading: Icon(icon, color: AppColors.primary),
-          title: Text(label, style: const TextStyle(fontSize: 14)),
+          leading: Icon(item['icon'], color: AppColors.primary),
+          title: Text(item['label'], style: const TextStyle(fontSize: 14)),
           trailing: const Icon(Icons.chevron_right),
           onTap: () {
-            // TODO: xử lý chức năng khi nhấn
+            final route = item['router'] as String;
+            if (route == '/logout') {
+              _handleLogout(context);
+            } else {
+              Navigator.pushNamed(context, route);
+            }
           },
         ),
         const Divider(height: 1),
       ],
     );
+  }
+
+  void _handleLogout(BuildContext context) {
+    // TODO: xử lý đăng xuất, ví dụ: xóa token, clear session, chuyển về màn đăng nhập
+    Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
   }
 }
