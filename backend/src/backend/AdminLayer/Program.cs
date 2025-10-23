@@ -22,7 +22,6 @@ builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(Assembly.Loa
 // Add Infrastructure Layer (DbContext, Repositories, Services...)
 builder.Services.AddInfrastructure(builder.Configuration);
 
-// Add Identity
 builder.Services.AddIdentity<AspNetUser, IdentityRole<long>>(options =>
 {
     options.Password.RequireDigit = true;
@@ -34,8 +33,9 @@ builder.Services.AddIdentity<AspNetUser, IdentityRole<long>>(options =>
 .AddEntityFrameworkStores<HolaBikeContext>()
 .AddDefaultTokenProviders()
 .AddRoleManager<RoleManager<IdentityRole<long>>>();
+.AddDefaultTokenProviders()
+.AddRoleManager<RoleManager<IdentityRole<long>>>(); 
 
-// Add Controllers & Custom Validation Error Response
 builder.Services.AddControllers()
     .ConfigureApiBehaviorOptions(options =>
     {
@@ -173,6 +173,50 @@ async Task SeedIdentityAsync(IServiceProvider services)
     }
 }
 
+// Add CORS
+builder.Services.AddCors(o => o.AddPolicy("frontend", p =>
+    p.WithOrigins("http://localhost:5173")
+     .AllowAnyHeader().AllowAnyMethod().AllowCredentials()
+));
+
+// Add Swagger with Auth support
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "HolaBike API", Version = "v1" });
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "JWT Authorization header using the Bearer scheme."
+    });
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            new string[] {}
+        }
+    });
+});
+
+// Add Authorization Policies
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
+    options.AddPolicy("StaffOrAdmin", policy => policy.RequireRole("Admin", "Staff"));
+    options.AddPolicy("UserOnly", policy => policy.RequireRole("User"));
+});
+
 var app = builder.Build();
 
 // Seed roles + admin
@@ -194,6 +238,57 @@ using (var scope = app.Services.CreateScope())
 
 // --- Middleware Pipeline Configuration ---
 
+
+// ✅ --- SEED DATABASE ON STARTUP ---
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    var logger = services.GetRequiredService<ILogger<Program>>();
+    try
+    {
+        var roleManager = services.GetRequiredService<RoleManager<IdentityRole<long>>>();
+        var userManager = services.GetRequiredService<UserManager<AspNetUser>>();
+
+        // 1. Seed Roles
+        string[] roleNames = { "Admin", "Staff", "User" };
+        foreach (var roleName in roleNames)
+        {
+            if (!await roleManager.RoleExistsAsync(roleName))
+            {
+                await roleManager.CreateAsync(new IdentityRole<long>(roleName));
+                logger.LogInformation("Role '{RoleName}' created.", roleName);
+            }
+        }
+
+        // 2. Seed Admin User
+        var adminEmail = "admin@gmail.com";
+        var adminUser = await userManager.FindByEmailAsync(adminEmail);
+        if (adminUser == null)
+        {
+            adminUser = new AspNetUser
+            {
+                UserName = adminEmail,
+                Email = adminEmail,
+                EmailConfirmed = true, // Tự động xác thực email cho admin
+                CreatedDate = DateTimeOffset.UtcNow
+            };
+            var result = await userManager.CreateAsync(adminUser, "Admin123");
+            if (result.Succeeded)
+            {
+                // Gán cả 2 quyền Admin và Staff cho tài khoản này
+                await userManager.AddToRolesAsync(adminUser, new[] { "Admin", "Staff" });
+                logger.LogInformation("Admin user created and assigned Admin/Staff roles.");
+            }
+        }
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "An error occurred while seeding the database.");
+    }
+}
+
+
+// --- Middleware Pipeline Configuration ---
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -201,6 +296,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
+app.UseMiddleware<ValidationMiddleware>();
+app.UseMiddleware<ResponseMiddleware>();
 
 app.UseHttpsRedirection();
 
@@ -209,6 +306,10 @@ app.UseRouting();
 app.UseCors("AllowAll"); // Use CORS Policy
 
 app.UseAuthentication(); // This must come before UseAuthorization
+
+app.UseCors("frontend");
+
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
@@ -216,5 +317,6 @@ app.MapControllers();
 app.Run();
 
 // ✅ FIX: Make the auto-generated Program class public so test projects can access it.
+// Make the Program class public so it can be accessed from test projects
 public partial class Program { }
 
