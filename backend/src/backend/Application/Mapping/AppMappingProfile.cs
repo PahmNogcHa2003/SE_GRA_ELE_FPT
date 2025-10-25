@@ -23,9 +23,6 @@ namespace Application.Mapping
             CreateMap<Domain.Entities.Tag, DTOs.TagDTO>().ReverseMap();
             CreateMap<Wallet, WalletDTO>().ReverseMap();
             CreateMap<WalletTransaction, WalletTransactionDTO>().ReverseMap();
-            CreateMap<UserTicket, ManageUserTicketDTO>()
-                 .ForMember(dest => dest.UserEmail, opt => opt.MapFrom(src => src.User.Email)) 
-                 .ForMember(dest => dest.PlanName, opt => opt.MapFrom(src => $"{src.PlanPrice.Plan.Name} - {src.PlanPrice.VehicleType}"));
             CreateMap<CreateTicketPlanDTO, TicketPlan>();
             CreateMap<UpdateTicketPlanDTO, TicketPlan>()
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
@@ -34,6 +31,7 @@ namespace Application.Mapping
             CreateMap<UpdateTicketPlanPriceDTO, TicketPlanPrice>()
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
             CreateMap<TicketPlanPrice, TicketPlanPriceDTO>().ReverseMap();
+            CreateMap<UserTicket, UserTicketDTO>().ReverseMap();
             CreateMap<UserTicket, ManageUserTicketDTO>()
                 .ForMember(dest => dest.UserEmail, opt => opt.MapFrom(src => src.User.Email)) 
                 .ForMember(dest => dest.PlanName, opt => opt.MapFrom(src => $"{src.PlanPrice.Plan.Name} - {src.PlanPrice.VehicleType}"));
