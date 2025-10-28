@@ -40,9 +40,7 @@ namespace Application.Mapping
             CreateMap<Domain.Entities.Ward, DTOs.Location.LocationDTO>().ReverseMap();
             CreateMap<Domain.Entities.Rental, DTOs.RentalDTO>().ReverseMap();
             CreateMap<Domain.Entities.UserDevice, DTOs.UserDevice.UserDeviceDTO>().ReverseMap();
-
-
-
+            CreateMap<Domain.Entities.Contact, DTOs.Contact.CreateContactDTO>().ReverseMap();
 
             ConfigureNewsMapping();
 
