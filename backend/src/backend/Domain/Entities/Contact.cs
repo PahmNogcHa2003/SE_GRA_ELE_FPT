@@ -8,8 +8,6 @@ namespace Domain.Entities;
 [Table("Contact")]
 public class Contact : BaseEntity<long>
 {
-    public long? UserId { get; set; }
-
     [StringLength(255)]
     public string? Email { get; set; }
 
@@ -29,7 +27,7 @@ public class Contact : BaseEntity<long>
     [Unicode(false)] 
     public string Status { get; set; } = "Open"; 
 
-    public long? AssignedTo { get; set; }
+    public long? ReplyById { get; set; }
 
     [Required]
     [Precision(0)]
@@ -37,11 +35,7 @@ public class Contact : BaseEntity<long>
 
     [Precision(0)]
     public DateTimeOffset? ClosedAt { get; set; }
-
-    [ForeignKey(nameof(UserId))]
-    [InverseProperty(nameof(AspNetUser.Contacts))]
-    public AspNetUser? User { get; set; } 
    
-    [ForeignKey(nameof(AssignedTo))]
-    public AspNetUser? Assignee { get; set; }
+    [ForeignKey(nameof(ReplyById))]
+    public AspNetUser? Reply { get; set; }
 }
