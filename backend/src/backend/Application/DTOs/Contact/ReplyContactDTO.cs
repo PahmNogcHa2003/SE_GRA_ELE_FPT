@@ -14,3 +14,4 @@ namespace Application.DTOs.Contact
         public string? ReplyContent { get; set; }
     }
 }
+

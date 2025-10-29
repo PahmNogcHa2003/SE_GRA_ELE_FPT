@@ -56,6 +56,8 @@ namespace Infrastructure.Dependency_Injection
             services.AddScoped<IRepository<UserDevice, long>, UserDevicesRepository>();
             services.AddScoped<IEmailRepository, MailRepository>();
             services.AddScoped<IContactRepository, ContactRepository>();
+            services.AddScoped<IManageContactRepository, ManageContactRepository>();
+            services.AddScoped<IReplyContactRepository, ReplyContactRepository>();
 
 
 
@@ -93,6 +95,9 @@ namespace Infrastructure.Dependency_Injection
             services.AddScoped<IJwtTokenService, JwtTokenService>();
             services.AddScoped<IEmailService, EmailService>();
             services.AddScoped<IContactService, ContactService>();
+            services.AddScoped<IManageContactService, ManageContactService>();
+            services.AddScoped<IReplyContactService, ReplyContactService>();
+
 
             // --- AutoMapper ---
             services.AddAutoMapper(typeof(AppMappingProfile).Assembly);
