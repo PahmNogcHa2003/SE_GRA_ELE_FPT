@@ -1,14 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
-using System.ComponentModel.DataAnnotations;
 using System.Threading.Tasks;
 
 namespace Application.DTOs.Contact
 {
-    public class ContactDTO : BaseDTO<long>
+    public class ManageContactDTO : BaseDTO<long>
     {
+
         [StringLength(255)]
         public string? Email { get; set; }
 
