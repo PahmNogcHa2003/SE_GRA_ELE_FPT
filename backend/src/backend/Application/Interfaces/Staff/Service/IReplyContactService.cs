@@ -9,8 +9,8 @@ using System.Threading.Tasks;
 
 namespace Application.Interfaces.Staff.Service
 {
-    public interface IReplyContactService : IService<Contact, ReplyContactDTO, long>,
-          IService3DTO<Contact, ReplyContactDTO, long>
+    public interface IReplyContactService 
     {
+        Task<bool> ReplyToContactAsync(long contactId, ReplyContactDTO dto, long staffId, CancellationToken cancellationToken = default);
     }
 }
