@@ -77,55 +77,10 @@ namespace Application.Services.User
 
             _logger.LogInformation("Gửi yêu cầu KYC thành công. Bắt đầu xử lý OCR trong nền. ID yêu cầu: {KycId}", kycFormEntity.Id);
 
-            // Bước 3: Kích hoạt tác vụ nền để xử lý OCR và không chờ nó hoàn thành
-            // API sẽ trả về ngay lập tức sau dòng này.
-            _ = Task.Run(() => ProcessOcrInBackground(kycFormEntity.Id, frontUploadResult.Url, backUploadResult.Url));
 
             return true;
         }
 
-        private async Task ProcessOcrInBackground(long kycId, string frontUrl, string backUrl)
-        {
-            // Khi chạy tác vụ nền, chúng ta cần tạo một "scope" mới để lấy các service
-            // như DbContext, vì scope của request ban đầu đã kết thúc.
-            using (var scope = _serviceProvider.CreateScope())
-            {
-                var scopedUow = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
-                var scopedKycRepo = scope.ServiceProvider.GetRequiredService<IKycRepository>();
-                var scopedOcrRepo = scope.ServiceProvider.GetRequiredService<IOcrRepository>();
-                var scopedMapper = scope.ServiceProvider.GetRequiredService<IMapper>();
-                var scopedLogger = scope.ServiceProvider.GetRequiredService<ILogger<KycService>>();
-
-                try
-                {
-                    scopedLogger.LogInformation("[Background] Bắt đầu đọc thông tin từ ảnh cho KYC ID: {KycId}", kycId);
-
-                    var ocrDataDto = await scopedOcrRepo.ReadIdCardInfoAsync(frontUrl, backUrl);
-
-                    // Phải lấy lại entity trong scope mới để Entity Framework theo dõi
-                    var kycToUpdate = await scopedKycRepo.GetByIdAsync(kycId);
-
-                    if (kycToUpdate != null && ocrDataDto != null)
-                    {
-                        scopedMapper.Map(ocrDataDto, kycToUpdate);
-                        kycToUpdate.Status = KycStatus.Pending; // Giữ nguyên trạng thái chờ duyệt
-
-                        scopedKycRepo.Update(kycToUpdate);
-                        await scopedUow.SaveChangesAsync(); // Lưu dữ liệu OCR vào DB
-
-                        scopedLogger.LogInformation("[Background] Cập nhật thông tin từ OCR thành công cho KYC ID: {KycId}", kycId);
-                    }
-                    else
-                    {
-                        scopedLogger.LogWarning("[Background] OCR không trả về dữ liệu hoặc không tìm thấy KYC ID: {KycId}. Yêu cầu sẽ được xử lý thủ công.", kycId);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    scopedLogger.LogError(ex, "[Background] Lỗi nghiêm trọng trong quá trình xử lý OCR cho KYC ID: {KycId}", kycId);
-                }
-            }
-        }
     }
 }
 
