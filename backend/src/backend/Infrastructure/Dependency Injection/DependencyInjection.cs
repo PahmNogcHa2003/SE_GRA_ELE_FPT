@@ -1,5 +1,6 @@
 ﻿using Application.Interfaces;
 using Application.Interfaces.Base;
+using Application.Interfaces.Email;
 using Application.Interfaces.Identity;
 using Application.Interfaces.Location;
 using Application.Interfaces.Staff.Repository;
@@ -8,11 +9,13 @@ using Application.Interfaces.User.Repository;
 using Application.Interfaces.User.Service;
 using Application.Mapping;
 using Application.Services.Base;
+using Application.Services.Email;
 using Application.Services.Identity;
 using Application.Services.Staff;
 using Application.Services.User;
 using Domain.Entities;
 using Infrastructure.Persistence;
+using Infrastructure.Repositories.Email;
 using Infrastructure.Repositories.Location;
 using Infrastructure.Repositories.Staff;
 using Infrastructure.Repositories.User;
@@ -51,6 +54,11 @@ namespace Infrastructure.Dependency_Injection
             services.AddScoped<IManageUserTicketRepository, ManageUserTicketRepository>();
             services.AddScoped<IRepository<Rental, long>, RentalsRepository>();
             services.AddScoped<IRepository<UserDevice, long>, UserDevicesRepository>();
+            services.AddScoped<IEmailRepository, MailRepository>();
+            services.AddScoped<IContactRepository, ContactRepository>();
+            services.AddScoped<IManageContactRepository, ManageContactRepository>();
+            services.AddScoped<IReplyContactRepository, ReplyContactRepository>();
+
 
 
             // --- Location API ---
@@ -62,6 +70,7 @@ namespace Infrastructure.Dependency_Injection
             services.AddMemoryCache();
             //LocationRepository
             services.AddScoped<ILocationRepository, LocationRepository>();
+            services.Configure<Setting.MailSettings>(config.GetSection("MailSettings"));
 
             // --- Services (application layer) ---
             services.AddScoped(typeof(IService<,,>), typeof(GenericService<,,>));
@@ -85,8 +94,10 @@ namespace Infrastructure.Dependency_Injection
             services.AddScoped<IRentalsService, RentalsService>();
             services.AddScoped<IUserDevicesService, UserDevicesService>();
             services.AddScoped<IJwtTokenService, JwtTokenService>();
-
-
+            services.AddScoped<IEmailService, EmailService>();
+            services.AddScoped<IContactService, ContactService>();
+            services.AddScoped<IManageContactService, ManageContactService>();
+            services.AddScoped<IReplyContactService, ReplyContactService>();
 
 
             // --- AutoMapper ---

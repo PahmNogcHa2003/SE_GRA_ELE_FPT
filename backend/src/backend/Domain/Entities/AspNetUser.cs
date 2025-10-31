@@ -15,11 +15,7 @@ namespace Domain.Entities
 
         [InverseProperty("User")]
         public virtual ICollection<Rental> Rentals { get; set; } = new List<Rental>();
-
-        [InverseProperty("User")]
-        public virtual ICollection<Contact> Contacts { get; set; } = new List<Contact>();
-
-        [InverseProperty("Assignee")]
+        [InverseProperty("Reply")]
         public virtual ICollection<Contact> AssignedContacts { get; set; } = new List<Contact>();
 
         [InverseProperty("User")]
