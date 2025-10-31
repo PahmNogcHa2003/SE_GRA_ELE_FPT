@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Application.DTOs.Email
+namespace Infrastructure.Setting
 {
     public class MailSettings
     {

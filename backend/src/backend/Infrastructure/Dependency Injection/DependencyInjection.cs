@@ -69,7 +69,8 @@ namespace Infrastructure.Dependency_Injection
             //  cache
             services.AddMemoryCache();
             //LocationRepository
-            services.AddScoped<ILocationRepository, LocationRepository>();        
+            services.AddScoped<ILocationRepository, LocationRepository>();
+            services.Configure<Setting.MailSettings>(config.GetSection("MailSettings"));
 
             // --- Services (application layer) ---
             services.AddScoped(typeof(IService<,,>), typeof(GenericService<,,>));
