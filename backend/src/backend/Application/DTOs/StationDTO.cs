@@ -28,5 +28,7 @@ namespace Application.DTOs
 
         [StringLength(255)]
         public string? Image { get; set; }
+        public int VehicleAvailable { get; set; }
+        public double? DistanceKm { get; set; }
     }
 }

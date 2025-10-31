@@ -149,12 +149,13 @@ namespace Application.Services.Identity
 
             // Tạo JWT
             var jwt = await _tokenService.GenerateJwtTokenAsync(user);
-
+            var roles = await _userManager.GetRolesAsync(user);
             return new AuthResponseDTO
             {
                 IsSuccess = true,
                 Message = "Login successful.",
-                Token = jwt
+                Token = jwt,
+                Roles = [.. roles]
             };
         }
         private long? GetUserIdAsLong(ClaimsPrincipal userPrincipal)

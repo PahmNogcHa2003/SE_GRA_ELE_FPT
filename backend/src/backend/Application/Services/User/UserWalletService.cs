@@ -22,7 +22,7 @@ namespace Application.Services.User
         }
 
         // TRIỂN KHAI PHƯƠNG THỨC MỚI
-        public async Task<WalletDTO?> GetByUserIdAsync(long userId, CancellationToken ct = default)
+        public async Task<WalletDTO?> GetByUserIdAsync(long? userId, CancellationToken ct = default)
         {
             var walletEntity = await _repo.Query()
             .AsNoTracking()

@@ -66,7 +66,8 @@ namespace Infrastructure.Dependency_Injection
             // --- Services (application layer) ---
             services.AddScoped(typeof(IService<,,>), typeof(GenericService<,,>));
             //services.AddScoped<IUserService, UserService>();
-            services.AddScoped<IStationsService, StationsService>();
+            services.AddScoped<Application.Interfaces.Staff.Service.IStationsService, Application.Services.Staff.StationsService>();
+            services.AddScoped<Application.Interfaces.User.Service.IStationsService, Application.Services.User.StationsService>();
             services.AddScoped<ICategoriesVehicleService, CategoriesVehicleService>();
             services.AddScoped<IVehicleService, VehiclesService>();
             services.AddScoped<INewsService, NewsService>();

@@ -31,7 +31,10 @@ namespace Application.Mapping
             CreateMap<UpdateTicketPlanPriceDTO, TicketPlanPrice>()
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
             CreateMap<TicketPlanPrice, TicketPlanPriceDTO>().ReverseMap();
-            CreateMap<UserTicket, UserTicketDTO>().ReverseMap();
+            CreateMap<UserTicket, UserTicketDTO>()
+                .ForMember(d => d.PlanName, m => m.MapFrom(s => s.PlanPrice.Plan.Name))
+                .ForMember(d => d.VehicleType, o => o.MapFrom(s => s.PlanPrice.VehicleType))
+                .ForMember(d => d.ActivationMode, m => m.MapFrom(s => (ActivationModeDTO)(int)s.PlanPrice.ActivationMode));
             CreateMap<UserTicket, ManageUserTicketDTO>()
                 .ForMember(dest => dest.UserEmail, opt => opt.MapFrom(src => src.User.Email)) 
                 .ForMember(dest => dest.PlanName, opt => opt.MapFrom(src => $"{src.PlanPrice.Plan.Name} - {src.PlanPrice.VehicleType}"));
@@ -40,7 +43,9 @@ namespace Application.Mapping
             CreateMap<Domain.Entities.Ward, DTOs.Location.LocationDTO>().ReverseMap();
             CreateMap<Domain.Entities.Rental, DTOs.RentalDTO>().ReverseMap();
             CreateMap<Domain.Entities.UserDevice, DTOs.UserDevice.UserDeviceDTO>().ReverseMap();
-
+            CreateMap<TicketPlanPrice, UserTicketPlanPriceDTO>()
+                .ForMember(d => d.ActivationMode, m => m.MapFrom(s => (ActivationModeDTO)(int)s.ActivationMode));
+            CreateMap<TicketPlan, UserTicketPlanDTO>();
 
 
 

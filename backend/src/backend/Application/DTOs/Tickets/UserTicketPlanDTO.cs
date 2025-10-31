@@ -9,8 +9,10 @@ namespace Application.DTOs.Tickets
     public class UserTicketPlanDTO
     {
         public long Id { get; set; }
+        public string? Code { get; set; }
         public string? Name { get; set; }
+        public string? Type { get; set; }       
         public string? Description { get; set; }
-        public List<UserTicketPlanPriceDTO> Prices { get; set; } = new List<UserTicketPlanPriceDTO>();
+        public List<UserTicketPlanPriceDTO> Prices { get; set; } = new();
     }
 }
