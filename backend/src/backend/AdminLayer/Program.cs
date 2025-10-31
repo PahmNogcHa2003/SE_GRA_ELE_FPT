@@ -66,6 +66,8 @@ builder.Services.AddCors(o => o.AddPolicy("frontend", p =>
 builder.Services.AddEndpointsApiExplorer();
 
 // AuthN + JWT
+
+// Add Authentication & JWT
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;

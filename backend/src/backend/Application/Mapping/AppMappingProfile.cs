@@ -46,6 +46,9 @@ namespace Application.Mapping
             CreateMap<TicketPlanPrice, UserTicketPlanPriceDTO>()
                 .ForMember(d => d.ActivationMode, m => m.MapFrom(s => (ActivationModeDTO)(int)s.ActivationMode));
             CreateMap<TicketPlan, UserTicketPlanDTO>();
+            CreateMap<Domain.Entities.Contact, DTOs.Contact.CreateContactDTO>().ReverseMap();
+            CreateMap<Domain.Entities.Contact, DTOs.Contact.ReplyContactDTO>().ReverseMap();
+            CreateMap<Domain.Entities.Contact, DTOs.Contact.ManageContactDTO>().ReverseMap();
 
 
 

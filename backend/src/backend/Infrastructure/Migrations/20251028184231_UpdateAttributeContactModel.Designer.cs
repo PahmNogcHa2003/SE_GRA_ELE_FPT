@@ -4,6 +4,7 @@ using Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(HolaBikeContext))]
-    partial class HolaBikeContextModelSnapshot : ModelSnapshot
+    [Migration("20251028184231_UpdateAttributeContactModel")]
+    partial class UpdateAttributeContactModel
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -737,12 +740,6 @@ namespace Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
-                    b.Property<int>("ActivationMode")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("ActivationWindowDays")
-                        .HasColumnType("int");
-
                     b.Property<int?>("DailyFreeDurationMinutes")
                         .HasColumnType("int");
 
@@ -760,6 +757,14 @@ namespace Infrastructure.Migrations
 
                     b.Property<decimal>("Price")
                         .HasColumnType("decimal(18, 2)");
+
+                    b.Property<DateTimeOffset?>("ValidFrom")
+                        .HasPrecision(0)
+                        .HasColumnType("datetimeoffset(0)");
+
+                    b.Property<DateTimeOffset?>("ValidTo")
+                        .HasPrecision(0)
+                        .HasColumnType("datetimeoffset(0)");
 
                     b.Property<int?>("ValidityDays")
                         .HasColumnType("int");
@@ -952,10 +957,6 @@ namespace Infrastructure.Migrations
                         .HasPrecision(0)
                         .HasColumnType("datetimeoffset(0)");
 
-                    b.Property<DateTimeOffset?>("ActivationDeadline")
-                        .HasPrecision(0)
-                        .HasColumnType("datetimeoffset(0)");
-
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasPrecision(0)
                         .HasColumnType("datetimeoffset(0)");
@@ -993,14 +994,6 @@ namespace Infrastructure.Migrations
 
                     b.Property<long>("UserId")
                         .HasColumnType("bigint");
-
-                    b.Property<DateTimeOffset?>("ValidFrom")
-                        .HasPrecision(0)
-                        .HasColumnType("datetimeoffset(0)");
-
-                    b.Property<DateTimeOffset?>("ValidTo")
-                        .HasPrecision(0)
-                        .HasColumnType("datetimeoffset(0)");
 
                     b.HasKey("Id");
 

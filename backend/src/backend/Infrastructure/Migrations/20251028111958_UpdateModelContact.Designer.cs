@@ -4,6 +4,7 @@ using Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(HolaBikeContext))]
-    partial class HolaBikeContextModelSnapshot : ModelSnapshot
+    [Migration("20251028111958_UpdateModelContact")]
+    partial class UpdateModelContact
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -199,8 +202,8 @@ namespace Infrastructure.Migrations
 
                     b.Property<string>("Content")
                         .IsRequired()
-                        .HasMaxLength(4000)
-                        .HasColumnType("nvarchar(4000)");
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasPrecision(0)
@@ -210,23 +213,12 @@ namespace Infrastructure.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
-                    b.Property<bool>("IsReplySent")
-                        .HasColumnType("bit");
-
                     b.Property<string>("PhoneNumber")
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
-                    b.Property<DateTimeOffset?>("ReplyAt")
-                        .HasPrecision(0)
-                        .HasColumnType("datetimeoffset(0)");
-
                     b.Property<long?>("ReplyById")
                         .HasColumnType("bigint");
-
-                    b.Property<string>("ReplyContent")
-                        .HasMaxLength(4000)
-                        .HasColumnType("nvarchar(4000)");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -737,12 +729,6 @@ namespace Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
-                    b.Property<int>("ActivationMode")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("ActivationWindowDays")
-                        .HasColumnType("int");
-
                     b.Property<int?>("DailyFreeDurationMinutes")
                         .HasColumnType("int");
 
@@ -760,6 +746,14 @@ namespace Infrastructure.Migrations
 
                     b.Property<decimal>("Price")
                         .HasColumnType("decimal(18, 2)");
+
+                    b.Property<DateTimeOffset?>("ValidFrom")
+                        .HasPrecision(0)
+                        .HasColumnType("datetimeoffset(0)");
+
+                    b.Property<DateTimeOffset?>("ValidTo")
+                        .HasPrecision(0)
+                        .HasColumnType("datetimeoffset(0)");
 
                     b.Property<int?>("ValidityDays")
                         .HasColumnType("int");
@@ -952,10 +946,6 @@ namespace Infrastructure.Migrations
                         .HasPrecision(0)
                         .HasColumnType("datetimeoffset(0)");
 
-                    b.Property<DateTimeOffset?>("ActivationDeadline")
-                        .HasPrecision(0)
-                        .HasColumnType("datetimeoffset(0)");
-
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasPrecision(0)
                         .HasColumnType("datetimeoffset(0)");
@@ -993,14 +983,6 @@ namespace Infrastructure.Migrations
 
                     b.Property<long>("UserId")
                         .HasColumnType("bigint");
-
-                    b.Property<DateTimeOffset?>("ValidFrom")
-                        .HasPrecision(0)
-                        .HasColumnType("datetimeoffset(0)");
-
-                    b.Property<DateTimeOffset?>("ValidTo")
-                        .HasPrecision(0)
-                        .HasColumnType("datetimeoffset(0)");
 
                     b.HasKey("Id");
 
