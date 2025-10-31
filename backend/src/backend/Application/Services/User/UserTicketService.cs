@@ -7,12 +7,12 @@ using Application.Services.Base;
 using AutoMapper;
 using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using System.Runtime.InteropServices;
 
 public class UserTicketService
     : GenericService<UserTicket, UserTicketDTO, long>, IUserTicketService
 {
     private readonly IUnitOfWork _uow;
-    private readonly IWalletService _walletService;
     private readonly IMapper _mapper;
 
     private readonly IRepository<TicketPlanPrice, long> _planPriceRepo;
@@ -20,6 +20,12 @@ public class UserTicketService
     private readonly IRepository<Wallet, long> _walletRepo;
     private readonly IRepository<WalletTransaction, long> _walletTxnRepo;
     private readonly IUserTicketRepository _userTicketRepository;
+
+    private static readonly TimeZoneInfo VnTz =
+        TimeZoneInfo.FindSystemTimeZoneById(
+            RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+                ? "SE Asia Standard Time"
+                : "Asia/Ho_Chi_Minh");
 
     public UserTicketService(
         IRepository<UserTicket, long> userTicketRepo,
@@ -34,7 +40,6 @@ public class UserTicketService
     ) : base(userTicketRepo, mapper, uow)
     {
         _uow = uow;
-        _walletService = walletService;
         _mapper = mapper;
         _userTicketRepository = userTicketRepository;
         _planPriceRepo = planPriceRepo;
@@ -43,47 +48,111 @@ public class UserTicketService
         _walletTxnRepo = walletTxnRepo;
     }
 
+    // ===== Helper: hạn thực tế của vé
+    private static DateTimeOffset? EffectiveExpiry(UserTicket t)
+        => t.ValidTo ?? t.ExpiresAt;
+
+    // ===== On-demand: cập nhật trạng thái Expired
+    private async Task EnsureTicketStatusesUpToDateAsync(long userId, CancellationToken ct)
+    {
+        var now = DateTimeOffset.UtcNow;
+
+        var list = await _userTicketRepository.Query()
+            .Where(t => t.UserId == userId && t.Status != "Expired")
+            .ToListAsync(ct);
+
+        foreach (var t in list)
+        {
+            // Vé lượt để dành quá hạn kích hoạt
+            if (t.Status == "Ready" && t.ActivationDeadline != null && t.ActivationDeadline <= now)
+                t.Status = "Expired";
+
+            // Subscription quá hạn hiệu lực
+            var exp = EffectiveExpiry(t);
+            if (exp != null && exp <= now)
+                t.Status = "Expired";
+        }
+
+        await _uow.SaveChangesAsync(ct);
+    }
+
+    public async Task<List<UserTicketPlanDTO>> GetTicketMarketAsync(string? vehicleType, CancellationToken ct)
+    {
+        var q = _planPriceRepo.Query()
+            .Include(p => p.Plan)
+            .Where(p => p.IsActive);
+
+        if (!string.IsNullOrWhiteSpace(vehicleType))
+        {
+            var vt = vehicleType.ToLower();
+            q = q.Where(p => p.VehicleType != null && p.VehicleType.ToLower() == vt);
+        }
+
+        var prices = await q.AsNoTracking().ToListAsync(ct);
+
+        var groups = prices.GroupBy(p => p.Plan);
+        var result = new List<UserTicketPlanDTO>();
+
+        foreach (var g in groups)
+        {
+            var planDto = _mapper.Map<UserTicketPlanDTO>(g.Key);
+            planDto.Prices = _mapper.Map<List<UserTicketPlanPriceDTO>>(g.ToList());
+            planDto.Code = g.Key.Code;
+            planDto.Type = g.Key.Type;
+            result.Add(planDto);
+        }
+        return result.OrderBy(x => x.Id).ToList();
+    }
+
     public async Task<UserTicketDTO?> PurchaseTicketAsync(long? userId, PurchaseTicketRequestDTO request, CancellationToken ct)
     {
-        // 1) Lấy PlanPrice (active) + tên Plan
+        if (userId is null || userId <= 0) throw new InvalidOperationException("User không hợp lệ.");
+        if (request is null) throw new ArgumentNullException(nameof(request));
+
         var planPrice = await _planPriceRepo.Query()
             .Include(x => x.Plan)
-            .AsNoTracking()
             .FirstOrDefaultAsync(p => p.Id == request.PlanPriceId && p.IsActive, ct);
 
         if (planPrice is null)
-            throw new KeyNotFoundException("Loại vé không hợp lệ hoặc đã hết hạn.");
+            throw new KeyNotFoundException("Loại vé không hợp lệ hoặc đã ngừng bán.");
 
-        // 2) Nếu là gói thuê bao, chặn mua trùng khi còn hiệu lực/chờ
-        if (planPrice.ValidityDays.HasValue && planPrice.ValidityDays.Value > 0)
+        var nowUtc = DateTimeOffset.UtcNow;
+        var isOnFirstUse = planPrice.ActivationMode == PlanActivationMode.ON_FIRST_USE;
+        var isSubscription = planPrice.ValidityDays.GetValueOrDefault() > 0; // Day/Month
+
+        if (isSubscription)
         {
-            var hasExisting = await _userTicketRepository
-                .HasExistingSubscriptionAsync(userId.Value, request.PlanPriceId, ct);
-            if (hasExisting)
-                throw new InvalidOperationException("Bạn đã có gói vé tương tự đang hoạt động hoặc đang chờ kích hoạt.");
+            var hasAnyActiveSubscription = await _userTicketRepository.Query()
+                .Include(t => t.PlanPrice)
+                .Where(t => t.UserId == userId.Value)
+                .Where(t => t.PlanPrice.ValidityDays > 0)
+                .Where(t => (t.ValidTo ?? t.ExpiresAt) != null && (t.ValidTo ?? t.ExpiresAt) > nowUtc)
+                .Where(t => t.Status == "Active" || t.Status == "Ready")
+                .AnyAsync(ct);
+
+            if (hasAnyActiveSubscription)
+                throw new InvalidOperationException("Bạn đang có gói theo thời gian còn hiệu lực. Vui lòng dùng hết/đợi hết hạn rồi mua gói mới.");
         }
 
-        // 3) Lấy ví của user
+        // Ví
         var wallet = await _walletRepo.Query()
-            .FirstOrDefaultAsync(w => w.UserId == userId && w.Status == "Active", ct);
+            .FirstOrDefaultAsync(w => w.UserId == userId.Value && w.Status == "Active", ct);
         if (wallet is null)
             throw new InvalidOperationException("Ví không tồn tại hoặc không hoạt động.");
 
-        // 4) Tính tiền đơn hàng
         var subtotal = planPrice.Price;
         var discount = 0m;
-        var total = subtotal - discount;
-        if (total < 0) total = 0;
+        var total = Math.Max(0, subtotal - discount);
 
-        // 5) Kiểm tra số dư ví
         if (wallet.Balance < total)
             throw new InvalidOperationException("Số dư ví không đủ để mua gói.");
 
-        var now = DateTimeOffset.UtcNow;
+        var nowLocal = TimeZoneInfo.ConvertTime(nowUtc, VnTz);
         var trx = await _uow.BeginTransactionAsync(ct);
+
         try
         {
-            // 6) Tạo Order (Pending)
+            // Order (Pending)
             var order = new Order
             {
                 UserId = userId.Value,
@@ -94,54 +163,83 @@ public class UserTicketService
                 Discount = discount,
                 Total = total,
                 Currency = wallet.Currency ?? "VND",
-                CreatedAt = now
+                CreatedAt = nowUtc
             };
             await _orderRepo.AddAsync(order, ct);
 
-
-            // 7) Trừ ví (cập nhật Wallet + ghi WalletTransaction)
+            // Trừ ví & ghi giao dịch
             wallet.Balance -= total;
-            wallet.UpdatedAt = now;
+            wallet.UpdatedAt = nowUtc;
             _walletRepo.Update(wallet);
 
             var walletTxn = new WalletTransaction
             {
                 WalletId = wallet.Id,
-                Direction = "Out",             // theo schema: 6 ký tự
-                Source = "TicketPurchase",    // nguồn: mua vé
+                Direction = "Out",
+                Source = "TicketPurchase",
                 Amount = total,
                 BalanceAfter = wallet.Balance,
-                CreatedAt = now
+                CreatedAt = nowUtc
             };
             await _walletTxnRepo.AddAsync(walletTxn, ct);
 
-            // 8) Tạo UserTicket (Ready)
-            var newUserTicket = new UserTicket
+            // Tạo vé
+            var newTicket = new UserTicket
             {
                 UserId = userId.Value,
                 PlanPriceId = planPrice.Id,
                 PurchasedPrice = total,
+                SerialCode = GenerateSerialCode(userId.Value, planPrice.Id),
                 Status = "Ready",
-                CreatedAt = now,
+                CreatedAt = nowUtc,
                 RemainingMinutes = planPrice.DurationLimitMinutes,
-                RemainingRides = null,
-                SerialCode = GenerateSerialCode(userId.Value, planPrice.Id)
-                // ActivatedAt/ExpiresAt: để null, sẽ set khi kích hoạt
+                RemainingRides = null
             };
-            await _userTicketRepository.AddAsync(newUserTicket, ct);
 
-            // 9) Cập nhật Order sang Paid
+            if (isOnFirstUse)
+            {
+                // Vé lượt: để dành, có hạn kích hoạt
+                newTicket.ActivationDeadline = nowUtc.AddDays(planPrice.ActivationWindowDays ?? 30);
+                newTicket.RemainingRides = 1;
+            }
+            else
+            {
+                // Subscription: kích hoạt ngay
+                newTicket.Status = "Active";
+                newTicket.ActivatedAt = nowUtc;
+
+                if (string.Equals(planPrice.Plan.Type, "Day", StringComparison.OrdinalIgnoreCase))
+                {
+                    // Ngày theo VN, lưu UTC
+                    var startLocal = new DateTimeOffset(nowLocal.Year, nowLocal.Month, nowLocal.Day, 0, 0, 0, VnTz.GetUtcOffset(nowLocal));
+                    var endLocal = startLocal.AddDays(1).AddTicks(-1);
+
+                    newTicket.ValidFrom = startLocal.ToUniversalTime();
+                    newTicket.ValidTo = endLocal.ToUniversalTime();
+                }
+                else // Month
+                {
+                    var days = planPrice.ValidityDays ?? 30;
+                    newTicket.ValidFrom = nowUtc;
+                    newTicket.ValidTo = nowUtc.AddDays(days);
+                }
+
+                // Đồng bộ để mọi loại vé đều có ExpiresAt
+                newTicket.ExpiresAt = newTicket.ValidTo;
+            }
+
+            await _userTicketRepository.AddAsync(newTicket, ct);
+
+            // Hoàn tất order
             order.Status = "Paid";
-            order.PaidAt = now;
-            _orderRepo.Update(order);
+            order.PaidAt = nowUtc;
 
-            // 10) Lưu & Commit
             await _uow.SaveChangesAsync(ct);
             await _uow.CommitTransactionAsync(trx, ct);
 
-            // 11) Trả DTO
-            var dto = _mapper.Map<UserTicketDTO>(newUserTicket);
-            dto.PlanName = planPrice.Plan?.Name;
+            var dto = _mapper.Map<UserTicketDTO>(newTicket);
+            dto.PlanName = planPrice.Plan?.Name ?? string.Empty;
+            dto.ActivationMode = (ActivationModeDTO)(int)planPrice.ActivationMode;
             return dto;
         }
         catch
@@ -153,21 +251,77 @@ public class UserTicketService
 
     public async Task<List<UserTicketDTO>?> GetMyActiveTicketsAsync(long? userId, CancellationToken ct)
     {
-        var tickets = await _userTicketRepository.GetActiveTicketsByUserIdAsync(userId, ct);
+        if (userId is null || userId <= 0) return new List<UserTicketDTO>();
 
-        return tickets.Select(ut => new UserTicketDTO
+        await EnsureTicketStatusesUpToDateAsync(userId.Value, ct);
+
+        var now = DateTimeOffset.UtcNow;
+
+        var data = await _userTicketRepository.Query()
+            .Include(x => x.PlanPrice).ThenInclude(pp => pp.Plan)
+            .Where(x => x.UserId == userId.Value)
+            .Where(x =>
+                // Subscription còn hạn
+                (x.Status == "Active" && (x.ValidTo ?? x.ExpiresAt) != null && (x.ValidTo ?? x.ExpiresAt) > now)
+                // Vé lượt đang để dành còn hạn kích hoạt
+                || (x.Status == "Ready" && (x.ActivationDeadline == null || x.ActivationDeadline > now)))
+            .OrderByDescending(x => x.CreatedAt)
+            .AsNoTracking()
+            .Select(ut => new UserTicketDTO
+            {
+                Id = ut.Id,
+                PlanPriceId = ut.PlanPriceId,
+                PlanName = ut.PlanPrice.Plan != null ? ut.PlanPrice.Plan.Name : string.Empty,
+                VehicleType = ut.PlanPrice.VehicleType!, 
+                SerialCode = ut.SerialCode,
+                PurchasedPrice = ut.PurchasedPrice,
+                Status = ut.Status,
+                ActivatedAt = ut.ActivatedAt,
+                ValidFrom = ut.ValidFrom,
+                ValidTo = ut.ValidTo,
+                ExpiresAt = ut.ExpiresAt,
+                ActivationDeadline = ut.ActivationDeadline,
+                RemainingMinutes = ut.RemainingMinutes,
+                RemainingRides = ut.RemainingRides,
+                CreatedAt = ut.CreatedAt,
+                ActivationMode = (ActivationModeDTO)(int)ut.PlanPrice.ActivationMode
+            })
+            .ToListAsync(ct);
+
+        return data;
+    }
+
+    public async Task<UserTicketDTO?> GetIdByUserIdAsync(long? userId, long ticketId, CancellationToken ct)
+    {
+        var ut = await _userTicketRepository.Query()
+            .Include(t => t.PlanPrice).ThenInclude(pp => pp.Plan)
+            .AsNoTracking()
+            .FirstOrDefaultAsync(t => t.Id == ticketId && t.UserId == userId, ct);
+
+        if (ut is null) return null;
+
+        var dto = new UserTicketDTO
         {
             Id = ut.Id,
             PlanPriceId = ut.PlanPriceId,
-            PlanName = $"{ut.PlanPrice.Plan.Name} - {ut.PlanPrice.VehicleType}",
+            PlanName = $"{ut.PlanPrice.Plan?.Name} - {ut.PlanPrice.VehicleType}",
             SerialCode = ut.SerialCode,
             PurchasedPrice = ut.PurchasedPrice,
             Status = ut.Status,
+
             ActivatedAt = ut.ActivatedAt,
+            ValidFrom = ut.ValidFrom,
+            ValidTo = ut.ValidTo,
             ExpiresAt = ut.ExpiresAt,
+            ActivationDeadline = ut.ActivationDeadline,
             RemainingMinutes = ut.RemainingMinutes,
-            CreatedAt = ut.CreatedAt
-        }).ToList();
+            RemainingRides = ut.RemainingRides,
+            CreatedAt = ut.CreatedAt,
+
+            ActivationMode = (ActivationModeDTO)(int)ut.PlanPrice.ActivationMode
+        };
+
+        return dto;
     }
 
     private static string GenerateOrderNo(long userId)

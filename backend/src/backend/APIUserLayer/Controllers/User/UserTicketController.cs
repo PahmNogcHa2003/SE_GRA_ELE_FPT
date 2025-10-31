@@ -19,14 +19,22 @@ namespace APIUserLayer.Controllers.User
         {
             _svc = svc;
         }
-
+        // MARKET: hiển thị các gói & giá theo loại xe
+        // GET /api/user-tickets/market?vehicleType=Bike
+        // hoặc yêu cầu login tùy bạn
+        [HttpGet("market")]
+        public async Task<IActionResult> Market([FromQuery] string? vehicleType, CancellationToken ct)
+        {
+            var data = await _svc.GetTicketMarketAsync(vehicleType, ct);
+            return Ok(data);
+        }
         // GET: api/UserTicket/123
         [HttpGet("{id:long}")]
-        public async Task<ActionResult<ApiResponse<UserTicketDTO>>> GetById(
-            long id,
-            CancellationToken ct = default)
+        public async Task<ActionResult<ApiResponse<UserTicketDTO>>> GetById(long id, CancellationToken ct = default)
         {
-            var item = await _svc.GetAsync(id, ct);
+            var userId = User.GetUserIdAsLong();
+            var item = await _svc.GetIdByUserIdAsync(userId, id, ct); // đảm bảo cùng chủ sở hữu
+
             if (item is null)
                 return NotFound(ApiResponse<UserTicketDTO>.ErrorResponse("User ticket not found."));
 
@@ -34,17 +42,16 @@ namespace APIUserLayer.Controllers.User
         }
 
         // GET: api/UserTicket/users/45/active
-        [HttpGet("users/{userId:long}/active")]
+        [HttpGet("active")]
         public async Task<ActionResult<ApiResponse<List<UserTicketDTO>>>> GetMyActiveTickets(
-            long userId,
             CancellationToken ct = default)
         {
+            var userId = User.GetUserIdAsLong();
             var list = await _svc.GetMyActiveTicketsAsync(userId, ct);
             return Ok(ApiResponse<List<UserTicketDTO>>.SuccessResponse(list, "Fetched active tickets successfully."));
         }
 
         // POST: api/UserTicket/purchase
-
         [HttpPost("purchase")]
         public async Task<ActionResult<ApiResponse<UserTicketDTO>>> Purchase(
             [FromBody] PurchaseTicketRequestDTO request,
@@ -55,8 +62,8 @@ namespace APIUserLayer.Controllers.User
 
             try
             {
-                var userId = User.GetUserIdAsLong(); // 👈 lấy từ JWT
-                var created = await _svc.PurchaseTicketAsync(userId, request, ct); // 👈 truyền xuống service
+                var userId = User.GetUserIdAsLong(); 
+                var created = await _svc.PurchaseTicketAsync(userId, request, ct);
                 return CreatedAtAction(nameof(GetById), new { id = created.Id },
                     ApiResponse<UserTicketDTO>.SuccessResponse(created, "Purchased ticket successfully."));
             }

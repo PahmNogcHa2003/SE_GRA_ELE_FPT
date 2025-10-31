@@ -61,33 +61,43 @@ namespace Admin.Controllers
         /// <param name="model">The login credentials.</param>
         /// <returns>HTTP 200 on success, HTTP 401 on authentication failure.</returns>
         [HttpPost("login")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(ApiResponse<AuthResponseDTO>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<AuthResponseDTO>), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(ApiResponse<AuthResponseDTO>), StatusCodes.Status400BadRequest)]
         public async Task<ActionResult<ApiResponse<AuthResponseDTO>>> Login([FromBody] LoginDTO model)
         {
-            // 1. Model State Validation
             if (!ModelState.IsValid)
             {
-                var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToArray();
+                var errors = ModelState.Values
+                    .SelectMany(v => v.Errors)
+                    .Select(e => e.ErrorMessage)
+                    .ToArray();
+
                 return BadRequest(ApiResponse<AuthResponseDTO>.ErrorResponse("Validation Failed", errors));
             }
-
-            // 2. Call the Application Service
             var result = await _authService.LoginAsync(model);
 
-            if (!result.IsSuccess)
+            if (!result.IsSuccess || string.IsNullOrWhiteSpace(result.Token))
             {
-                // 401 Unauthorized for invalid credentials (standard for failed authentication)
-                var errorResponse = ApiResponse<AuthResponseDTO>.ErrorResponse("Authentication Failed", new[] { "Invalid email or password." });
+                var errorResponse = ApiResponse<AuthResponseDTO>.ErrorResponse("Authentication Failed",
+                    new[] { "Invalid email or password." });
+
                 return Unauthorized(errorResponse);
             }
-
-            // 3. Success: Return 200 OK with the token data
-            var data = new AuthResponseDTO { Token = result.Token! };
-            var successResponse = ApiResponse<AuthResponseDTO>.SuccessResponse(data, "Login successful.");
+            var successResponse = ApiResponse<AuthResponseDTO>.SuccessResponse(
+                new AuthResponseDTO
+                {
+                    IsSuccess = true,
+                    Message = "Login successful.",
+                    Token = result.Token,
+                    Roles = result.Roles 
+                },
+                "Login successful."
+            );
 
             return Ok(successResponse);
         }
+
         [HttpGet("me")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]

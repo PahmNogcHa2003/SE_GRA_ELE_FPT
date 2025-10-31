@@ -82,38 +82,33 @@ namespace Application.Services.User
         }
 
         public async Task<PaymentResultDTO> ProcessVnPayCallbackAsync(IQueryCollection collections, CancellationToken cancellationToken)
-        {         
+        {
             if (!_paymentGatewayService.ValidateSignature(collections))
-            {
                 return new PaymentResultDTO { IsSuccess = false, Message = "Invalid signature.", RspCode = "97" };
-            }
 
             var vnp_TxnRef = collections["vnp_TxnRef"].FirstOrDefault();
             var vnp_ResponseCode = collections["vnp_ResponseCode"].FirstOrDefault();
             var vnp_TransactionNo = collections["vnp_TransactionNo"].FirstOrDefault();
 
             if (string.IsNullOrEmpty(vnp_TxnRef))
-            {
                 return new PaymentResultDTO { IsSuccess = false, Message = "Transaction reference not found.", RspCode = "01" };
-            }
 
             var parts = vnp_TxnRef.Split('_');
             if (parts.Length < 2 || !long.TryParse(parts[1], out long orderId))
-            {
                 return new PaymentResultDTO { IsSuccess = false, Message = "Invalid transaction reference format.", RspCode = "01" };
-            }
-            // Bước 2: Xử lý nghiệp vụ chính
+
             var payment = await _paymentRepository.GetByOrderIdAsync(orderId, cancellationToken);
             if (payment == null)
-            {
                 return new PaymentResultDTO { IsSuccess = false, Message = "Order not found.", RspCode = "01" };
-            }
             if (payment.Status == PaymentStatus.Success)
             {
-                return new PaymentResultDTO { IsSuccess = true, Message = "Order already confirmed.", RspCode = "02" };
+                return new PaymentResultDTO
+                {
+                    IsSuccess = false,
+                    Message = "Giao dịch này đã được xác nhận trước đó. Không thể xử lý lại.",
+                    RspCode = "02"
+                };
             }
-
-            // Bước 3: Dùng transaction để đảm bảo toàn vẹn dữ liệu
             var transaction = await _unitOfWork.BeginTransactionAsync(cancellationToken);
             try
             {
@@ -126,30 +121,74 @@ namespace Application.Services.User
                     payment.Order.Status = OrderStatus.Success;
                     payment.Order.PaidAt = DateTimeOffset.UtcNow;
 
-                    // Gọi WalletService để xử lý logic nạp tiền và trừ nợ
-                    await _walletService.CreditAsync(payment.Order.UserId, payment.Amount, "VNPay", payment.OrderId, cancellationToken);
+                    // Ghi nhận nạp ví
+                    var walletTxn = await _walletService.CreditAsync(payment.Order.UserId, payment.Amount, "VNPay", payment.OrderId, cancellationToken);
+
+                    _paymentRepository.Update(payment);
+                    _orderRepository.Update(payment.Order);
+                    await _unitOfWork.SaveChangesAsync(cancellationToken);
+                    await _unitOfWork.CommitTransactionAsync(transaction, cancellationToken);
+
+                    // ✅ Chuẩn bị dữ liệu gửi FE
+                    return new PaymentResultDTO
+                    {
+                        IsSuccess = true,
+                        Message = "Thanh toán thành công.",
+                        RspCode = "00",
+                        Order = new
+                        {
+                            payment.Order.Id,
+                            payment.Order.OrderNo,
+                            payment.Order.Total,
+                            payment.Order.Status,
+                            payment.Order.PaidAt,
+                            payment.Order.CreatedAt
+                        },
+                        Transaction = new
+                        {
+                            walletTxn.Id,
+                            walletTxn.Amount,
+                            walletTxn.Direction,
+                            walletTxn.Source,
+                            walletTxn.BalanceAfter,
+                            walletTxn.CreatedAt
+                        }
+                    };
                 }
                 else
                 {
                     payment.Status = PaymentStatus.Failed;
                     payment.Order.Status = OrderStatus.Failed;
                     payment.FailureReason = $"VNPay response code: {vnp_ResponseCode}";
+
+                    _paymentRepository.Update(payment);
+                    _orderRepository.Update(payment.Order);
+                    await _unitOfWork.SaveChangesAsync(cancellationToken);
+                    await _unitOfWork.CommitTransactionAsync(transaction, cancellationToken);
+
+                    return new PaymentResultDTO
+                    {
+                        IsSuccess = false,
+                        Message = "Thanh toán thất bại hoặc bị hủy.",
+                        RspCode = vnp_ResponseCode,
+                        Order = new
+                        {
+                            payment.Order.Id,
+                            payment.Order.OrderNo,
+                            payment.Order.Total,
+                            payment.Order.Status,
+                            payment.Order.CreatedAt
+                        }
+                    };
                 }
-                _paymentRepository.Update(payment);
-                _orderRepository.Update(payment.Order);
-
-                await _unitOfWork.SaveChangesAsync(cancellationToken);
-                await _unitOfWork.CommitTransactionAsync(transaction, cancellationToken);
-
-                return new PaymentResultDTO { IsSuccess = true, Message = "Confirm Success.", RspCode = "00" };
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 await _unitOfWork.RollbackTransactionAsync(transaction, cancellationToken);
-                return new PaymentResultDTO { IsSuccess = false, Message = "An error occurred during processing.", RspCode = "99" };
+                return new PaymentResultDTO { IsSuccess = false, Message = $"Error: {ex.Message}", RspCode = "99" };
             }
-
         }
+
         private static string GenerateOrderNo(long userId)
       => $"ORD-{userId}-{DateTime.UtcNow:yyyyMMddHHmmss}";
     }

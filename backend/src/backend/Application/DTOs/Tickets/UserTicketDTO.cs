@@ -10,13 +10,20 @@ namespace Application.DTOs.Tickets
     {
         public long Id { get; set; }
         public long PlanPriceId { get; set; }
-        public string PlanName { get; set; } = string.Empty; 
+        public string PlanName { get; set; } = string.Empty;
+        public string VehicleType { get; set; } = "Bike";
         public string? SerialCode { get; set; }
         public decimal? PurchasedPrice { get; set; }
         public string Status { get; set; } = "Ready";
+        public ActivationModeDTO ActivationMode { get; set; }
+
         public DateTimeOffset? ActivatedAt { get; set; }
+        public DateTimeOffset? ValidFrom { get; set; }
+        public DateTimeOffset? ValidTo { get; set; }
         public DateTimeOffset? ExpiresAt { get; set; }
+        public DateTimeOffset? ActivationDeadline { get; set; }
         public int? RemainingMinutes { get; set; }
+        public int? RemainingRides { get; set; }
         public DateTimeOffset CreatedAt { get; set; }
     }
 }
