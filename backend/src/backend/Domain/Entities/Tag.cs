@@ -1,17 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Microsoft.EntityFrameworkCore;
 
 namespace Domain.Entities;
 
+[Table("Tags")] // Khớp với tên bảng được tham chiếu trong Foreign Key
 public partial class Tag : BaseEntity<long>
 {
+    [Required]
     [StringLength(50)]
     public string Name { get; set; } = null!;
 
-    [ForeignKey("TagId")]
-    [InverseProperty("Tags")]
-    public virtual ICollection<News> News { get; set; } = new List<News>();
+    // Navigation property trỏ đến bảng nối TagNew
+    [InverseProperty("Tag")]
+    public virtual ICollection<TagNew> TagNews { get; set; } = new List<TagNew>();
 }

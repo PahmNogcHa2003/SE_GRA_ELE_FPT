@@ -6,21 +6,45 @@ using Microsoft.EntityFrameworkCore;
 namespace Domain.Entities;
 
 [Table("Contact")]
-[Microsoft.EntityFrameworkCore.Index(nameof(UserId), Name = "IX_Contact_UserId")]
 public class Contact : BaseEntity<long>
 {
-    [Required]
-    public long UserId { get; set; }
+    [StringLength(255)]
+    public string? Email { get; set; }
 
-    [StringLength(500)]
+    [StringLength(50)]
+    public string? PhoneNumber { get; set; }
+
+    [Required]
+    [StringLength(150)]
+    public string Title { get; set; } = string.Empty;
+
+    [Required]
+    [StringLength(4000)]
+    public string Content { get; set; } = string.Empty;
+
+    [Required]
+    [StringLength(20)]
     [Unicode(false)]
-    public string? Message { get; set; }
+    public string Status { get; set; } = "Open"; // e.g. Open, Replied, Closed
+
+    // Nếu bạn dùng AspNetUser PK là long
+    public long? ReplyById { get; set; }
+
+    [StringLength(4000)]
+    public string? ReplyContent { get; set; }
 
     [Precision(0)]
-    public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
+    public DateTimeOffset? ReplyAt { get; set; }
 
-    // 🔗 Navigation property
-    [ForeignKey(nameof(UserId))]
-    [InverseProperty(nameof(AspNetUser.Contacts))]
-    public AspNetUser User { get; set; } = null!;
+    public bool IsReplySent { get; set; } = false;
+
+    [Required]
+    [Precision(0)]
+    public DateTimeOffset CreatedAt { get; set; }
+
+    [Precision(0)]
+    public DateTimeOffset? ClosedAt { get; set; }
+
+    [ForeignKey(nameof(ReplyById))]
+    public AspNetUser? Reply { get; set; }
 }
