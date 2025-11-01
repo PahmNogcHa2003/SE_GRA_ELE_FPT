@@ -11,5 +11,6 @@ namespace Application.DTOs.Auth
         public bool IsSuccess { get; set; }
         public string Message { get; set; }
         public string? Token { get; set; }
+        public List<string>? Roles { get; set; }
     }
 }

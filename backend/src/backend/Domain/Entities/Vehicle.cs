@@ -7,13 +7,11 @@ using Microsoft.EntityFrameworkCore;
 namespace Domain.Entities;
 
 [Table("Vehicle")]
-[Microsoft.EntityFrameworkCore.Index(nameof(BikeCode), Name = "IX_Vehicle_BikeCode", IsUnique = true)]
-[Microsoft.EntityFrameworkCore.Index(nameof(CategoryId), Name = "IX_Vehicle_CategoryId")]
-[Microsoft.EntityFrameworkCore.Index(nameof(StationId), Name = "IX_Vehicle_StationId")]
 public partial class Vehicle : BaseEntity<long>
 {
     public long? CategoryId { get; set; }
 
+    [Required]
     [StringLength(50)]
     public string BikeCode { get; set; } = null!;
 
@@ -21,17 +19,19 @@ public partial class Vehicle : BaseEntity<long>
 
     public bool? ChargingStatus { get; set; }
 
+    [Required]
     [StringLength(20)]
     [Unicode(false)]
-    public string Status { get; set; } = null!;
+    public string Status { get; set; } = "Available";
 
     public long? StationId { get; set; }
 
+    [Required]
     [Precision(0)]
     public DateTimeOffset CreatedAt { get; set; }
 
-    [InverseProperty(nameof(Booking.Vehicle))]
-    public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
+    [InverseProperty(nameof(Rental.Vehicle))]
+    public virtual ICollection<Rental> Rentals { get; set; } = new List<Rental>();
 
     [ForeignKey(nameof(CategoryId))]
     [InverseProperty(nameof(CategoriesVehicle.Vehicles))]

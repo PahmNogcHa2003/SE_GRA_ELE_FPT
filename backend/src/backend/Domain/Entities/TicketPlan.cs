@@ -9,15 +9,23 @@ namespace Domain.Entities;
 [Table("TicketPlan")]
 public partial class TicketPlan : BaseEntity<long>
 {
-    [StringLength(100)]
-    public string Name { get; set; } = null!;
+    [StringLength(50)]
+    public string? Code { get; set; }
+
+    [StringLength(50)]
+    public string? Type { get; set; }
+
+    [StringLength(150)]
+    public string? Name { get; set; }
 
     [StringLength(255)]
     public string? Description { get; set; }
 
-    public int DurationMinutes { get; set; }
+    public bool IsActive { get; set; } = true;
 
-    public bool IsActive { get; set; }
+    [Required]
+    [Precision(0)]
+    public DateTimeOffset CreatedAt { get; set; }
 
     [InverseProperty("Plan")]
     public virtual ICollection<TicketPlanPrice> TicketPlanPrices { get; set; } = new List<TicketPlanPrice>();
