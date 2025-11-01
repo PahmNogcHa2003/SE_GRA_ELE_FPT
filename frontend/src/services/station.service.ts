@@ -70,3 +70,14 @@ export const deleteStation = async (id: number): Promise<ApiResponse<object>> =>
   const response = await http.delete<ApiResponse<object>>(`${BASE_URL}/${id}`);
   return response.data;
 };
+/**
+ * Lấy danh sách trạm gần vị trí đã cho trong một bán kính nhất định.
+ * @param params Các tham số bao gồm lat, lng, radiusKm, page, pageSize.
+ * @returns Promise chứa dữ liệu các trạm gần đó đã được phân trang.
+ */
+export const getNearbyStations = async (params: {
+  lat: number; lng: number; radiusKm?: number; page?: number; pageSize?: number;
+}): Promise<StationPagedApiResponse> => {
+  const res = await http.get<StationPagedApiResponse>(`${BASE_URL}/nearby`, { params });
+  return res.data;
+};

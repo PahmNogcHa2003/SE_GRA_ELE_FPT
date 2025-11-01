@@ -8,6 +8,8 @@ export interface StationDTO {
     lng : number;
     isActive: boolean;
     image?: string;
+    vehicleAvailable?: number;
+    distanceKm?: number;
 }
 export interface GetStationsParams {
   page?: number;

@@ -7,8 +7,8 @@ import {
   Typography,
   Input,
   Tag,
-  message,
-  Popconfirm,
+  // message, // THAY ĐỔI: Không cần dùng message của antd nữa
+  // Popconfirm, // THAY ĐỔI: Không cần dùng Popconfirm nữa
   Select,
   Row,
   Col,
@@ -16,10 +16,11 @@ import {
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { TableProps } from 'antd';
+import Swal from 'sweetalert2'; // THÊM MỚI: Import SweetAlert2
 
 import * as stationService from '../../services/station.service';
 import type { StationDTO, GetStationsParams } from '../../types/station';
-import StationForm from '../../features/stations/StationForm'; // Đảm bảo bạn đã có component này
+import StationForm from '../../features/stations/StationForm';
 
 const { Title } = Typography;
 const { Search } = Input;
@@ -27,7 +28,6 @@ const { Search } = Input;
 const ManageStationsPage: React.FC = () => {
   const queryClient = useQueryClient();
 
-  // State để quản lý tất cả các tham số query
   const [queryParams, setQueryParams] = useState<GetStationsParams>({
     page: 1,
     pageSize: 10,
@@ -39,53 +39,74 @@ const ManageStationsPage: React.FC = () => {
 
   // --- React Query Hooks ---
 
-  // 1. Query để lấy dữ liệu
   const { data: stationsData, isLoading } = useQuery({
-    queryKey: ['stations', queryParams], // Tự động refetch khi queryParams thay đổi
+    queryKey: ['stations', queryParams],
     queryFn: () => stationService.getStations(queryParams),
-    select: (res) => res.data, // Chỉ lấy phần data từ ApiResponse
+    select: (res) => res.data,
   });
 
-  // 2. Mutation để tạo mới
   const createMutation = useMutation({
     mutationFn: stationService.createStation,
     onSuccess: () => {
-      message.success('Tạo trạm mới thành công!');
+      // THAY ĐỔI: Sử dụng SweetAlert2
+      Swal.fire({
+        title: 'Thành công!',
+        text: 'Tạo trạm mới thành công!',
+        icon: 'success',
+        confirmButtonText: 'Tuyệt vời',
+      });
       queryClient.invalidateQueries({ queryKey: ['stations'] });
       setIsModalOpen(false);
     },
     onError: () => {
-      message.error('Có lỗi xảy ra khi tạo trạm mới.');
+      // THAY ĐỔI: Sử dụng SweetAlert2
+      Swal.fire({
+        title: 'Lỗi!',
+        text: 'Có lỗi xảy ra khi tạo trạm mới.',
+        icon: 'error',
+        confirmButtonText: 'Đã hiểu',
+      });
     },
   });
 
-  // 3. Mutation để cập nhật
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: number; data: StationDTO }) =>
       stationService.updateStation(id, data),
     onSuccess: () => {
-      message.success('Cập nhật trạm thành công!');
+      // THAY ĐỔI: Sử dụng SweetAlert2
+      Swal.fire({
+        title: 'Thành công!',
+        text: 'Cập nhật trạm thành công!',
+        icon: 'success',
+        confirmButtonText: 'OK',
+      });
       queryClient.invalidateQueries({ queryKey: ['stations'] });
       setIsModalOpen(false);
       setEditingStation(null);
     },
     onError: () => {
-      message.error('Có lỗi xảy ra khi cập nhật trạm.');
+      // THAY ĐỔI: Sử dụng SweetAlert2
+      Swal.fire({
+        title: 'Lỗi!',
+        text: 'Có lỗi xảy ra khi cập nhật trạm.',
+        icon: 'error',
+        confirmButtonText: 'Đóng',
+      });
     },
   });
 
-  // 4. Mutation để xóa
   const deleteMutation = useMutation({
     mutationFn: stationService.deleteStation,
     onSuccess: () => {
-      message.success('Xóa trạm thành công!');
+      // THAY ĐỔI: Sử dụng SweetAlert2
+      Swal.fire('Đã xóa!', 'Trạm đã được xóa thành công.', 'success');
       queryClient.invalidateQueries({ queryKey: ['stations'] });
     },
     onError: () => {
-      message.error('Có lỗi xảy ra khi xóa trạm.');
+      // THAY ĐỔI: Sử dụng SweetAlert2
+      Swal.fire('Lỗi!', 'Có lỗi xảy ra khi xóa trạm.', 'error');
     },
   });
-
 
   // --- Handlers ---
 
@@ -112,16 +133,30 @@ const ManageStationsPage: React.FC = () => {
     }
   };
 
-  const handleDelete = (id: number) => {
-    deleteMutation.mutate(id);
+  // THAY ĐỔI: Tạo hàm xử lý xác nhận xóa bằng SweetAlert2
+  const handleDeleteConfirm = (id: number) => {
+    Swal.fire({
+      title: 'Bạn có chắc chắn muốn xóa?',
+      text: "Hành động này không thể được hoàn tác!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Chắc chắn, xóa nó!',
+      cancelButtonText: 'Hủy bỏ'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        deleteMutation.mutate(id);
+      }
+    });
   };
+
 
   const handleSearch = (value: string) => {
     setQueryParams(prev => ({ ...prev, page: 1, search: value.trim() }));
   };
-  
+
   const handleFilterChange = (value: string) => {
-    // Tạo một bản sao của params để xóa key an toàn
     const newParams: GetStationsParams = { ...queryParams, page: 1 };
     
     if (value === 'all') {
@@ -134,7 +169,7 @@ const ManageStationsPage: React.FC = () => {
     setQueryParams(newParams);
   };
 
-  const handleTableChange: TableProps<StationDTO>['onChange'] = (pagination, filters, sorter) => {
+  const handleTableChange: TableProps<StationDTO>['onChange'] = (pagination, /*filters*/ sorter) => {
     const singleSorter = Array.isArray(sorter) ? sorter[0] : sorter;
     
     const newParams: GetStationsParams = {
@@ -177,15 +212,13 @@ const ManageStationsPage: React.FC = () => {
       render: (_, record) => (
         <Space size="middle">
           <Button icon={<EditOutlined />} onClick={() => handleOpenEditModal(record)} />
-          <Popconfirm
-            title="Xóa trạm"
-            description="Bạn có chắc chắn muốn xóa trạm này không?"
-            onConfirm={() => handleDelete(record.id)}
-            okText="Xóa"
-            cancelText="Hủy"
-          >
-            <Button icon={<DeleteOutlined />} danger loading={deleteMutation.isPending && deleteMutation.variables === record.id} />
-          </Popconfirm>
+          {/* THAY ĐỔI: Bỏ Popconfirm và gọi hàm mới */}
+          <Button 
+            icon={<DeleteOutlined />} 
+            danger 
+            onClick={() => handleDeleteConfirm(record.id)}
+            loading={deleteMutation.isPending && deleteMutation.variables === record.id}
+          />
         </Space>
       ),
     },
