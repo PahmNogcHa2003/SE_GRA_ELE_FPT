@@ -10,6 +10,7 @@ import PaymentReturnPage from '../pages/user/PaymentReturnPage';
 import MyTicketsPage from '../pages/user/MyTicketsPage';
 import StationPage from '../pages/user/StationsPage';
 import BuyTicketsPage from '../pages/user/BuyTicketsPage';
+import ContactPage  from '../pages/user/ContactPage';
 // Staff pages
 import ManageStationsPage from '../pages/staff/ManageStationsPage';
 import ManageVehiclesPage from '../pages/staff/ManageVehiclesPage';
@@ -34,6 +35,7 @@ const AppRoutes = () => (
         <Route path="/" element={<UserLayout />}>
           <Route index element={<HomePage />} />
           <Route path="stations" element={<StationPage />} />
+          <Route path="contact" element={<ContactPage/>}/>
         </Route>
       </Route>
 
