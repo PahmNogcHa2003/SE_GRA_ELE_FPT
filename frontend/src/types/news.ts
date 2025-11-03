@@ -1,25 +1,33 @@
 // src/types/news.ts
-import type { ApiResponse, PagedResult } from "./api";
+import type { ApiResponse, PagedResult } from './api';
+
 export interface NewsDTO {
   id: number;
   title: string;
   slug: string;
-  bannerImage: string;
-  content: string;
-  authorId: number; // Tạm thời chỉ lưu ID
-  createdAt: string; // Hoặc Date
-  isActive: boolean;
+  banner?: string | null;
+  content?: string | null;
+  status: string;
+  publishedAt?: string | null;
+  publishedBy?: number | null;
+  scheduledAt?: string | null;
+  createdAt: string;
+  userId: number;
   tagIds: number[];
-  tags?: { id: number; name: string }[]; // Để hiển thị trong bảng
+  tagNames?: string[];
 }
 
+// Param gọi API lấy danh sách News (tuỳ theo controller của bạn)
 export interface GetNewsParams {
-  page?: number;
+  pageNumber?: number;
   pageSize?: number;
   search?: string;
   filterField?: string;
   filterValue?: string;
-  sortOrder?: string;
+  sortBy?: string;
+  sortDirection?: 'asc' | 'desc';
+  status?: string;
 }
+
 export type NewsApiResponse = ApiResponse<NewsDTO>;
 export type NewsPagedApiResponse = ApiResponse<PagedResult<NewsDTO>>;

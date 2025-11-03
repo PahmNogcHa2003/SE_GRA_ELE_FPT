@@ -11,6 +11,8 @@ import MyTicketsPage from '../pages/user/MyTicketsPage';
 import StationPage from '../pages/user/StationsPage';
 import BuyTicketsPage from '../pages/user/BuyTicketsPage';
 import ContactPage  from '../pages/user/ContactPage';
+import NewsListPage from '../pages/user/NewsListPage';
+import NewsDetailPage from '../pages/user/NewsDetailPage';
 // Staff pages
 import ManageStationsPage from '../pages/staff/ManageStationsPage';
 import ManageVehiclesPage from '../pages/staff/ManageVehiclesPage';
@@ -36,6 +38,8 @@ const AppRoutes = () => (
           <Route index element={<HomePage />} />
           <Route path="stations" element={<StationPage />} />
           <Route path="contact" element={<ContactPage/>}/>
+          <Route path="news" element={<NewsListPage />} />
+          <Route path="news/:id" element={<NewsDetailPage />} />
         </Route>
       </Route>
 
