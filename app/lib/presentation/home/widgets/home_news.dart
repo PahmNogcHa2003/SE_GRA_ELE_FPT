@@ -8,7 +8,7 @@ class HomeNews extends StatelessWidget {
   Widget build(BuildContext context) {
     final news = [
       {
-        'title': '🎉 Sinh nhật Hola Bike rộn ràng',
+        'title': '🎉 Sinh nhật EcoJourney rộn ràng',
         'img':
             'https://img.freepik.com/free-vector/realistic-golden-wheel-fortune-background_23-2149639949.jpg',
       },

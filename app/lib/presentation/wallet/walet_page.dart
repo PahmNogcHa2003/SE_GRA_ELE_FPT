@@ -32,7 +32,7 @@ class WalletScreen extends StatelessWidget {
                   Expanded(
                     child: _buildBalanceRow(
                       label: "Tài khoản chính",
-                      point: 0,
+                      point: 2000,
                       icon: Icons.account_balance_wallet,
                     ),
                   ),
