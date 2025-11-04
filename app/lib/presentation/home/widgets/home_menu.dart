@@ -18,7 +18,7 @@ class HomeMenu extends StatelessWidget {
       {
         'icon': Icons.map_outlined,
         'label': 'Chuyến đi',
-        'router': '/trip-tracking',
+        'router': '/trip-tracking-history',
       },
       {'icon': Icons.help_outline, 'label': 'Hướng dẫn', 'router': '/guide'},
       {
