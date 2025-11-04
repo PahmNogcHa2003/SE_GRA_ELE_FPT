@@ -1,23 +1,27 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 
 namespace Domain.Entities;
 
-[Index("StationId", Name = "IX_StationLogs_StationId")]
+[Table("StationLogs")]
+[Index(nameof(StationId), Name = "IX_StationLogs_StationId")]
 public partial class StationLog : BaseEntity<long>
 {
-
+    [Required]
     public long StationId { get; set; }
 
     [StringLength(50)]
-    public string Action { get; set; } = null!;
+    public string? ChangeType { get; set; }
 
-    public DateTimeOffset Timestamp { get; set; }
+    public int? Quantity { get; set; }
 
-    [ForeignKey("StationId")]
+    [Required]
+    [Precision(0)]
+    public DateTimeOffset CreatedAt { get; set; }
+
+    [ForeignKey(nameof(StationId))]
     [InverseProperty("StationLogs")]
     public virtual Station Station { get; set; } = null!;
 }

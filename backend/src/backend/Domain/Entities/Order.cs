@@ -7,26 +7,58 @@ using Microsoft.EntityFrameworkCore;
 namespace Domain.Entities;
 
 [Table("Order")]
-[Index("UserId", Name = "IX_Order_UserId")]
-public partial class Order : BaseEntity<long>   
+[Index(nameof(UserId), Name = "IX_Order_UserId")]
+public partial class Order : BaseEntity<long>
 {
+    [Required]
     public long UserId { get; set; }
 
-    [StringLength(50)]
-    public string OrderNo { get; set; } = null!;
+    [StringLength(30)]
+    public string? OrderNo { get; set; }
 
-    [StringLength(20)]
-    public string Status { get; set; } = null!;
+    [Required]
+    [StringLength(30)]
+    [Unicode(false)] 
+    public string OrderType { get; set; } = null!;
 
-    public DateTimeOffset CreatedAt { get; set; }
+    [Required]
+    [StringLength(30)]
+    [Unicode(false)] 
+    public string Status { get; set; } = "Pending";
 
-    [InverseProperty("Order")]
-    public virtual ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
+    [Required]
+    [Column(TypeName = "decimal(18, 2)")]
+    public decimal Subtotal { get; set; }
+
+    [Required]
+    [Column(TypeName = "decimal(18, 2)")]
+    public decimal Discount { get; set; } = 0; 
+
+    [Required]
+    [Column(TypeName = "decimal(18, 2)")]
+    public decimal Total { get; set; }
+
+    [Required]
+    [StringLength(3)]
+    [Column(TypeName = "char(3)")] 
+    public string Currency { get; set; } = "VND";
+
+    [Required]
+    [Precision(0)]
+    public DateTimeOffset CreatedAt { get; set; } 
+
+    [Precision(0)]
+    public DateTimeOffset? PaidAt { get; set; }
+
+    [StringLength(255)]
+    public string? CancelReason { get; set; }
+
+    // --- Navigation Properties ---
 
     [InverseProperty("Order")]
     public virtual ICollection<Payment> Payments { get; set; } = new List<Payment>();
 
-    [ForeignKey("UserId")]
+    [ForeignKey(nameof(UserId))]
     [InverseProperty("Orders")]
     public virtual AspNetUser User { get; set; } = null!;
 }
