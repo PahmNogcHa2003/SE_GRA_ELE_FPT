@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:hola_bike_app/presentation/home/home_screen.dart';
+import 'package:hola_bike_app/presentation/trip/trip_tracking_page.dart';
 import 'package:hola_bike_app/theme/app_colors.dart';
 
 class RentBikePage extends StatefulWidget {
@@ -23,10 +24,15 @@ class _RentBikePageState extends State<RentBikePage> {
 
   void _confirmRent() {
     EasyLoading.showSuccess('Thuê xe thành công!');
-    Future.delayed(const Duration(seconds: 2), () {
+    Future.delayed(const Duration(seconds: 1), () {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => HomeScreen()),
+        MaterialPageRoute(
+          builder: (_) => TripTrackingPage(
+            bikeId: widget.bikeId,
+            isRenting: true, // truyền trạng thái đang thuê
+          ),
+        ),
       );
     });
   }

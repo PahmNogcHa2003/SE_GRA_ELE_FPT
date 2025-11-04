@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hola_bike_app/presentation/home/home_screen.dart';
+import 'package:hola_bike_app/presentation/register/register_page.dart';
 
 import '../../theme/app_colors.dart';
 
@@ -59,6 +60,38 @@ class LoginScreen extends StatelessWidget {
                 "Đăng nhập",
                 style: TextStyle(fontSize: 16, color: AppColors.card),
               ),
+            ),
+
+            // 👉 Thêm nút dẫn sang đăng ký
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text(
+                  'Chưa có tài khoản? ',
+                  style: TextStyle(color: Colors.black),
+                ),
+                TextButton(
+                  style: TextButton.styleFrom(
+                    padding: EdgeInsets.zero,
+                    minimumSize: Size(0, 0),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const RegisterPage()),
+                    );
+                  },
+                  child: const Text(
+                    'Đăng ký ngay',
+                    style: TextStyle(
+                      color: AppColors.primary,
+                      decoration: TextDecoration.underline,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
