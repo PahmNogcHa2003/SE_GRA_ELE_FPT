@@ -53,6 +53,19 @@ builder.Services.AddControllers()
         };
     });
 
+// --- Add HttpClient for Province API ---
+builder.Services.AddHttpClient("ProvincesAPI", client =>
+{
+#if DEBUG
+    // Local dev dùng HTTP cho đỡ lỗi SSL
+    client.BaseAddress = new Uri("http://provinces.open-api.vn/api/v2/");
+#else
+    // Production dùng HTTPS an toàn
+    client.BaseAddress = new Uri("https://provinces.open-api.vn/api/v2/");
+#endif
+});
+
+
 // Add CORS
 builder.Services.AddCors(options =>
 {

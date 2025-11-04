@@ -24,7 +24,7 @@ namespace APIUserLayer.Controllers
         }
 
         [HttpGet("provinces/{provinceCode:int}/wards")]
-        public async Task<IActionResult> GetWards(int provinceCode)
+        public async Task<IActionResult> GetWards(string provinceCode)
         {
             var query = new GetWardsByProvinceQuery(provinceCode);
             return Ok(await _sender.Send(query));

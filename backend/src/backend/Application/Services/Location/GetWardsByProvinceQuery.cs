@@ -6,7 +6,7 @@ using MediatR;
 
 namespace Application.Services.Location;
 
-public record GetWardsByProvinceQuery(int ProvinceCode) : IRequest<IEnumerable<LocationDTO>>;
+public record GetWardsByProvinceQuery(string ProvinceCode) : IRequest<IEnumerable<LocationDTO>>;
 
 public class GetWardsByProvinceQueryHandler : IRequestHandler<GetWardsByProvinceQuery, IEnumerable<LocationDTO>>
 {
