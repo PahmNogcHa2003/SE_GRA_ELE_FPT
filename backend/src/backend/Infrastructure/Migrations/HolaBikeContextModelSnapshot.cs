@@ -22,71 +22,34 @@ namespace Infrastructure.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("AspNetUserRole", b =>
+            modelBuilder.Entity("Domain.Entities.AdminProfile", b =>
                 {
                     b.Property<long>("UserId")
                         .HasColumnType("bigint");
 
-                    b.Property<long>("RoleId")
-                        .HasColumnType("bigint");
+                    b.Property<string>("AvatarUrl")
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
 
-                    b.HasKey("UserId", "RoleId");
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasPrecision(0)
+                        .HasColumnType("datetimeoffset(0)");
 
-                    b.HasIndex(new[] { "RoleId" }, "IX_AspNetUserRoles_RoleId");
+                    b.Property<string>("FullName")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
 
-                    b.ToTable("AspNetUserRoles", (string)null);
-                });
+                    b.Property<string>("Position")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
-            modelBuilder.Entity("Domain.Entities.AspNetRole", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasPrecision(0)
+                        .HasColumnType("datetimeoffset(0)");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+                    b.HasKey("UserId");
 
-                    b.Property<string>("ConcurrencyStamp")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Name")
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
-
-                    b.Property<string>("NormalizedName")
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex(new[] { "NormalizedName" }, "RoleNameIndex")
-                        .IsUnique()
-                        .HasFilter("([NormalizedName] IS NOT NULL)");
-
-                    b.ToTable("AspNetRoles");
-                });
-
-            modelBuilder.Entity("Domain.Entities.AspNetRoleClaim", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("ClaimType")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ClaimValue")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<long>("RoleId")
-                        .HasColumnType("bigint");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex(new[] { "RoleId" }, "IX_AspNetRoleClaims_RoleId");
-
-                    b.ToTable("AspNetRoleClaims");
+                    b.ToTable("AdminProfile");
                 });
 
             modelBuilder.Entity("Domain.Entities.AspNetUser", b =>
@@ -101,7 +64,12 @@ namespace Infrastructure.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset>("CreatedDate")
+                        .HasPrecision(0)
+                        .HasColumnType("datetimeoffset(0)");
 
                     b.Property<string>("Email")
                         .HasMaxLength(256)
@@ -111,9 +79,7 @@ namespace Infrastructure.Migrations
                         .HasColumnType("bit");
 
                     b.Property<bool>("LockoutEnabled")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(true);
+                        .HasColumnType("bit");
 
                     b.Property<DateTimeOffset?>("LockoutEnd")
                         .HasColumnType("datetimeoffset");
@@ -145,132 +111,17 @@ namespace Infrastructure.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
-                    b.HasKey("Id")
-                        .HasName("PK__AspNetUs__3214EC072EDEC32C");
-
-                    b.HasIndex(new[] { "NormalizedEmail" }, "EmailIndex");
-
-                    b.HasIndex(new[] { "NormalizedUserName" }, "UserNameIndex")
-                        .IsUnique()
-                        .HasFilter("([NormalizedUserName] IS NOT NULL)");
-
-                    b.ToTable("AspNetUsers");
-                });
-
-            modelBuilder.Entity("Domain.Entities.AspNetUserClaim", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("ClaimType")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ClaimValue")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<long>("UserId")
-                        .HasColumnType("bigint");
-
                     b.HasKey("Id");
 
-                    b.HasIndex(new[] { "UserId" }, "IX_AspNetUserClaims_UserId");
+                    b.HasIndex("NormalizedEmail")
+                        .HasDatabaseName("EmailIndex");
 
-                    b.ToTable("AspNetUserClaims");
-                });
+                    b.HasIndex("NormalizedUserName")
+                        .IsUnique()
+                        .HasDatabaseName("UserNameIndex")
+                        .HasFilter("[NormalizedUserName] IS NOT NULL");
 
-            modelBuilder.Entity("Domain.Entities.AspNetUserLogin", b =>
-                {
-                    b.Property<string>("LoginProvider")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("ProviderKey")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("ProviderDisplayName")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<long>("UserId")
-                        .HasColumnType("bigint");
-
-                    b.HasKey("LoginProvider", "ProviderKey");
-
-                    b.HasIndex(new[] { "UserId" }, "IX_AspNetUserLogins_UserId");
-
-                    b.ToTable("AspNetUserLogins");
-                });
-
-            modelBuilder.Entity("Domain.Entities.AspNetUserToken", b =>
-                {
-                    b.Property<long>("UserId")
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("LoginProvider")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("Name")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("Value")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("UserId", "LoginProvider", "Name");
-
-                    b.ToTable("AspNetUserTokens");
-                });
-
-            modelBuilder.Entity("Domain.Entities.Booking", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
-
-                    b.Property<DateTimeOffset>("BookingTime")
-                        .HasPrecision(0)
-                        .HasColumnType("datetimeoffset(0)");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasPrecision(0)
-                        .HasColumnType("datetimeoffset(0)")
-                        .HasDefaultValueSql("(sysdatetimeoffset())");
-
-                    b.Property<long?>("EndStationId")
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("StartStationId")
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .ValueGeneratedOnAdd()
-                        .HasMaxLength(20)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(20)")
-                        .HasDefaultValue("Reserved");
-
-                    b.Property<long>("UserId")
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("VehicleId")
-                        .HasColumnType("bigint");
-
-                    b.HasKey("Id")
-                        .HasName("PK__Booking__3214EC0770A0BD14");
-
-                    b.HasIndex(new[] { "EndStationId" }, "IX_Booking_EndStationId");
-
-                    b.HasIndex(new[] { "StartStationId" }, "IX_Booking_StartStationId");
-
-                    b.HasIndex(new[] { "UserId" }, "IX_Booking_UserId");
-
-                    b.HasIndex(new[] { "VehicleId" }, "IX_Booking_VehicleId");
-
-                    b.ToTable("Booking", (string)null);
+                    b.ToTable("AspNetUsers", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Entities.BookingTicket", b =>
@@ -285,10 +136,10 @@ namespace Infrastructure.Migrations
                         .HasPrecision(0)
                         .HasColumnType("datetimeoffset(0)");
 
-                    b.Property<long>("BookingId")
-                        .HasColumnType("bigint");
+                    b.Property<decimal>("PlanPrice")
+                        .HasColumnType("decimal(18, 2)");
 
-                    b.Property<long>("PlanPriceId")
+                    b.Property<long>("RentalId")
                         .HasColumnType("bigint");
 
                     b.Property<int?>("UsedMinutes")
@@ -301,16 +152,13 @@ namespace Infrastructure.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
-                    b.HasKey("Id")
-                        .HasName("PK__BookingT__3214EC071E4FB2B5");
+                    b.HasKey("Id");
 
-                    b.HasIndex(new[] { "BookingId" }, "IX_BookingTicket_BookingId");
+                    b.HasIndex("RentalId");
 
-                    b.HasIndex(new[] { "PlanPriceId" }, "IX_BookingTicket_PlanPriceId");
+                    b.HasIndex("UserTicketId");
 
-                    b.HasIndex(new[] { "UserTicketId" }, "IX_BookingTicket_UserTicketId");
-
-                    b.ToTable("BookingTicket", (string)null);
+                    b.ToTable("BookingTicket");
                 });
 
             modelBuilder.Entity("Domain.Entities.CategoriesVehicle", b =>
@@ -326,18 +174,15 @@ namespace Infrastructure.Migrations
                         .HasColumnType("nvarchar(255)");
 
                     b.Property<bool>("IsActive")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(true);
+                        .HasColumnType("bit");
 
                     b.Property<string>("Name")
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
-                    b.HasKey("Id")
-                        .HasName("PK__Categori__3214EC07D4E0FA58");
+                    b.HasKey("Id");
 
-                    b.ToTable("CategoriesVehicle", (string)null);
+                    b.ToTable("CategoriesVehicle");
                 });
 
             modelBuilder.Entity("Domain.Entities.Contact", b =>
@@ -348,123 +193,148 @@ namespace Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
+                    b.Property<DateTimeOffset?>("ClosedAt")
+                        .HasPrecision(0)
+                        .HasColumnType("datetimeoffset(0)");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
                     b.Property<DateTimeOffset>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetimeoffset")
-                        .HasDefaultValueSql("(sysdatetimeoffset())");
+                        .HasPrecision(0)
+                        .HasColumnType("datetimeoffset(0)");
 
-                    b.Property<string>("Message")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<long>("UserId")
-                        .HasColumnType("bigint");
-
-                    b.HasKey("Id")
-                        .HasName("PK__Contact__3214EC07DE2F6868");
-
-                    b.HasIndex(new[] { "UserId" }, "IX_Contact_UserId");
-
-                    b.ToTable("Contact", (string)null);
-                });
-
-            modelBuilder.Entity("Domain.Entities.KycDocument", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
-
-                    b.Property<string>("DocPath")
+                    b.Property<string>("Email")
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
-                    b.Property<string>("DocType")
+                    b.Property<bool>("IsReplySent")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("PhoneNumber")
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
-                    b.Property<long>("SubmissionId")
+                    b.Property<DateTimeOffset?>("ReplyAt")
+                        .HasPrecision(0)
+                        .HasColumnType("datetimeoffset(0)");
+
+                    b.Property<long?>("ReplyById")
                         .HasColumnType("bigint");
 
-                    b.Property<DateTimeOffset>("UploadedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetimeoffset")
-                        .HasDefaultValueSql("(sysdatetimeoffset())");
-
-                    b.HasKey("Id")
-                        .HasName("PK__KycDocum__3214EC076BC33163");
-
-                    b.HasIndex(new[] { "SubmissionId" }, "IX_KycDocument_SubmissionId");
-
-                    b.ToTable("KycDocument", (string)null);
-                });
-
-            modelBuilder.Entity("Domain.Entities.KycProfile", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
-
-                    b.Property<long>("SubmissionId")
-                        .HasColumnType("bigint");
-
-                    b.Property<DateTimeOffset?>("VerifiedAt")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<DateOnly?>("VerifiedDob")
-                        .HasColumnType("date");
-
-                    b.Property<string>("VerifiedGender")
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<string>("VerifiedName")
-                        .HasMaxLength(150)
-                        .HasColumnType("nvarchar(150)");
-
-                    b.HasKey("Id")
-                        .HasName("PK__KycProfi__3214EC0728C9BBF2");
-
-                    b.HasIndex(new[] { "SubmissionId" }, "IX_KycProfile_SubmissionId");
-
-                    b.ToTable("KycProfile", (string)null);
-                });
-
-            modelBuilder.Entity("Domain.Entities.KycSubmission", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
-
-                    b.Property<DateTimeOffset?>("ReviewedAt")
-                        .HasColumnType("datetimeoffset");
+                    b.Property<string>("ReplyContent")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
 
                     b.Property<string>("Status")
                         .IsRequired()
-                        .ValueGeneratedOnAdd()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)")
-                        .HasDefaultValue("Pending");
+                        .HasMaxLength(20)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(20)");
 
-                    b.Property<DateTimeOffset>("SubmittedAt")
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ReplyById");
+
+                    b.ToTable("Contact");
+                });
+
+            modelBuilder.Entity("Domain.Entities.KycForm", b =>
+                {
+                    b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("datetimeoffset")
-                        .HasDefaultValueSql("(sysdatetimeoffset())");
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasPrecision(0)
+                        .HasColumnType("datetimeoffset(0)");
+
+                    b.Property<DateTime?>("Dob")
+                        .HasColumnType("date");
+
+                    b.Property<DateTimeOffset?>("ExpiryDate")
+                        .HasPrecision(7)
+                        .HasColumnType("datetimeoffset(7)");
+
+                    b.Property<string>("FullName")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("Gender")
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<string>("IdBackUrl")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("IdFrontUrl")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("IssuedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTimeOffset?>("IssuedDate")
+                        .HasPrecision(7)
+                        .HasColumnType("datetimeoffset(7)");
+
+                    b.Property<string>("NumberCard")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("PlaceOfOrigin")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("PlaceOfResidence")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("RejectReason")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<DateTimeOffset?>("ReviewedAt")
+                        .HasPrecision(0)
+                        .HasColumnType("datetimeoffset(0)");
+
+                    b.Property<string>("SelfieUrl")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTimeOffset?>("SubmittedAt")
+                        .HasPrecision(0)
+                        .HasColumnType("datetimeoffset(0)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasPrecision(0)
+                        .HasColumnType("datetimeoffset(0)");
 
                     b.Property<long>("UserId")
                         .HasColumnType("bigint");
 
-                    b.HasKey("Id")
-                        .HasName("PK__KycSubmi__3214EC075C41B76A");
+                    b.HasKey("Id");
 
-                    b.HasIndex(new[] { "UserId" }, "IX_KycSubmission_UserId");
+                    b.HasIndex(new[] { "UserId" }, "UQ_KycForm_User")
+                        .IsUnique();
 
-                    b.ToTable("KycSubmission", (string)null);
+                    b.ToTable("KycForm");
                 });
 
             modelBuilder.Entity("Domain.Entities.News", b =>
@@ -475,32 +345,55 @@ namespace Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
-                    b.Property<long>("AuthorId")
-                        .HasColumnType("bigint");
+                    b.Property<string>("Banner")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
 
                     b.Property<string>("Content")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTimeOffset>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetimeoffset")
-                        .HasDefaultValueSql("(sysdatetimeoffset())");
+                        .HasPrecision(0)
+                        .HasColumnType("datetimeoffset(0)");
 
-                    b.Property<bool>("IsActive")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(true);
+                    b.Property<DateTimeOffset?>("PublishedAt")
+                        .HasPrecision(0)
+                        .HasColumnType("datetimeoffset(0)");
+
+                    b.Property<long?>("PublishedBy")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset?>("ScheduledAt")
+                        .HasPrecision(0)
+                        .HasColumnType("datetimeoffset(0)");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(20)");
 
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
-                    b.HasKey("Id")
-                        .HasName("PK__News__3214EC0717F784AE");
+                    b.Property<long>("UserId")
+                        .HasColumnType("bigint");
 
-                    b.HasIndex(new[] { "AuthorId" }, "IX_News_AuthorId");
+                    b.HasKey("Id");
+
+                    b.HasIndex("PublishedBy");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex(new[] { "Slug" }, "UQ_News_Slug")
+                        .IsUnique();
 
                     b.ToTable("News");
                 });
@@ -513,63 +406,56 @@ namespace Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
+                    b.Property<string>("CancelReason")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
                     b.Property<DateTimeOffset>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetimeoffset")
-                        .HasDefaultValueSql("(sysdatetimeoffset())");
+                        .HasPrecision(0)
+                        .HasColumnType("datetimeoffset(0)");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("char(3)");
+
+                    b.Property<decimal>("Discount")
+                        .HasColumnType("decimal(18, 2)");
 
                     b.Property<string>("OrderNo")
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<string>("OrderType")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasMaxLength(30)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(30)");
+
+                    b.Property<DateTimeOffset?>("PaidAt")
+                        .HasPrecision(0)
+                        .HasColumnType("datetimeoffset(0)");
 
                     b.Property<string>("Status")
                         .IsRequired()
-                        .ValueGeneratedOnAdd()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)")
-                        .HasDefaultValue("Pending");
+                        .HasMaxLength(30)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(30)");
+
+                    b.Property<decimal>("Subtotal")
+                        .HasColumnType("decimal(18, 2)");
+
+                    b.Property<decimal>("Total")
+                        .HasColumnType("decimal(18, 2)");
 
                     b.Property<long>("UserId")
                         .HasColumnType("bigint");
 
-                    b.HasKey("Id")
-                        .HasName("PK__Order__3214EC07970C734A");
+                    b.HasKey("Id");
 
                     b.HasIndex(new[] { "UserId" }, "IX_Order_UserId");
 
-                    b.ToTable("Order", (string)null);
-                });
-
-            modelBuilder.Entity("Domain.Entities.OrderItem", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
-
-                    b.Property<long>("OrderId")
-                        .HasColumnType("bigint");
-
-                    b.Property<decimal>("Price")
-                        .HasColumnType("decimal(18, 2)");
-
-                    b.Property<string>("ProductName")
-                        .HasMaxLength(150)
-                        .HasColumnType("nvarchar(150)");
-
-                    b.Property<int>("Quantity")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasDefaultValue(1);
-
-                    b.HasKey("Id")
-                        .HasName("PK__OrderIte__3214EC0775FA8447");
-
-                    b.HasIndex(new[] { "OrderId" }, "IX_OrderItem_OrderId");
-
-                    b.ToTable("OrderItem", (string)null);
+                    b.ToTable("Order");
                 });
 
             modelBuilder.Entity("Domain.Entities.Payment", b =>
@@ -583,32 +469,73 @@ namespace Infrastructure.Migrations
                     b.Property<decimal>("Amount")
                         .HasColumnType("decimal(18, 2)");
 
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetimeoffset")
-                        .HasDefaultValueSql("(sysdatetimeoffset())");
+                    b.Property<string>("CheckoutUrl")
+                        .HasMaxLength(1024)
+                        .HasColumnType("nvarchar(1024)");
 
-                    b.Property<string>("Method")
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasPrecision(0)
+                        .HasColumnType("datetimeoffset(0)");
+
+                    b.Property<string>("Currency")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasMaxLength(3)
+                        .HasColumnType("char(3)");
+
+                    b.Property<string>("FailureReason")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("GatewayTxnId")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("IdempotencyKey")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<long>("OrderId")
                         .HasColumnType("bigint");
 
+                    b.Property<DateTimeOffset?>("PaidAt")
+                        .HasPrecision(0)
+                        .HasColumnType("datetimeoffset(0)");
+
+                    b.Property<string>("Provider")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(30)");
+
+                    b.Property<string>("ProviderTxnRef")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("RawRequest")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("RawResponse")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Status")
                         .IsRequired()
-                        .ValueGeneratedOnAdd()
                         .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)")
-                        .HasDefaultValue("Pending");
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(20)");
 
-                    b.HasKey("Id")
-                        .HasName("PK__Payment__3214EC07EE32C633");
+                    b.HasKey("Id");
 
                     b.HasIndex(new[] { "OrderId" }, "IX_Payment_OrderId");
 
-                    b.ToTable("Payment", (string)null);
+                    b.HasIndex(new[] { "GatewayTxnId" }, "UQ_Payment_GatewayTxnId")
+                        .IsUnique()
+                        .HasFilter("[GatewayTxnId] IS NOT NULL");
+
+                    b.HasIndex(new[] { "Provider", "ProviderTxnRef" }, "UQ_Payment_ProviderTxnRef")
+                        .IsUnique();
+
+                    b.ToTable("Payment");
                 });
 
             modelBuilder.Entity("Domain.Entities.Rental", b =>
@@ -619,31 +546,43 @@ namespace Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
-                    b.Property<long>("BookingId")
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasPrecision(0)
+                        .HasColumnType("datetimeoffset(0)");
+
+                    b.Property<long?>("EndStationId")
                         .HasColumnType("bigint");
 
-                    b.Property<decimal?>("Distance")
-                        .HasColumnType("decimal(10, 2)");
-
                     b.Property<DateTimeOffset?>("EndTime")
-                        .HasColumnType("datetimeoffset");
+                        .HasPrecision(0)
+                        .HasColumnType("datetimeoffset(0)");
+
+                    b.Property<long>("StartStationId")
+                        .HasColumnType("bigint");
 
                     b.Property<DateTimeOffset>("StartTime")
-                        .HasColumnType("datetimeoffset");
+                        .HasPrecision(0)
+                        .HasColumnType("datetimeoffset(0)");
 
                     b.Property<string>("Status")
                         .IsRequired()
-                        .ValueGeneratedOnAdd()
                         .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)")
-                        .HasDefaultValue("Ongoing");
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(20)");
 
-                    b.HasKey("Id")
-                        .HasName("PK__Rentals__3214EC0788FA21F4");
+                    b.Property<long>("UserId")
+                        .HasColumnType("bigint");
 
-                    b.HasIndex(new[] { "BookingId" }, "IX_Rentals_BookingId");
+                    b.Property<long>("VehicleId")
+                        .HasColumnType("bigint");
 
-                    b.ToTable("Rentals");
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("VehicleId");
+
+                    b.ToTable("Rental");
                 });
 
             modelBuilder.Entity("Domain.Entities.Station", b =>
@@ -662,9 +601,7 @@ namespace Infrastructure.Migrations
                         .HasColumnType("nvarchar(255)");
 
                     b.Property<bool>("IsActive")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(true);
+                        .HasColumnType("bit");
 
                     b.Property<decimal?>("Lat")
                         .HasColumnType("decimal(9, 6)");
@@ -680,10 +617,9 @@ namespace Infrastructure.Migrations
                         .HasMaxLength(150)
                         .HasColumnType("nvarchar(150)");
 
-                    b.HasKey("Id")
-                        .HasName("PK__Station__3214EC07C295B181");
+                    b.HasKey("Id");
 
-                    b.ToTable("Station", (string)null);
+                    b.ToTable("Station");
                 });
 
             modelBuilder.Entity("Domain.Entities.StationLog", b =>
@@ -694,21 +630,21 @@ namespace Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
-                    b.Property<string>("Action")
-                        .IsRequired()
+                    b.Property<string>("ChangeType")
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasPrecision(0)
+                        .HasColumnType("datetimeoffset(0)");
+
+                    b.Property<int?>("Quantity")
+                        .HasColumnType("int");
 
                     b.Property<long>("StationId")
                         .HasColumnType("bigint");
 
-                    b.Property<DateTimeOffset>("Timestamp")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetimeoffset")
-                        .HasDefaultValueSql("(sysdatetimeoffset())");
-
-                    b.HasKey("Id")
-                        .HasName("PK__StationL__3214EC07C48CFD68");
+                    b.HasKey("Id");
 
                     b.HasIndex(new[] { "StationId" }, "IX_StationLogs_StationId");
 
@@ -728,10 +664,33 @@ namespace Infrastructure.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
-                    b.HasKey("Id")
-                        .HasName("PK__Tags__3214EC07D6927A00");
+                    b.HasKey("Id");
 
                     b.ToTable("Tags");
+                });
+
+            modelBuilder.Entity("Domain.Entities.TagNew", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<long>("NewId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("TagId")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TagId");
+
+                    b.HasIndex(new[] { "NewId", "TagId" }, "UQ_TagNew")
+                        .IsUnique();
+
+                    b.ToTable("TagNew");
                 });
 
             modelBuilder.Entity("Domain.Entities.TicketPlan", b =>
@@ -742,27 +701,32 @@ namespace Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
+                    b.Property<string>("Code")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasPrecision(0)
+                        .HasColumnType("datetimeoffset(0)");
+
                     b.Property<string>("Description")
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
-                    b.Property<int>("DurationMinutes")
-                        .HasColumnType("int");
-
                     b.Property<bool>("IsActive")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(true);
+                        .HasColumnType("bit");
 
                     b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
 
-                    b.HasKey("Id")
-                        .HasName("PK__TicketPl__3214EC07F7F4A069");
+                    b.Property<string>("Type")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
-                    b.ToTable("TicketPlan", (string)null);
+                    b.HasKey("Id");
+
+                    b.ToTable("TicketPlan");
                 });
 
             modelBuilder.Entity("Domain.Entities.TicketPlanPrice", b =>
@@ -773,53 +737,42 @@ namespace Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
+                    b.Property<int>("ActivationMode")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("ActivationWindowDays")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("DailyFreeDurationMinutes")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("DurationLimitMinutes")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<decimal?>("OverageFeePer15Min")
+                        .HasColumnType("decimal(18, 2)");
+
                     b.Property<long>("PlanId")
                         .HasColumnType("bigint");
 
                     b.Property<decimal>("Price")
                         .HasColumnType("decimal(18, 2)");
 
+                    b.Property<int?>("ValidityDays")
+                        .HasColumnType("int");
+
                     b.Property<string>("VehicleType")
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
-                    b.HasKey("Id")
-                        .HasName("PK__TicketPl__3214EC075961CEE6");
+                    b.HasKey("Id");
 
                     b.HasIndex(new[] { "PlanId" }, "IX_TicketPlanPrice_PlanId");
 
-                    b.ToTable("TicketPlanPrice", (string)null);
-                });
-
-            modelBuilder.Entity("Domain.Entities.UserAddress", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
-
-                    b.Property<string>("Address")
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
-
-                    b.Property<string>("City")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("Country")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<long>("UserId")
-                        .HasColumnType("bigint");
-
-                    b.HasKey("Id")
-                        .HasName("PK__UserAddr__3214EC07F13D6185");
-
-                    b.HasIndex(new[] { "UserId" }, "IX_UserAddress_UserId");
-
-                    b.ToTable("UserAddress", (string)null);
+                    b.ToTable("TicketPlanPrice");
                 });
 
             modelBuilder.Entity("Domain.Entities.UserDevice", b =>
@@ -830,26 +783,38 @@ namespace Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
-                    b.Property<string>("DeviceId")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasPrecision(0)
+                        .HasColumnType("datetimeoffset(0)");
 
-                    b.Property<string>("DeviceType")
+                    b.Property<Guid>("DeviceId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset?>("LastLoginAt")
+                        .HasPrecision(0)
+                        .HasColumnType("datetimeoffset(0)");
+
+                    b.Property<string>("Platform")
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
-                    b.Property<DateTimeOffset?>("LastLogin")
-                        .HasColumnType("datetimeoffset");
+                    b.Property<string>("PushToken")
+                        .HasMaxLength(1024)
+                        .HasColumnType("nvarchar(1024)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasPrecision(0)
+                        .HasColumnType("datetimeoffset(0)");
 
                     b.Property<long>("UserId")
                         .HasColumnType("bigint");
 
-                    b.HasKey("Id")
-                        .HasName("PK__UserDevi__3214EC07D3C6E212");
+                    b.HasKey("Id");
 
-                    b.HasIndex(new[] { "UserId" }, "IX_UserDevice_UserId");
+                    b.HasIndex(new[] { "UserId", "DeviceId" }, "UQ_UserDevice_User_Device")
+                        .IsUnique();
 
-                    b.ToTable("UserDevice", (string)null);
+                    b.ToTable("UserDevice");
                 });
 
             modelBuilder.Entity("Domain.Entities.UserProfile", b =>
@@ -860,26 +825,94 @@ namespace Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
-                    b.Property<DateOnly?>("Dob")
+                    b.Property<string>("AddressDetail")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("AvatarUrl")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasPrecision(0)
+                        .HasColumnType("datetimeoffset(0)");
+
+                    b.Property<DateTime?>("Dob")
                         .HasColumnType("date");
+
+                    b.Property<string>("EmergencyName")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("EmergencyPhone")
+                        .IsRequired()
+                        .HasMaxLength(15)
+                        .HasColumnType("nvarchar(15)");
+
+                    b.Property<DateTimeOffset?>("ExpiryDate")
+                        .HasPrecision(7)
+                        .HasColumnType("datetimeoffset(7)");
 
                     b.Property<string>("FullName")
                         .HasMaxLength(150)
                         .HasColumnType("nvarchar(150)");
 
                     b.Property<string>("Gender")
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasMaxLength(10)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(10)");
+
+                    b.Property<string>("IssuedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTimeOffset?>("IssuedDate")
+                        .HasPrecision(7)
+                        .HasColumnType("datetimeoffset(7)");
+
+                    b.Property<string>("NumberCard")
+                        .IsRequired()
+                        .HasMaxLength(15)
+                        .HasColumnType("nvarchar(15)");
+
+                    b.Property<string>("PlaceOfOrigin")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("PlaceOfResidence")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<int?>("ProvinceCode")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ProvinceName")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasPrecision(0)
+                        .HasColumnType("datetimeoffset(0)");
 
                     b.Property<long>("UserId")
                         .HasColumnType("bigint");
 
-                    b.HasKey("Id")
-                        .HasName("PK__UserProf__3214EC070F6A0589");
+                    b.Property<int?>("WardCode")
+                        .HasColumnType("int");
 
-                    b.HasIndex(new[] { "UserId" }, "IX_UserProfile_UserId");
+                    b.Property<string>("WardName")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
-                    b.ToTable("UserProfile", (string)null);
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.HasIndex(new[] { "NumberCard" }, "UQ_UserProfile_NumberCard")
+                        .IsUnique()
+                        .HasFilter("[NumberCard] IS NOT NULL");
+
+                    b.ToTable("UserProfile");
                 });
 
             modelBuilder.Entity("Domain.Entities.UserSession", b =>
@@ -900,12 +933,11 @@ namespace Infrastructure.Migrations
                     b.Property<long>("UserId")
                         .HasColumnType("bigint");
 
-                    b.HasKey("Id")
-                        .HasName("PK__UserSess__3214EC07FD5AF48C");
+                    b.HasKey("Id");
 
                     b.HasIndex(new[] { "UserId" }, "IX_UserSession_UserId");
 
-                    b.ToTable("UserSession", (string)null);
+                    b.ToTable("UserSession");
                 });
 
             modelBuilder.Entity("Domain.Entities.UserTicket", b =>
@@ -916,29 +948,67 @@ namespace Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
-                    b.Property<DateTimeOffset>("EndTime")
-                        .HasColumnType("datetimeoffset");
+                    b.Property<DateTimeOffset?>("ActivatedAt")
+                        .HasPrecision(0)
+                        .HasColumnType("datetimeoffset(0)");
 
-                    b.Property<bool>("IsUsed")
-                        .HasColumnType("bit");
+                    b.Property<DateTimeOffset?>("ActivationDeadline")
+                        .HasPrecision(0)
+                        .HasColumnType("datetimeoffset(0)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasPrecision(0)
+                        .HasColumnType("datetimeoffset(0)");
+
+                    b.Property<DateTimeOffset?>("ExpiresAt")
+                        .HasPrecision(0)
+                        .HasColumnType("datetimeoffset(0)");
 
                     b.Property<long>("PlanPriceId")
                         .HasColumnType("bigint");
 
-                    b.Property<DateTimeOffset>("StartTime")
-                        .HasColumnType("datetimeoffset");
+                    b.Property<decimal?>("PurchasedPrice")
+                        .HasColumnType("decimal(18, 2)");
+
+                    b.Property<int?>("RemainingMinutes")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("RemainingRides")
+                        .HasColumnType("int");
+
+                    b.Property<byte[]>("RowVer")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("SerialCode")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(20)");
 
                     b.Property<long>("UserId")
                         .HasColumnType("bigint");
 
-                    b.HasKey("Id")
-                        .HasName("PK__UserTick__3214EC07A55923E8");
+                    b.Property<DateTimeOffset?>("ValidFrom")
+                        .HasPrecision(0)
+                        .HasColumnType("datetimeoffset(0)");
 
-                    b.HasIndex(new[] { "PlanPriceId" }, "IX_UserTicket_PlanPriceId");
+                    b.Property<DateTimeOffset?>("ValidTo")
+                        .HasPrecision(0)
+                        .HasColumnType("datetimeoffset(0)");
 
-                    b.HasIndex(new[] { "UserId" }, "IX_UserTicket_UserId");
+                    b.HasKey("Id");
 
-                    b.ToTable("UserTicket", (string)null);
+                    b.HasIndex("PlanPriceId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("UserTicket");
                 });
 
             modelBuilder.Entity("Domain.Entities.Vehicle", b =>
@@ -964,33 +1034,25 @@ namespace Infrastructure.Migrations
                         .HasColumnType("bit");
 
                     b.Property<DateTimeOffset>("CreatedAt")
-                        .ValueGeneratedOnAdd()
                         .HasPrecision(0)
-                        .HasColumnType("datetimeoffset(0)")
-                        .HasDefaultValueSql("(sysdatetimeoffset())");
+                        .HasColumnType("datetimeoffset(0)");
 
                     b.Property<long?>("StationId")
                         .HasColumnType("bigint");
 
                     b.Property<string>("Status")
                         .IsRequired()
-                        .ValueGeneratedOnAdd()
                         .HasMaxLength(20)
                         .IsUnicode(false)
-                        .HasColumnType("varchar(20)")
-                        .HasDefaultValue("Available");
+                        .HasColumnType("varchar(20)");
 
-                    b.HasKey("Id")
-                        .HasName("PK__Vehicle__3214EC0734EACA34");
+                    b.HasKey("Id");
 
-                    b.HasIndex(new[] { "BikeCode" }, "IX_Vehicle_BikeCode")
-                        .IsUnique();
+                    b.HasIndex("CategoryId");
 
-                    b.HasIndex(new[] { "CategoryId" }, "IX_Vehicle_CategoryId");
+                    b.HasIndex("StationId");
 
-                    b.HasIndex(new[] { "StationId" }, "IX_Vehicle_StationId");
-
-                    b.ToTable("Vehicle", (string)null);
+                    b.ToTable("Vehicle");
                 });
 
             modelBuilder.Entity("Domain.Entities.VehicleUsageLog", b =>
@@ -1001,28 +1063,29 @@ namespace Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
-                    b.Property<long>("BookingId")
+                    b.Property<string>("ChangeType")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasPrecision(0)
+                        .HasColumnType("datetimeoffset(0)");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<long?>("UserId")
                         .HasColumnType("bigint");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<DateTimeOffset>("Timestamp")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetimeoffset")
-                        .HasDefaultValueSql("(sysdatetimeoffset())");
 
                     b.Property<long>("VehicleId")
                         .HasColumnType("bigint");
 
-                    b.HasKey("Id")
-                        .HasName("PK__VehicleU__3214EC07E37D2CE1");
+                    b.HasKey("Id");
 
-                    b.HasIndex(new[] { "BookingId" }, "IX_VehicleUsageLogs_BookingId");
+                    b.HasIndex("UserId");
 
-                    b.HasIndex(new[] { "VehicleId" }, "IX_VehicleUsageLogs_VehicleId");
+                    b.HasIndex("VehicleId");
 
                     b.ToTable("VehicleUsageLogs");
                 });
@@ -1038,20 +1101,83 @@ namespace Infrastructure.Migrations
                     b.Property<decimal>("Balance")
                         .HasColumnType("decimal(18, 2)");
 
-                    b.Property<DateTimeOffset>("UpdatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetimeoffset")
-                        .HasDefaultValueSql("(sysdatetimeoffset())");
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("char(3)");
+
+                    b.Property<byte[]>("RowVer")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<decimal>("TotalDebt")
+                        .HasColumnType("decimal(18, 2)");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasPrecision(0)
+                        .HasColumnType("datetimeoffset(0)");
 
                     b.Property<long>("UserId")
                         .HasColumnType("bigint");
 
-                    b.HasKey("Id")
-                        .HasName("PK__Wallet__3214EC0718574291");
+                    b.HasKey("Id");
 
-                    b.HasIndex(new[] { "UserId" }, "IX_Wallet_UserId");
+                    b.HasIndex("UserId")
+                        .IsUnique();
 
-                    b.ToTable("Wallet", (string)null);
+                    b.ToTable("Wallet");
+                });
+
+            modelBuilder.Entity("Domain.Entities.WalletDebt", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("decimal(18, 2)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasPrecision(0)
+                        .HasColumnType("datetimeoffset(0)");
+
+                    b.Property<long?>("OrderId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset?>("PaidAt")
+                        .HasPrecision(0)
+                        .HasColumnType("datetimeoffset(0)");
+
+                    b.Property<decimal>("Remaining")
+                        .HasColumnType("decimal(18, 2)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<long>("UserId")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrderId");
+
+                    b.HasIndex(new[] { "UserId", "OrderId" }, "UQ_WalletDebt_User_Order")
+                        .IsUnique()
+                        .HasFilter("[OrderId] IS NOT NULL");
+
+                    b.ToTable("WalletDebt");
                 });
 
             modelBuilder.Entity("Domain.Entities.WalletTransaction", b =>
@@ -1065,46 +1191,470 @@ namespace Infrastructure.Migrations
                     b.Property<decimal>("Amount")
                         .HasColumnType("decimal(18, 2)");
 
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetimeoffset")
-                        .HasDefaultValueSql("(sysdatetimeoffset())");
+                    b.Property<decimal>("BalanceAfter")
+                        .HasColumnType("decimal(18, 2)");
 
-                    b.Property<string>("Type")
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasPrecision(0)
+                        .HasColumnType("datetimeoffset(0)");
+
+                    b.Property<string>("Direction")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasMaxLength(6)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(6)");
+
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(30)");
 
                     b.Property<long>("WalletId")
                         .HasColumnType("bigint");
 
-                    b.HasKey("Id")
-                        .HasName("PK__WalletTr__3214EC0730F16E79");
+                    b.HasKey("Id");
 
                     b.HasIndex(new[] { "WalletId" }, "IX_WalletTransaction_WalletId");
 
-                    b.ToTable("WalletTransaction", (string)null);
+                    b.ToTable("WalletTransaction");
                 });
 
-            modelBuilder.Entity("TagNew", b =>
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole<long>", b =>
                 {
-                    b.Property<long>("TagId")
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("bigint");
 
-                    b.Property<long>("NewsId")
-                        .HasColumnType("bigint");
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
-                    b.HasKey("TagId", "NewsId")
-                        .HasName("PK__TagNew__4C28127383B3AF5F");
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .HasColumnType("nvarchar(max)");
 
-                    b.HasIndex(new[] { "NewsId" }, "IX_TagNew_NewsId");
+                    b.Property<string>("Name")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
 
-                    b.ToTable("TagNew", (string)null);
+                    b.Property<string>("NormalizedName")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NormalizedName")
+                        .IsUnique()
+                        .HasDatabaseName("RoleNameIndex")
+                        .HasFilter("[NormalizedName] IS NOT NULL");
+
+                    b.ToTable("AspNetRoles", (string)null);
                 });
 
-            modelBuilder.Entity("AspNetUserRole", b =>
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<long>", b =>
                 {
-                    b.HasOne("Domain.Entities.AspNetRole", null)
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ClaimType")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ClaimValue")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<long>("RoleId")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RoleId");
+
+                    b.ToTable("AspNetRoleClaims", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<long>", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ClaimType")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ClaimValue")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<long>("UserId")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("AspNetUserClaims", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<long>", b =>
+                {
+                    b.Property<string>("LoginProvider")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("ProviderKey")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("ProviderDisplayName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<long>("UserId")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("LoginProvider", "ProviderKey");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("AspNetUserLogins", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<long>", b =>
+                {
+                    b.Property<long>("UserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("RoleId")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("UserId", "RoleId");
+
+                    b.HasIndex("RoleId");
+
+                    b.ToTable("AspNetUserRoles", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<long>", b =>
+                {
+                    b.Property<long>("UserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("LoginProvider")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Value")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("UserId", "LoginProvider", "Name");
+
+                    b.ToTable("AspNetUserTokens", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Entities.AdminProfile", b =>
+                {
+                    b.HasOne("Domain.Entities.AspNetUser", "User")
+                        .WithOne("AdminProfile")
+                        .HasForeignKey("Domain.Entities.AdminProfile", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Domain.Entities.BookingTicket", b =>
+                {
+                    b.HasOne("Domain.Entities.Rental", "Rental")
+                        .WithMany("BookingTickets")
+                        .HasForeignKey("RentalId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.UserTicket", "UserTicket")
+                        .WithMany("BookingTickets")
+                        .HasForeignKey("UserTicketId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Rental");
+
+                    b.Navigation("UserTicket");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Contact", b =>
+                {
+                    b.HasOne("Domain.Entities.AspNetUser", "Reply")
+                        .WithMany("AssignedContacts")
+                        .HasForeignKey("ReplyById");
+
+                    b.Navigation("Reply");
+                });
+
+            modelBuilder.Entity("Domain.Entities.KycForm", b =>
+                {
+                    b.HasOne("Domain.Entities.AspNetUser", "User")
+                        .WithMany("KycForms")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Domain.Entities.News", b =>
+                {
+                    b.HasOne("Domain.Entities.AspNetUser", "Publisher")
+                        .WithMany("PublishedNews")
+                        .HasForeignKey("PublishedBy");
+
+                    b.HasOne("Domain.Entities.AspNetUser", "User")
+                        .WithMany("AuthoredNews")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Publisher");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Order", b =>
+                {
+                    b.HasOne("Domain.Entities.AspNetUser", "User")
+                        .WithMany("Orders")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Payment", b =>
+                {
+                    b.HasOne("Domain.Entities.Order", "Order")
+                        .WithMany("Payments")
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Order");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Rental", b =>
+                {
+                    b.HasOne("Domain.Entities.AspNetUser", "User")
+                        .WithMany("Rentals")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.Vehicle", "Vehicle")
+                        .WithMany("Rentals")
+                        .HasForeignKey("VehicleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+
+                    b.Navigation("Vehicle");
+                });
+
+            modelBuilder.Entity("Domain.Entities.StationLog", b =>
+                {
+                    b.HasOne("Domain.Entities.Station", "Station")
+                        .WithMany("StationLogs")
+                        .HasForeignKey("StationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Station");
+                });
+
+            modelBuilder.Entity("Domain.Entities.TagNew", b =>
+                {
+                    b.HasOne("Domain.Entities.News", "News")
+                        .WithMany("TagNews")
+                        .HasForeignKey("NewId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.Tag", "Tag")
+                        .WithMany("TagNews")
+                        .HasForeignKey("TagId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("News");
+
+                    b.Navigation("Tag");
+                });
+
+            modelBuilder.Entity("Domain.Entities.TicketPlanPrice", b =>
+                {
+                    b.HasOne("Domain.Entities.TicketPlan", "Plan")
+                        .WithMany("TicketPlanPrices")
+                        .HasForeignKey("PlanId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Plan");
+                });
+
+            modelBuilder.Entity("Domain.Entities.UserDevice", b =>
+                {
+                    b.HasOne("Domain.Entities.AspNetUser", "User")
+                        .WithMany("UserDevices")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Domain.Entities.UserProfile", b =>
+                {
+                    b.HasOne("Domain.Entities.AspNetUser", "User")
+                        .WithOne("UserProfile")
+                        .HasForeignKey("Domain.Entities.UserProfile", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Domain.Entities.UserSession", b =>
+                {
+                    b.HasOne("Domain.Entities.AspNetUser", "User")
+                        .WithMany("UserSessions")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Domain.Entities.UserTicket", b =>
+                {
+                    b.HasOne("Domain.Entities.TicketPlanPrice", "PlanPrice")
+                        .WithMany("UserTickets")
+                        .HasForeignKey("PlanPriceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.AspNetUser", "User")
+                        .WithMany("UserTickets")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("PlanPrice");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Vehicle", b =>
+                {
+                    b.HasOne("Domain.Entities.CategoriesVehicle", "Category")
+                        .WithMany("Vehicles")
+                        .HasForeignKey("CategoryId");
+
+                    b.HasOne("Domain.Entities.Station", "Station")
+                        .WithMany("Vehicles")
+                        .HasForeignKey("StationId");
+
+                    b.Navigation("Category");
+
+                    b.Navigation("Station");
+                });
+
+            modelBuilder.Entity("Domain.Entities.VehicleUsageLog", b =>
+                {
+                    b.HasOne("Domain.Entities.AspNetUser", "User")
+                        .WithMany("VehicleUsageLogs")
+                        .HasForeignKey("UserId");
+
+                    b.HasOne("Domain.Entities.Vehicle", "Vehicle")
+                        .WithMany("VehicleUsageLogs")
+                        .HasForeignKey("VehicleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+
+                    b.Navigation("Vehicle");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Wallet", b =>
+                {
+                    b.HasOne("Domain.Entities.AspNetUser", "User")
+                        .WithOne("Wallet")
+                        .HasForeignKey("Domain.Entities.Wallet", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Domain.Entities.WalletDebt", b =>
+                {
+                    b.HasOne("Domain.Entities.Order", "Order")
+                        .WithMany()
+                        .HasForeignKey("OrderId");
+
+                    b.HasOne("Domain.Entities.AspNetUser", "User")
+                        .WithMany("WalletDebts")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Order");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Domain.Entities.WalletTransaction", b =>
+                {
+                    b.HasOne("Domain.Entities.Wallet", "Wallet")
+                        .WithMany("WalletTransactions")
+                        .HasForeignKey("WalletId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Wallet");
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<long>", b =>
+                {
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole<long>", null)
+                        .WithMany()
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<long>", b =>
+                {
+                    b.HasOne("Domain.Entities.AspNetUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<long>", b =>
+                {
+                    b.HasOne("Domain.Entities.AspNetUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<long>", b =>
+                {
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole<long>", null)
                         .WithMany()
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1117,411 +1667,44 @@ namespace Infrastructure.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Domain.Entities.AspNetRoleClaim", b =>
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<long>", b =>
                 {
-                    b.HasOne("Domain.Entities.AspNetRole", "Role")
-                        .WithMany("AspNetRoleClaims")
-                        .HasForeignKey("RoleId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Role");
-                });
-
-            modelBuilder.Entity("Domain.Entities.AspNetUserClaim", b =>
-                {
-                    b.HasOne("Domain.Entities.AspNetUser", "User")
-                        .WithMany("AspNetUserClaims")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("Domain.Entities.AspNetUserLogin", b =>
-                {
-                    b.HasOne("Domain.Entities.AspNetUser", "User")
-                        .WithMany("AspNetUserLogins")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("Domain.Entities.AspNetUserToken", b =>
-                {
-                    b.HasOne("Domain.Entities.AspNetUser", "User")
-                        .WithMany("AspNetUserTokens")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("Domain.Entities.Booking", b =>
-                {
-                    b.HasOne("Domain.Entities.Station", "EndStation")
-                        .WithMany("BookingEndStations")
-                        .HasForeignKey("EndStationId")
-                        .HasConstraintName("FK_Booking_EndStation");
-
-                    b.HasOne("Domain.Entities.Station", "StartStation")
-                        .WithMany("BookingStartStations")
-                        .HasForeignKey("StartStationId")
-                        .IsRequired()
-                        .HasConstraintName("FK_Booking_StartStation");
-
-                    b.HasOne("Domain.Entities.AspNetUser", "User")
-                        .WithMany("Bookings")
-                        .HasForeignKey("UserId")
-                        .IsRequired()
-                        .HasConstraintName("FK_Booking_User");
-
-                    b.HasOne("Domain.Entities.Vehicle", "Vehicle")
-                        .WithMany("Bookings")
-                        .HasForeignKey("VehicleId")
-                        .IsRequired()
-                        .HasConstraintName("FK_Booking_Vehicle");
-
-                    b.Navigation("EndStation");
-
-                    b.Navigation("StartStation");
-
-                    b.Navigation("User");
-
-                    b.Navigation("Vehicle");
-                });
-
-            modelBuilder.Entity("Domain.Entities.BookingTicket", b =>
-                {
-                    b.HasOne("Domain.Entities.Booking", "Booking")
-                        .WithMany("BookingTickets")
-                        .HasForeignKey("BookingId")
-                        .IsRequired()
-                        .HasConstraintName("FK_BookingTicket_Booking");
-
-                    b.HasOne("Domain.Entities.TicketPlanPrice", "PlanPrice")
-                        .WithMany("BookingTickets")
-                        .HasForeignKey("PlanPriceId")
-                        .IsRequired()
-                        .HasConstraintName("FK_BookingTicket_TPP");
-
-                    b.HasOne("Domain.Entities.UserTicket", "UserTicket")
-                        .WithMany("BookingTickets")
-                        .HasForeignKey("UserTicketId")
-                        .IsRequired()
-                        .HasConstraintName("FK_BookingTicket_UserTicket");
-
-                    b.Navigation("Booking");
-
-                    b.Navigation("PlanPrice");
-
-                    b.Navigation("UserTicket");
-                });
-
-            modelBuilder.Entity("Domain.Entities.Contact", b =>
-                {
-                    b.HasOne("Domain.Entities.AspNetUser", "User")
-                        .WithMany("Contacts")
-                        .HasForeignKey("UserId")
-                        .IsRequired()
-                        .HasConstraintName("FK_Contact_User");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("Domain.Entities.KycDocument", b =>
-                {
-                    b.HasOne("Domain.Entities.KycSubmission", "Submission")
-                        .WithMany("KycDocuments")
-                        .HasForeignKey("SubmissionId")
-                        .IsRequired()
-                        .HasConstraintName("FK_KycDocument_Submission");
-
-                    b.Navigation("Submission");
-                });
-
-            modelBuilder.Entity("Domain.Entities.KycProfile", b =>
-                {
-                    b.HasOne("Domain.Entities.KycSubmission", "Submission")
-                        .WithMany("KycProfiles")
-                        .HasForeignKey("SubmissionId")
-                        .IsRequired()
-                        .HasConstraintName("FK_KycProfile_Submission");
-
-                    b.Navigation("Submission");
-                });
-
-            modelBuilder.Entity("Domain.Entities.KycSubmission", b =>
-                {
-                    b.HasOne("Domain.Entities.AspNetUser", "User")
-                        .WithMany("KycSubmissions")
-                        .HasForeignKey("UserId")
-                        .IsRequired()
-                        .HasConstraintName("FK_KycSubmission_User");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("Domain.Entities.News", b =>
-                {
-                    b.HasOne("Domain.Entities.AspNetUser", "Author")
-                        .WithMany("News")
-                        .HasForeignKey("AuthorId")
-                        .IsRequired()
-                        .HasConstraintName("FK_News_Author");
-
-                    b.Navigation("Author");
-                });
-
-            modelBuilder.Entity("Domain.Entities.Order", b =>
-                {
-                    b.HasOne("Domain.Entities.AspNetUser", "User")
-                        .WithMany("Orders")
-                        .HasForeignKey("UserId")
-                        .IsRequired()
-                        .HasConstraintName("FK_Order_User");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("Domain.Entities.OrderItem", b =>
-                {
-                    b.HasOne("Domain.Entities.Order", "Order")
-                        .WithMany("OrderItems")
-                        .HasForeignKey("OrderId")
-                        .IsRequired()
-                        .HasConstraintName("FK_OrderItem_Order");
-
-                    b.Navigation("Order");
-                });
-
-            modelBuilder.Entity("Domain.Entities.Payment", b =>
-                {
-                    b.HasOne("Domain.Entities.Order", "Order")
-                        .WithMany("Payments")
-                        .HasForeignKey("OrderId")
-                        .IsRequired()
-                        .HasConstraintName("FK_Payment_Order");
-
-                    b.Navigation("Order");
-                });
-
-            modelBuilder.Entity("Domain.Entities.Rental", b =>
-                {
-                    b.HasOne("Domain.Entities.Booking", "Booking")
-                        .WithMany("Rentals")
-                        .HasForeignKey("BookingId")
-                        .IsRequired()
-                        .HasConstraintName("FK_Rentals_Booking");
-
-                    b.Navigation("Booking");
-                });
-
-            modelBuilder.Entity("Domain.Entities.StationLog", b =>
-                {
-                    b.HasOne("Domain.Entities.Station", "Station")
-                        .WithMany("StationLogs")
-                        .HasForeignKey("StationId")
-                        .IsRequired()
-                        .HasConstraintName("FK_StationLog_Station");
-
-                    b.Navigation("Station");
-                });
-
-            modelBuilder.Entity("Domain.Entities.TicketPlanPrice", b =>
-                {
-                    b.HasOne("Domain.Entities.TicketPlan", "Plan")
-                        .WithMany("TicketPlanPrices")
-                        .HasForeignKey("PlanId")
-                        .IsRequired()
-                        .HasConstraintName("FK_TicketPlanPrice_Plan");
-
-                    b.Navigation("Plan");
-                });
-
-            modelBuilder.Entity("Domain.Entities.UserAddress", b =>
-                {
-                    b.HasOne("Domain.Entities.AspNetUser", "User")
-                        .WithMany("UserAddresses")
-                        .HasForeignKey("UserId")
-                        .IsRequired()
-                        .HasConstraintName("FK_UserAddress_User");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("Domain.Entities.UserDevice", b =>
-                {
-                    b.HasOne("Domain.Entities.AspNetUser", "User")
-                        .WithMany("UserDevices")
-                        .HasForeignKey("UserId")
-                        .IsRequired()
-                        .HasConstraintName("FK_UserDevice_User");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("Domain.Entities.UserProfile", b =>
-                {
-                    b.HasOne("Domain.Entities.AspNetUser", "User")
-                        .WithMany("UserProfiles")
-                        .HasForeignKey("UserId")
-                        .IsRequired()
-                        .HasConstraintName("FK_UserProfile_User");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("Domain.Entities.UserSession", b =>
-                {
-                    b.HasOne("Domain.Entities.AspNetUser", "User")
-                        .WithMany("UserSessions")
-                        .HasForeignKey("UserId")
-                        .IsRequired()
-                        .HasConstraintName("FK_UserSession_User");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("Domain.Entities.UserTicket", b =>
-                {
-                    b.HasOne("Domain.Entities.TicketPlanPrice", "PlanPrice")
-                        .WithMany("UserTickets")
-                        .HasForeignKey("PlanPriceId")
-                        .IsRequired()
-                        .HasConstraintName("FK_UserTicket_Price");
-
-                    b.HasOne("Domain.Entities.AspNetUser", "User")
-                        .WithMany("UserTickets")
-                        .HasForeignKey("UserId")
-                        .IsRequired()
-                        .HasConstraintName("FK_UserTicket_User");
-
-                    b.Navigation("PlanPrice");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("Domain.Entities.Vehicle", b =>
-                {
-                    b.HasOne("Domain.Entities.CategoriesVehicle", "Category")
-                        .WithMany("Vehicles")
-                        .HasForeignKey("CategoryId")
-                        .HasConstraintName("FK_Vehicle_Category");
-
-                    b.HasOne("Domain.Entities.Station", "Station")
-                        .WithMany("Vehicles")
-                        .HasForeignKey("StationId")
-                        .HasConstraintName("FK_Vehicle_Station");
-
-                    b.Navigation("Category");
-
-                    b.Navigation("Station");
-                });
-
-            modelBuilder.Entity("Domain.Entities.VehicleUsageLog", b =>
-                {
-                    b.HasOne("Domain.Entities.Booking", "Booking")
-                        .WithMany("VehicleUsageLogs")
-                        .HasForeignKey("BookingId")
-                        .IsRequired()
-                        .HasConstraintName("FK_UsageLog_Booking");
-
-                    b.HasOne("Domain.Entities.Vehicle", "Vehicle")
-                        .WithMany("VehicleUsageLogs")
-                        .HasForeignKey("VehicleId")
-                        .IsRequired()
-                        .HasConstraintName("FK_UsageLog_Vehicle");
-
-                    b.Navigation("Booking");
-
-                    b.Navigation("Vehicle");
-                });
-
-            modelBuilder.Entity("Domain.Entities.Wallet", b =>
-                {
-                    b.HasOne("Domain.Entities.AspNetUser", "User")
-                        .WithMany("Wallets")
-                        .HasForeignKey("UserId")
-                        .IsRequired()
-                        .HasConstraintName("FK_Wallet_User");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("Domain.Entities.WalletTransaction", b =>
-                {
-                    b.HasOne("Domain.Entities.Wallet", "Wallet")
-                        .WithMany("WalletTransactions")
-                        .HasForeignKey("WalletId")
-                        .IsRequired()
-                        .HasConstraintName("FK_WalletTransaction_Wallet");
-
-                    b.Navigation("Wallet");
-                });
-
-            modelBuilder.Entity("TagNew", b =>
-                {
-                    b.HasOne("Domain.Entities.News", null)
+                    b.HasOne("Domain.Entities.AspNetUser", null)
                         .WithMany()
-                        .HasForeignKey("NewsId")
-                        .IsRequired()
-                        .HasConstraintName("FK_TagNew_News");
-
-                    b.HasOne("Domain.Entities.Tag", null)
-                        .WithMany()
-                        .HasForeignKey("TagId")
-                        .IsRequired()
-                        .HasConstraintName("FK_TagNew_Tag");
-                });
-
-            modelBuilder.Entity("Domain.Entities.AspNetRole", b =>
-                {
-                    b.Navigation("AspNetRoleClaims");
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Domain.Entities.AspNetUser", b =>
                 {
-                    b.Navigation("AspNetUserClaims");
+                    b.Navigation("AdminProfile");
 
-                    b.Navigation("AspNetUserLogins");
+                    b.Navigation("AssignedContacts");
 
-                    b.Navigation("AspNetUserTokens");
+                    b.Navigation("AuthoredNews");
 
-                    b.Navigation("Bookings");
-
-                    b.Navigation("Contacts");
-
-                    b.Navigation("KycSubmissions");
-
-                    b.Navigation("News");
+                    b.Navigation("KycForms");
 
                     b.Navigation("Orders");
 
-                    b.Navigation("UserAddresses");
+                    b.Navigation("PublishedNews");
+
+                    b.Navigation("Rentals");
 
                     b.Navigation("UserDevices");
 
-                    b.Navigation("UserProfiles");
+                    b.Navigation("UserProfile");
 
                     b.Navigation("UserSessions");
 
                     b.Navigation("UserTickets");
 
-                    b.Navigation("Wallets");
-                });
-
-            modelBuilder.Entity("Domain.Entities.Booking", b =>
-                {
-                    b.Navigation("BookingTickets");
-
-                    b.Navigation("Rentals");
-
                     b.Navigation("VehicleUsageLogs");
+
+                    b.Navigation("Wallet");
+
+                    b.Navigation("WalletDebts");
                 });
 
             modelBuilder.Entity("Domain.Entities.CategoriesVehicle", b =>
@@ -1529,29 +1712,31 @@ namespace Infrastructure.Migrations
                     b.Navigation("Vehicles");
                 });
 
-            modelBuilder.Entity("Domain.Entities.KycSubmission", b =>
+            modelBuilder.Entity("Domain.Entities.News", b =>
                 {
-                    b.Navigation("KycDocuments");
-
-                    b.Navigation("KycProfiles");
+                    b.Navigation("TagNews");
                 });
 
             modelBuilder.Entity("Domain.Entities.Order", b =>
                 {
-                    b.Navigation("OrderItems");
-
                     b.Navigation("Payments");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Rental", b =>
+                {
+                    b.Navigation("BookingTickets");
                 });
 
             modelBuilder.Entity("Domain.Entities.Station", b =>
                 {
-                    b.Navigation("BookingEndStations");
-
-                    b.Navigation("BookingStartStations");
-
                     b.Navigation("StationLogs");
 
                     b.Navigation("Vehicles");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Tag", b =>
+                {
+                    b.Navigation("TagNews");
                 });
 
             modelBuilder.Entity("Domain.Entities.TicketPlan", b =>
@@ -1561,8 +1746,6 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Domain.Entities.TicketPlanPrice", b =>
                 {
-                    b.Navigation("BookingTickets");
-
                     b.Navigation("UserTickets");
                 });
 
@@ -1573,7 +1756,7 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Domain.Entities.Vehicle", b =>
                 {
-                    b.Navigation("Bookings");
+                    b.Navigation("Rentals");
 
                     b.Navigation("VehicleUsageLogs");
                 });

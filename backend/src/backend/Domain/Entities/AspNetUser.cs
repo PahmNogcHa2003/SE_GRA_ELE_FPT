@@ -1,89 +1,57 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Microsoft.EntityFrameworkCore;
 
-namespace Domain.Entities;
-
-[Index("NormalizedEmail", Name = "EmailIndex")]
-public partial class AspNetUser : BaseEntity<long>
+namespace Domain.Entities
 {
-    [StringLength(256)]
-    public string? UserName { get; set; }
+    public class AspNetUser : IdentityUser<long>
+    {
+        [Required]
+        [Precision(0)]
+        public DateTimeOffset CreatedDate { get; set; }
 
-    [StringLength(256)]
-    public string? NormalizedUserName { get; set; }
+        [InverseProperty("User")]
+        public virtual ICollection<Rental> Rentals { get; set; } = new List<Rental>();
+        [InverseProperty("Reply")]
+        public virtual ICollection<Contact> AssignedContacts { get; set; } = new List<Contact>();
 
-    [StringLength(256)]
-    public string? Email { get; set; }
+        [InverseProperty("User")]
+        public virtual ICollection<KycForm> KycForms { get; set; } = new List<KycForm>();
 
-    [StringLength(256)]
-    public string? NormalizedEmail { get; set; }
+        [InverseProperty("User")]
+        public virtual ICollection<News> AuthoredNews { get; set; } = new List<News>();
 
-    public bool EmailConfirmed { get; set; }
+        [InverseProperty("Publisher")]
+        public virtual ICollection<News> PublishedNews { get; set; } = new List<News>();
 
-    public string? PasswordHash { get; set; }
+        [InverseProperty("User")]
+        public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
 
-    public string? SecurityStamp { get; set; }
+        [InverseProperty("User")]
+        public virtual ICollection<UserDevice> UserDevices { get; set; } = new List<UserDevice>();
 
-    public string? ConcurrencyStamp { get; set; }
+        [InverseProperty("User")]
+        public virtual UserProfile? UserProfile { get; set; }
 
-    public string? PhoneNumber { get; set; }
+        [InverseProperty("User")]
+        public virtual ICollection<UserSession> UserSessions { get; set; } = new List<UserSession>();
 
-    public bool PhoneNumberConfirmed { get; set; }
+        [InverseProperty("User")]
+        public virtual ICollection<UserTicket> UserTickets { get; set; } = new List<UserTicket>();
 
-    public bool TwoFactorEnabled { get; set; }
+        [InverseProperty("User")]
+        public virtual Wallet? Wallet { get; set; }
 
-    public DateTimeOffset? LockoutEnd { get; set; }
+        [InverseProperty("User")]
+        public virtual AdminProfile? AdminProfile { get; set; }
 
-    public bool LockoutEnabled { get; set; }
+        [InverseProperty("User")]
+        public virtual ICollection<WalletDebt> WalletDebts { get; set; } = new List<WalletDebt>();
 
-    public int AccessFailedCount { get; set; }
-
-    [InverseProperty("User")]
-    public virtual ICollection<AspNetUserClaim> AspNetUserClaims { get; set; } = new List<AspNetUserClaim>();
-
-    [InverseProperty("User")]
-    public virtual ICollection<AspNetUserLogin> AspNetUserLogins { get; set; } = new List<AspNetUserLogin>();
-
-    [InverseProperty("User")]
-    public virtual ICollection<AspNetUserToken> AspNetUserTokens { get; set; } = new List<AspNetUserToken>();
-
-    [InverseProperty("User")]
-    public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
-
-    [InverseProperty("User")]
-    public virtual ICollection<Contact> Contacts { get; set; } = new List<Contact>();
-
-    [InverseProperty("User")]
-    public virtual ICollection<KycSubmission> KycSubmissions { get; set; } = new List<KycSubmission>();
-
-    [InverseProperty("Author")]
-    public virtual ICollection<News> News { get; set; } = new List<News>();
-
-    [InverseProperty("User")]
-    public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
-
-    [InverseProperty("User")]
-    public virtual ICollection<UserAddress> UserAddresses { get; set; } = new List<UserAddress>();
-
-    [InverseProperty("User")]
-    public virtual ICollection<UserDevice> UserDevices { get; set; } = new List<UserDevice>();
-
-    [InverseProperty("User")]
-    public virtual ICollection<UserProfile> UserProfiles { get; set; } = new List<UserProfile>();
-
-    [InverseProperty("User")]
-    public virtual ICollection<UserSession> UserSessions { get; set; } = new List<UserSession>();
-
-    [InverseProperty("User")]
-    public virtual ICollection<UserTicket> UserTickets { get; set; } = new List<UserTicket>();
-
-    [InverseProperty("User")]
-    public virtual ICollection<Wallet> Wallets { get; set; } = new List<Wallet>();
-
-    [ForeignKey("UserId")]
-    [InverseProperty("Users")]
-    public virtual ICollection<AspNetRole> Roles { get; set; } = new List<AspNetRole>();
+        [InverseProperty("User")]
+        public virtual ICollection<VehicleUsageLog> VehicleUsageLogs { get; set; } = new List<VehicleUsageLog>();
+    }
 }
