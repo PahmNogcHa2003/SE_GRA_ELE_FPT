@@ -10,6 +10,6 @@ namespace Application.Interfaces.Location
     public interface ILocationRepository
     {
         Task<IEnumerable<Province>> GetProvincesAsync();
-        Task<IEnumerable<Ward>> GetWardsByProvinceAsync(int provinceCode);
+        Task<IEnumerable<Ward>> GetWardsByProvinceAsync(string provinceCode);
     }
 }
