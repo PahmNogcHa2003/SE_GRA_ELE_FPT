@@ -1,68 +1,110 @@
-﻿using Application.Interfaces;
-using Application.Interfaces.Location;
+﻿using Application.Interfaces.Location;
 using Domain.Entities;
 using Microsoft.Extensions.Caching.Memory;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 
-namespace Infrastructure.Repositories.Location;
-
-public class LocationRepository : ILocationRepository
+namespace Infrastructure.Repositories.Location
 {
-    private readonly IHttpClientFactory _httpClientFactory;
-    private readonly IMemoryCache _cache;
-    private const string BaseApiUrl = "https://provinces.open-api.vn/api/v2/";
-
-    public LocationRepository(IHttpClientFactory httpClientFactory, IMemoryCache cache)
+    public class LocationRepository : ILocationRepository
     {
-        _httpClientFactory = httpClientFactory;
-        _cache = cache;
-    }
+        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly IMemoryCache _cache;
+        private readonly string _apiKey;
+        private const string BaseApiUrl = "https://tinhthanhpho.com/api/v1/";
 
-    public async Task<IEnumerable<Province>> GetProvincesAsync()
-    {
-        const string cacheKey = "provinces_v2";
-        if (_cache.TryGetValue(cacheKey, out List<Province> provinces))
+        public LocationRepository(IHttpClientFactory httpClientFactory, IMemoryCache cache)
         {
-            return provinces ?? new List<Province>();
+            _httpClientFactory = httpClientFactory;
+            _cache = cache;
+            _apiKey = Environment.GetEnvironmentVariable("TINHTHANHPHO_API_KEY") ?? "";
         }
 
-        var client = _httpClientFactory.CreateClient("ProvincesAPI");
-        var response = await client.GetAsync("p/");
-        response.EnsureSuccessStatusCode();
-
-        var stream = await response.Content.ReadAsStreamAsync();
-        var result = await JsonSerializer.DeserializeAsync<List<Province>>(stream, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-
-        if (result is not null)
+        /// <summary>
+        /// Lấy danh sách tỉnh/thành phố (API mới)
+        /// </summary>
+        public async Task<IEnumerable<Province>> GetProvincesAsync()
         {
-            _cache.Set(cacheKey, result, TimeSpan.FromDays(7));
+            const string cacheKey = "provinces_v1";
+
+            if (_cache.TryGetValue(cacheKey, out List<Province> cached))
+                return cached;
+
+            var client = CreateClient();
+            var response = await client.GetAsync("new-provinces?limit=100");
+            response.EnsureSuccessStatusCode();
+
+            var stream = await response.Content.ReadAsStreamAsync();
+            var json = await JsonSerializer.DeserializeAsync<ApiResponse<List<Province>>>(stream,
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+            var provinces = json?.Data ?? new List<Province>();
+            _cache.Set(cacheKey, provinces, TimeSpan.FromDays(7));
+
+            return provinces;
         }
 
-        return result ?? new List<Province>();
-    }
-
-    public async Task<IEnumerable<Ward>> GetWardsByProvinceAsync(int provinceCode)
-    {
-        string cacheKey = $"wards_of_province_v2_{provinceCode}";
-        if (_cache.TryGetValue(cacheKey, out List<Ward> wards))
+        /// <summary>
+        /// Lấy danh sách phường/xã theo mã tỉnh (API mới)
+        /// </summary>
+        public async Task<IEnumerable<Ward>> GetWardsByProvinceAsync(string provinceCode)
         {
-            return wards ?? new List<Ward>();
+            string cacheKey = $"wards_v1_{provinceCode}";
+
+            if (_cache.TryGetValue(cacheKey, out List<Ward> cached))
+                return cached;
+
+            var client = CreateClient();
+            var response = await client.GetAsync($"new-provinces/{provinceCode}/wards?limit=200");
+            response.EnsureSuccessStatusCode();
+
+            var stream = await response.Content.ReadAsStreamAsync();
+            var json = await JsonSerializer.DeserializeAsync<ApiResponse<List<Ward>>>(stream,
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+            var wards = json?.Data ?? new List<Ward>();
+            _cache.Set(cacheKey, wards, TimeSpan.FromDays(7));
+
+            return wards;
         }
 
-        var client = _httpClientFactory.CreateClient("ProvincesAPI");
-        var response = await client.GetAsync($"w/?province_code={provinceCode}");
-        response.EnsureSuccessStatusCode();
-
-        var stream = await response.Content.ReadAsStreamAsync();
-        var result = await JsonSerializer.DeserializeAsync<List<Ward>>(stream, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-
-        if (result is not null)
+        /// <summary>
+        /// Lấy địa chỉ đầy đủ (API mới)
+        /// </summary>
+        public async Task<FullAddress?> GetFullAddressAsync(string provinceCode, string wardCode)
         {
-            _cache.Set(cacheKey, result, TimeSpan.FromDays(7));
+            var client = CreateClient();
+            var response = await client.GetAsync($"new-full-address?provinceCode={provinceCode}&wardCode={wardCode}");
+            response.EnsureSuccessStatusCode();
+
+            var stream = await response.Content.ReadAsStreamAsync();
+            var json = await JsonSerializer.DeserializeAsync<ApiResponse<FullAddress>>(stream,
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+            return json?.Data;
         }
 
-        return result ?? new List<Ward>();
+        // ===================== Helper Methods =====================
+
+        private HttpClient CreateClient()
+        {
+            var client = _httpClientFactory.CreateClient();
+            client.BaseAddress = new Uri(BaseApiUrl);
+            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+            if (!string.IsNullOrEmpty(_apiKey))
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _apiKey);
+
+            return client;
+        }
+
+        // ===================== Generic Response Wrapper =====================
+
+        private class ApiResponse<T>
+        {
+            public bool Success { get; set; }
+            public T? Data { get; set; }
+        }
     }
 }
