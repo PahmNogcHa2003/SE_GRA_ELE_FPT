@@ -1,0 +1,20 @@
+services:
+  webapi:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: webapi
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Server=sqlserver,1433;Database=HolaBike;User Id=sa;Password=B!ch2003;TrustServerCertificate=True;
+      - Jwt__Key=ThisIsMySuperLongAndVerySecureSecretKeyForHolaBikeApp2025!
+      - Jwt__Issuer=HolaBikeAPI
+      - Jwt__Audience=HolaBikeClient
+    ports:
+      - "8080:8080"
+    restart: always
+    networks:
+      - backend-net
+networks:
+  backend-net:
+    external: true
