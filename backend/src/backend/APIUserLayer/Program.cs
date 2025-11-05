@@ -3,6 +3,7 @@ using Domain.Entities;
 using Infrastructure.Dependency_Injection;
 using Infrastructure.Middlewares;
 using Infrastructure.Persistence;
+using Infrastructure.Setting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -180,7 +181,7 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("StaffOrAdmin", policy => policy.RequireRole("Admin", "Staff"));
     options.AddPolicy("UserOnly", policy => policy.RequireRole("User"));
 });
-
+builder.Services.Configure<VnPaySettings>(builder.Configuration.GetSection("VnPaySettings"));
 var app = builder.Build();
 
 // Seed roles + admin
@@ -197,60 +198,6 @@ using (var scope = app.Services.CreateScope())
         logger.LogError(ex, "Seeding identity failed.");
     }
 }
-
-
-
-// --- Middleware Pipeline Configuration ---
-
-
-// ✅ --- SEED DATABASE ON STARTUP ---
-using (var scope = app.Services.CreateScope())
-{
-    var services = scope.ServiceProvider;
-    var logger = services.GetRequiredService<ILogger<Program>>();
-    try
-    {
-        var roleManager = services.GetRequiredService<RoleManager<IdentityRole<long>>>();
-        var userManager = services.GetRequiredService<UserManager<AspNetUser>>();
-
-        // 1. Seed Roles
-        string[] roleNames = { "Admin", "Staff", "User" };
-        foreach (var roleName in roleNames)
-        {
-            if (!await roleManager.RoleExistsAsync(roleName))
-            {
-                await roleManager.CreateAsync(new IdentityRole<long>(roleName));
-                logger.LogInformation("Role '{RoleName}' created.", roleName);
-            }
-        }
-
-        // 2. Seed Admin User
-        var adminEmail = "admin@gmail.com";
-        var adminUser = await userManager.FindByEmailAsync(adminEmail);
-        if (adminUser == null)
-        {
-            adminUser = new AspNetUser
-            {
-                UserName = adminEmail,
-                Email = adminEmail,
-                EmailConfirmed = true, // Tự động xác thực email cho admin
-                CreatedDate = DateTimeOffset.UtcNow
-            };
-            var result = await userManager.CreateAsync(adminUser, "Admin123");
-            if (result.Succeeded)
-            {
-                // Gán cả 2 quyền Admin và Staff cho tài khoản này
-                await userManager.AddToRolesAsync(adminUser, new[] { "Admin", "Staff" });
-                logger.LogInformation("Admin user created and assigned Admin/Staff roles.");
-            }
-        }
-    }
-    catch (Exception ex)
-    {
-        logger.LogError(ex, "An error occurred while seeding the database.");
-    }
-}
-
 
 // --- Middleware Pipeline Configuration ---
 if (app.Environment.IsDevelopment())

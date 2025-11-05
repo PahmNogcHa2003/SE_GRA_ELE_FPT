@@ -59,9 +59,11 @@ namespace Application.Mapping
         private void ConfigureNewsMapping()
         {
             // Chiều từ Entity -> DTO (Khi lấy dữ liệu ra)
-            CreateMap<Domain.Entities.News, DTOs.NewsDTO>()
+            CreateMap<News, NewsDTO>()
                 .ForMember(dest => dest.TagIds,
-                           opt => opt.MapFrom(src => src.TagNews.Select(t => t.Id).ToList()));
+                    opt => opt.MapFrom(src => src.TagNews.Select(tn => tn.TagId)))
+                .ForMember(dest => dest.TagNames,
+                    opt => opt.MapFrom(src => src.TagNews.Select(tn => tn.Tag.Name)));
 
             // === DÒNG QUAN TRỌNG NHẤT ĐỂ SỬA LỖI ===
             // Chiều từ DTO -> Entity (Khi tạo mới/cập nhật)

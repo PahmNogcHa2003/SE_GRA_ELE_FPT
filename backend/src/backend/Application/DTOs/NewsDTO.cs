@@ -42,9 +42,8 @@ namespace Application.DTOs
 
         [Required]
         public long UserId { get; set; }
-
-        // Thêm thuộc tính này vào
         public List<long> TagIds { get; set; } = new List<long>();
+        public List<string>? TagNames { get; set; } 
 
     }
 }

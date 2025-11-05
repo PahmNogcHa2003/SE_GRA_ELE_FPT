@@ -5,22 +5,30 @@ using System.Text;
 using System.Threading.Tasks;
 using Application.DTOs;
 using Application.Interfaces;
+using Application.Interfaces.Base;
 using Application.Interfaces.User.Repository;
 using Application.Interfaces.User.Service;
+using Application.Services.Base;
+using AutoMapper;
 using Domain.Entities;
 
 namespace Application.Services.User
 {
-    public class WalletService : IWalletService
+    public class WalletService : GenericService<Wallet, WalletDTO, long>, IWalletService
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IWalletDebtRepository _walletDebtRepository;
         private readonly IWalletRepository _walletRepository;
         private readonly IWalletTransactionRepository _walletTransactionRepository;
-        public WalletService(IUnitOfWork unitOfWork, 
+
+        public WalletService(
+            IRepository<Wallet, long> repo,
+            IMapper mapper,
+            IUnitOfWork unitOfWork,
             IWalletDebtRepository walletDebtRepository,
             IWalletRepository walletRepository,
-            IWalletTransactionRepository walletTransactionRepository)
+            IWalletTransactionRepository walletTransactionRepository
+        ) : base(repo, mapper, unitOfWork)    
         {
             _unitOfWork = unitOfWork;
             _walletDebtRepository = walletDebtRepository;
