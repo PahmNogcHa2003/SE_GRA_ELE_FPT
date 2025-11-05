@@ -1,4 +1,5 @@
-﻿using Application.Interfaces.Base;
+﻿using Application.DTOs;
+using Application.Interfaces.Base;
 using System;
 using System.Collections.Generic;
 using System.Linq;

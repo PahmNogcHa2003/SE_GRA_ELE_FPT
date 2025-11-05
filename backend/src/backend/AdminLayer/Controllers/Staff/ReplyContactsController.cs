@@ -13,7 +13,7 @@ namespace AdminLayer.Controllers.Staff
 {
     [Route("api/staff/contacts")] // Thay đổi route cho rõ ràng
     [ApiController]
-    [Authorize(Roles = "Staff")] // Chỉ định rõ Role
+    [Authorize(Roles = "Admin")] // Chỉ định rõ Role
     public class ReplyContactsController : ApiBaseController // Kế thừa từ Base
     {
         // Tiêm (Inject) service chuyên biệt

@@ -42,7 +42,8 @@ namespace Infrastructure.Dependency_Injection
             services.AddScoped<IRepository<CategoriesVehicle, long>, CategoriesVehicleRepository>();
             services.AddScoped<IRepository<Vehicle, long>, VehicleRepository>();
             services.AddScoped<IRepository<Tag, long>, TagRepository>();
-            services.AddScoped<INewsRepository, NewsRepository>();
+            services.AddScoped<Application.Interfaces.Staff.Repository.INewsRepository, Repositories.Staff.NewsRepository>();
+            services.AddScoped<Application.Interfaces.User.Repository.INewsRepository, Repositories.User.NewsRepository>();
             services.AddScoped<IPaymentRepository, PaymentRepository>();
             services.AddScoped<IOrderRepository, OrderRepository>();
             services.AddScoped<IWalletRepository, WalletRepository>();
@@ -79,7 +80,8 @@ namespace Infrastructure.Dependency_Injection
             services.AddScoped<Application.Interfaces.User.Service.IStationsService, Application.Services.User.StationsService>();
             services.AddScoped<ICategoriesVehicleService, CategoriesVehicleService>();
             services.AddScoped<IVehicleService, VehiclesService>();
-            services.AddScoped<INewsService, NewsService>();
+            services.AddScoped<Application.Interfaces.User.Service.INewsService, Application.Services.User.NewsService>();
+            services.AddScoped<Application.Interfaces.Staff.Service.INewsService, Application.Services.Staff.NewsService>();
             services.AddScoped<ITagService, TagService>();
             services.AddScoped<IPaymentService, PaymentService>(); 
             services.AddScoped<IWalletService, WalletService>();

@@ -3,7 +3,8 @@ using Application.Interfaces.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.Linq; // For selecting error messages from ModelState
 using System.Threading.Tasks;
-using Application.Common; // Assuming your ApiResponse is here
+using Application.Common;
+using Microsoft.AspNetCore.Authorization; // Assuming your ApiResponse is here
 
 namespace Admin.Controllers
 {
@@ -24,6 +25,7 @@ namespace Admin.Controllers
         /// <param name="model">The registration data.</param>
         /// <returns>HTTP 201 on success, HTTP 400 on failure.</returns>
         [HttpPost("register")]
+        [AllowAnonymous]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<ActionResult<ApiResponse<AuthResponseDTO>>> Register([FromBody] RegisterDTO model)
@@ -61,6 +63,7 @@ namespace Admin.Controllers
         /// <param name="model">The login credentials.</param>
         /// <returns>HTTP 200 on success, HTTP 401 on authentication failure.</returns>
         [HttpPost("login")]
+        [AllowAnonymous]
         [ProducesResponseType(typeof(ApiResponse<AuthResponseDTO>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiResponse<AuthResponseDTO>), StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(typeof(ApiResponse<AuthResponseDTO>), StatusCodes.Status400BadRequest)]
