@@ -20,6 +20,7 @@ namespace Application.Services.Identity
         private readonly IUserProfilesService _profileService;
         private readonly IUserDevicesService _userDevicesService;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IWalletService _walletService;
 
         public AuthService(
             UserManager<AspNetUser> userManager,
@@ -27,6 +28,7 @@ namespace Application.Services.Identity
             IJwtTokenService tokenService,
             IUserProfilesService userProfilesService,
             IUserDevicesService userDevicesService,
+            IWalletService walletService,
             IUnitOfWork unitOfWork)
         {
             _userManager = userManager;
@@ -35,6 +37,7 @@ namespace Application.Services.Identity
             _profileService = userProfilesService;
             _userDevicesService = userDevicesService;
             _unitOfWork = unitOfWork;
+            _walletService = walletService;
         }
 
         // --- REGISTER ---
@@ -104,6 +107,16 @@ namespace Application.Services.Identity
 
                 await _profileService.CreateAsync(userProfileDto, ct);
 
+                var wallet = new WalletDTO
+                {
+                    UserId = user.Id,
+                    Balance = 0m,
+                    TotalDebt = 0m,
+                    Status = "Active",
+                    CreatedAt = now,
+                    UpdatedAt = now
+                };
+                await _walletService.CreateAsync(wallet, ct);
                 // 6) Lưu & commit
                 await _unitOfWork.SaveChangesAsync(ct);
                 await _unitOfWork.CommitTransactionAsync(tx, ct);
@@ -150,12 +163,14 @@ namespace Application.Services.Identity
             // Tạo JWT
             var jwt = await _tokenService.GenerateJwtTokenAsync(user);
             var roles = await _userManager.GetRolesAsync(user);
+            var profile = await _profileService.GetByUserIdAsync(user.Id);
             return new AuthResponseDTO
             {
                 IsSuccess = true,
                 Message = "Login successful.",
                 Token = jwt,
                 Roles = [.. roles]
+
             };
         }
         private long? GetUserIdAsLong(ClaimsPrincipal userPrincipal)
