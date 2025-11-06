@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:hola_bike_app/presentation/login/login_page.dart';
+import 'package:hola_bike_app/presentation/auth/login/login_page.dart';
 import '../../theme/app_colors.dart';
 
 class SplashScreen extends StatefulWidget {
