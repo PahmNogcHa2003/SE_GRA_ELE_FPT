@@ -56,6 +56,11 @@ namespace Infrastructure.Dependency_Injection
             services.AddScoped<IRepository<Rental, long>, RentalsRepository>();
             services.AddScoped<IRepository<UserDevice, long>, UserDevicesRepository>();
             services.AddScoped<IRepository<BookingTicket, long>, BookingTicketRepository>();
+            services.AddScoped<IEmailRepository, MailRepository>();
+            services.AddScoped<IContactRepository, ContactRepository>();
+            services.AddScoped<IManageContactRepository, ManageContactRepository>();
+            services.AddScoped<IReplyContactRepository, ReplyContactRepository>();
+
 
             //Test
             services.AddScoped<IStationsRepository, StationsRepository>();
@@ -103,7 +108,7 @@ namespace Infrastructure.Dependency_Injection
             services.AddScoped<IContactService, ContactService>();
             services.AddScoped<IManageContactService, ManageContactService>();
             services.AddScoped<IReplyContactService, ReplyContactService>();
-
+      
 
             // --- AutoMapper ---
             services.AddAutoMapper(typeof(AppMappingProfile).Assembly);
