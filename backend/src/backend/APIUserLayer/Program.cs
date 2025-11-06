@@ -187,6 +187,14 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
+builder.Services.AddHttpContextAccessor();
+
+
+// -------------------- Controllers & Swagger --------------------
+builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer(); // ✅ cần để Swagger hoạt động
+builder.Services.AddSwaggerGen();            // ✅ cần để tạo giao diện Swagger
+builder.Services.Configure<VnPaySettings>(builder.Configuration.GetSection("VnPaySettings"));
 // Add Authorization Policies
 builder.Services.AddAuthorization(options =>
 {
