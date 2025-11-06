@@ -26,7 +26,6 @@ class _TripTrackingPageState extends State<TripTrackingPage> {
   final List<Map<String, dynamic>> _tripHistory = [];
   LatLng? _currentPos;
   double _totalMeters = 0;
-  bool _tracking = false;
   DateTime? _startTime;
 
   @override
@@ -50,7 +49,6 @@ class _TripTrackingPageState extends State<TripTrackingPage> {
     }
 
     setState(() {
-      _tracking = true;
       _startTime = DateTime.now();
     });
 
@@ -88,7 +86,6 @@ class _TripTrackingPageState extends State<TripTrackingPage> {
 
   void _stopTracking() {
     _positionSub?.cancel();
-    setState(() => _tracking = false);
 
     EasyLoading.showSuccess('Hành trình đã kết thúc');
     Navigator.pop(context);

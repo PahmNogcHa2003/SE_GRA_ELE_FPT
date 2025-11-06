@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:hola_bike_app/presentation/auth/login/login_page.dart';
 import 'package:hola_bike_app/presentation/home/home_screen.dart';

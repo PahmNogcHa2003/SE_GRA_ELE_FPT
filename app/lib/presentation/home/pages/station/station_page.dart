@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'widgets/station_map.dart';
-import 'widgets/station_card.dart';
-import 'widgets/station_status_card.dart';
 
 class StationPage extends StatelessWidget {
   final bool showStatusCard;

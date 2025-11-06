@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
-import 'package:hola_bike_app/presentation/home/home_screen.dart';
 import 'package:hola_bike_app/presentation/trip/trip_tracking_page.dart';
 import 'package:hola_bike_app/theme/app_colors.dart';
 

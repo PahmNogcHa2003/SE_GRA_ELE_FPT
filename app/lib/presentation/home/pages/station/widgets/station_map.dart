@@ -21,32 +21,6 @@ class _StationMapState extends State<StationMap> {
     VehicleType.car,
   };
 
-  OverlayEntry? _stationOverlay;
-
-  void _showStationOverlay(BuildContext context, Station station) {
-    _stationOverlay?.remove();
-
-    _stationOverlay = OverlayEntry(
-      builder: (_) => Positioned(
-        bottom: 70,
-        left: 16,
-        right: 16,
-        child: Material(
-          color: Colors.transparent,
-          child: StationCard(
-            station: station,
-            onClose: () {
-              _stationOverlay?.remove();
-              _stationOverlay = null;
-            },
-          ),
-        ),
-      ),
-    );
-
-    Overlay.of(context).insert(_stationOverlay!);
-  }
-
   @override
   Widget build(BuildContext context) {
     final center = AppLocations.stations.first.latLng;
