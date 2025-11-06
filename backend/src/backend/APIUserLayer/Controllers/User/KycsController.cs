@@ -1,6 +1,6 @@
 ﻿using APIUserLayer.Controllers.Base;
 using Application.Common;
-using Application.DTOs.Kyc; // <-- Quan trọng: Phải using DTO mới
+using Application.DTOs.Kyc;
 using Application.Interfaces.User.Service;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -20,41 +20,29 @@ namespace APIUserLayer.Controllers.User
             _kycService = kycService;
         }
 
+        /// <summary>
+        /// Submit ảnh CCCD để tạo yêu cầu KYC
+        /// </summary>
+        /// <param name="request">DTO chứa FrontImage, BackImage và JsonData</param>
         [HttpPost("submit-images")]
+        [Authorize]
         [ProducesResponseType(typeof(ApiResponse<bool>), 200)]
         [ProducesResponseType(typeof(ApiResponse<object>), 400)]
-        [Authorize]
-        // === THAY ĐỔI QUAN TRỌNG NHẤT LÀ Ở ĐÂY ===
-        // Phương thức bây giờ nhận vào DTO thay vì 2 tham số IFormFile riêng lẻ.
         public async Task<IActionResult> SubmitKycImages([FromForm] CreateKycRequestDTO request)
         {
-            // Lấy id của người dùng từ claims (token)
-            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrEmpty(userIdString) || !long.TryParse(userIdString, out var userId))
+            if (request == null)
             {
-                return Unauthorized(ApiResponse<object>.ErrorResponse("Token không hợp lệ hoặc không tìm thấy User ID."));
+                return BadRequest(ApiResponse<object>.ErrorResponse("Request không hợp lệ."));
             }
 
-            // Gọi service với các file lấy từ DTO
-            //var result = await _kycService.SubmitKycImagesAsync(userId, request.FrontImage, request.BackImage);
-            var result = true;
-            return Ok(ApiResponse<bool>.SuccessResponse(result, "Yêu cầu đã được gửi. Chúng tôi sẽ xử lý và thông báo cho bạn."));
-        }
+            var result = await _kycService.CreateKycAsync(request);
 
-        [HttpGet("{id}")]
-        [ProducesResponseType(typeof(ApiResponse<KycDTO>), 200)]
-        [ProducesResponseType(typeof(ApiResponse<object>), 404)]
-        public async Task<ActionResult<ApiResponse<KycDTO>>> GetKycFormById(long id)
-        {
-            var kycForm = await _kycService.GetAsync(id);
-
-            if (kycForm == null)
+            if (!result)
             {
-                return NotFound(ApiResponse<object>.ErrorResponse($"Không tìm thấy yêu cầu KYC với ID: {id}"));
+                return BadRequest(ApiResponse<object>.ErrorResponse("Tạo yêu cầu KYC thất bại. Vui lòng kiểm tra lại thông tin."));
             }
 
-            return Ok(ApiResponse<KycDTO>.SuccessResponse(kycForm, "Lấy thông tin KYC thành công."));
+            return Ok(ApiResponse<bool>.SuccessResponse(true, "Yêu cầu KYC đã được gửi. Chúng tôi sẽ xử lý và thông báo cho bạn."));
         }
     }
 }
-

@@ -11,8 +11,8 @@ using System.Threading.Tasks;
 
 namespace Application.Interfaces.User.Service
 {
-    public interface IKycService : IService<Domain.Entities.KycForm, KycDTO, long>
+    public interface IKycService 
     {
-
+        Task<bool> CreateKycAsync(CreateKycRequestDTO createKycRequestDTO);
     }
 }
