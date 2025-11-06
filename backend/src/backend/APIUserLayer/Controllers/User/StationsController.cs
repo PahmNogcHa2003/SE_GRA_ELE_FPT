@@ -43,6 +43,14 @@ namespace APIUserLayer.Controllers.User
             var msg = data.TotalCount == 0 ? "Không có trạm nào trong bán kính yêu cầu" : "Fetched nearby stations";
             return Ok(ApiResponse<PagedResult<StationDTO>>.SuccessResponse(data, msg));
         }
+        [HttpGet("all")]
+        public async Task<ActionResult<ApiResponse<IEnumerable<StationDTO>>>> All(CancellationToken ct = default)
+        {
+            var data = await _stations.GetAllAsync(ct);
+
+            return Ok(ApiResponse<IEnumerable<StationDTO>>.SuccessResponse(data, "All stations"));
+        }
+
     }
 
 }
