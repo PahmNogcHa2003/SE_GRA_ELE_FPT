@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hola_bike_app/data/sources/remote/api_register.dart';
 import 'package:hola_bike_app/presentation/auth/login/login_page.dart';
 import 'package:hola_bike_app/presentation/auth/register/register_form.dart';
 import 'package:hola_bike_app/theme/app_colors.dart';
@@ -13,20 +14,59 @@ class RegisterPage extends StatefulWidget {
 class _RegisterPageState extends State<RegisterPage> {
   bool _formValid = false;
   bool _agreePolicy = false;
+  Map<String, dynamic>? _formData;
+
+  final _registerApi = RegisterApi();
+
+  Future<void> _handleRegister() async {
+    if (_formData == null) return;
+
+    try {
+      final response = await _registerApi.register(
+        phoneNumber: _formData!['phoneNumber'],
+        fullName: _formData!['fullName'],
+        identityNumber: _formData!['identityNumber'],
+        emergencyName: _formData!['emergencyName'],
+        emergencyPhone: _formData!['emergencyPhone'],
+        provinceId: _formData!['provinceId'],
+        provinceName: _formData!['provinceName'],
+        wardId: _formData!['wardId'],
+        wardName: _formData!['wardName'],
+        address: _formData!['address'],
+        email: _formData!['email'],
+        gender: _formData!['gender'],
+        dateOfBirth: _formData!['dateOfBirth'],
+        password: _formData!['password'],
+        confirmPassword: _formData!['confirmPassword'],
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Đăng ký thành công! ${response.message ?? ''}'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const LoginPage()),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Đăng ký thất bại: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final isRegisterEnabled = _formValid && _agreePolicy;
-
-    Future<void> _handleRegister() async {
-      // Gọi API đăng ký ở đây
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Đăng ký thành công!'),
-          backgroundColor: Colors.green,
-        ),
-      );
-    }
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -40,7 +80,12 @@ class _RegisterPageState extends State<RegisterPage> {
         child: Column(
           children: [
             RegisterForm(
-              onFormValidChanged: (valid) => setState(() => _formValid = valid),
+              onFormValidChanged: (valid, data) {
+                setState(() {
+                  _formValid = valid;
+                  _formData = data;
+                });
+              },
             ),
             const SizedBox(height: 16),
             Row(
@@ -69,11 +114,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
-                onPressed: isRegisterEnabled
-                    ? () {
-                        _handleRegister();
-                      }
-                    : null,
+                onPressed: isRegisterEnabled ? _handleRegister : null,
                 child: const Text('Đăng ký'),
               ),
             ),
@@ -81,15 +122,12 @@ class _RegisterPageState extends State<RegisterPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Text(
-                  'Đã có tài khoản? ',
-                  style: TextStyle(color: Colors.black),
-                ),
+                const Text('Đã có tài khoản? '),
                 TextButton(
                   onPressed: () {
-                    Navigator.push(
+                    Navigator.pushReplacement(
                       context,
-                      MaterialPageRoute(builder: (_) => const LoginScreen()),
+                      MaterialPageRoute(builder: (_) => const LoginPage()),
                     );
                   },
                   child: const Text(

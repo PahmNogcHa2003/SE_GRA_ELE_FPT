@@ -57,13 +57,19 @@ class _HomeScreenState extends State<HomeScreen> {
     Navigator.push(context, MaterialPageRoute(builder: (_) => const QrPage()));
   }
 
+  Future<void> _deleteToken() async {
+    await secureStorage.delete(key: 'access_token');
+    if (!mounted) return;
+    Navigator.of(context).pushReplacementNamed('/login');
+  }
+
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
-
     if (userInfo == null) {
+      _deleteToken();
       return const Scaffold(
         body: Center(child: Text('Không thể tải thông tin người dùng')),
       );

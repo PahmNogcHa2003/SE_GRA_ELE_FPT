@@ -6,7 +6,8 @@ import 'package:hola_bike_app/data/sources/remote/api_provice.dart';
 import 'package:hola_bike_app/data/sources/remote/api_wards.dart';
 
 class RegisterForm extends StatefulWidget {
-  final void Function(bool isValid) onFormValidChanged;
+  final void Function(bool isValid, Map<String, dynamic> formData)
+  onFormValidChanged;
 
   const RegisterForm({super.key, required this.onFormValidChanged});
 
@@ -26,6 +27,8 @@ class _RegisterFormState extends State<RegisterForm> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   final _birthController = TextEditingController();
+  final _emergencyNameController = TextEditingController();
+  final _emergencyPhoneController = TextEditingController();
 
   String? _gender;
   String? _selectedProvinceCode;
@@ -46,26 +49,11 @@ class _RegisterFormState extends State<RegisterForm> {
     _loadProvinces();
   }
 
-  @override
-  void dispose() {
-    _fullNameController.dispose();
-    _phoneController.dispose();
-    _identityController.dispose();
-    _addressController.dispose();
-    _emailController.dispose();
-    _passwordController.dispose();
-    _confirmPasswordController.dispose();
-    _birthController.dispose();
-    super.dispose();
-  }
-
   Future<void> _loadProvinces() async {
     setState(() => _isLoadingProvince = true);
     try {
       final data = await _provinceApi.getProvinces();
-      if (mounted) {
-        setState(() => _provinces = data);
-      }
+      if (mounted) setState(() => _provinces = data);
     } finally {
       if (mounted) setState(() => _isLoadingProvince = false);
     }
@@ -79,9 +67,7 @@ class _RegisterFormState extends State<RegisterForm> {
     });
     try {
       final data = await _wardsApi.GetWardByProvice(provinceCode);
-      if (mounted) {
-        setState(() => _wards = data);
-      }
+      if (mounted) setState(() => _wards = data);
     } finally {
       if (mounted) setState(() => _isLoadingWard = false);
     }
@@ -89,7 +75,43 @@ class _RegisterFormState extends State<RegisterForm> {
 
   void _checkFormValid() {
     final isValid = _formKey.currentState?.validate() ?? false;
-    widget.onFormValidChanged(isValid);
+
+    if (!isValid) {
+      widget.onFormValidChanged(false, {});
+      return;
+    }
+
+    final province = _provinces.firstWhere(
+      (p) => p.code == _selectedProvinceCode,
+      orElse: () => Province(code: '', name: ''),
+    );
+    final ward = _wards.firstWhere(
+      (w) => w.code == _selectedWardCode,
+      orElse: () => Province(code: '', name: ''),
+    );
+
+    DateTime? dob;
+    try {
+      dob = DateFormat('dd/MM/yyyy').parse(_birthController.text);
+    } catch (_) {}
+
+    widget.onFormValidChanged(true, {
+      'phoneNumber': _phoneController.text.trim(),
+      'fullName': _fullNameController.text.trim(),
+      'identityNumber': _identityController.text.trim(),
+      'emergencyName': _emergencyNameController.text.trim(),
+      'emergencyPhone': _emergencyPhoneController.text.trim(),
+      'provinceId': int.tryParse(province.code) ?? 0,
+      'provinceName': province.name,
+      'wardId': int.tryParse(ward.code) ?? 0,
+      'wardName': ward.name,
+      'address': _addressController.text.trim(),
+      'email': _emailController.text.trim(),
+      'gender': _gender ?? '',
+      'dateOfBirth': dob ?? DateTime.now(),
+      'password': _passwordController.text,
+      'confirmPassword': _confirmPasswordController.text,
+    });
   }
 
   @override
@@ -100,133 +122,65 @@ class _RegisterFormState extends State<RegisterForm> {
       child: Column(
         children: [
           _buildField(
-            controller: _fullNameController,
-            label: 'Họ và tên *',
+            _fullNameController,
+            'Họ và tên *',
             validator: (v) => v!.isEmpty ? 'Vui lòng nhập họ tên' : null,
           ),
           _buildField(
-            controller: _phoneController,
-            label: 'Số điện thoại *',
+            _phoneController,
+            'Số điện thoại *',
             keyboardType: TextInputType.phone,
             validator: (v) => v!.isEmpty ? 'Vui lòng nhập số điện thoại' : null,
           ),
           _buildField(
-            controller: _identityController,
-            label: 'CCCD/Passport *',
+            _identityController,
+            'CCCD/Passport *',
             validator: (v) => v!.isEmpty ? 'Vui lòng nhập CCCD/Passport' : null,
           ),
-
-          // --- Dropdown Tỉnh/TP ---
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: DropdownButtonFormField<String>(
-              value: _selectedProvinceCode,
-              isExpanded: true,
-              decoration: _dropdownDecoration('Tỉnh/TP (Nơi ở hiện tại) *'),
-              items: _provinces
-                  .map(
-                    (p) => DropdownMenuItem(value: p.code, child: Text(p.name)),
-                  )
-                  .toList(),
-              onChanged: (value) {
-                setState(() => _selectedProvinceCode = value);
-                if (value != null) _loadWards(value);
-                _checkFormValid();
-              },
-              validator: (v) =>
-                  v == null ? 'Vui lòng chọn Tỉnh/Thành phố' : null,
-            ),
-          ),
-          if (_isLoadingProvince)
-            const Padding(
-              padding: EdgeInsets.all(8),
-              child: CircularProgressIndicator(),
-            ),
-
-          // --- Dropdown Xã/Phường ---
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: DropdownButtonFormField<String>(
-              value: _selectedWardCode,
-              isExpanded: true,
-              decoration: _dropdownDecoration('Xã/Phường (Nơi ở hiện tại) *'),
-              items: _wards
-                  .map(
-                    (w) => DropdownMenuItem(value: w.code, child: Text(w.name)),
-                  )
-                  .toList(),
-              onChanged: (value) {
-                setState(() => _selectedWardCode = value);
-                _checkFormValid();
-              },
-              validator: (v) => v == null ? 'Vui lòng chọn xã/phường' : null,
-            ),
-          ),
-          if (_isLoadingWard)
-            const Padding(
-              padding: EdgeInsets.all(8),
-              child: CircularProgressIndicator(),
-            ),
-
           _buildField(
-            controller: _addressController,
-            label: 'Địa chỉ *',
+            _emergencyNameController,
+            'Tên người thân liên hệ khẩn *',
+            validator: (v) =>
+                v!.isEmpty ? 'Vui lòng nhập tên người thân' : null,
+          ),
+          _buildField(
+            _emergencyPhoneController,
+            'SĐT người thân *',
+            keyboardType: TextInputType.phone,
+            validator: (v) =>
+                v!.isEmpty ? 'Vui lòng nhập SĐT người thân' : null,
+          ),
+
+          // Dropdown tỉnh/thành
+          _dropdownProvince(),
+          _dropdownWard(),
+          _buildField(
+            _addressController,
+            'Địa chỉ *',
             validator: (v) => v!.isEmpty ? 'Vui lòng nhập địa chỉ' : null,
           ),
           _buildField(
-            controller: _emailController,
-            label: 'Email',
+            _emailController,
+            'Email',
             keyboardType: TextInputType.emailAddress,
-            validator: (v) {
-              if (v!.isEmpty) return null;
-              final emailReg = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
-              return emailReg.hasMatch(v) ? null : 'Email không hợp lệ';
-            },
           ),
-
-          // --- Dropdown giới tính ---
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: DropdownButtonFormField<String>(
-              value: _gender,
-              decoration: _dropdownDecoration('Giới tính'),
-              items: ['Nam', 'Nữ', 'Khác']
-                  .map(
-                    (item) => DropdownMenuItem(value: item, child: Text(item)),
-                  )
-                  .toList(),
-              onChanged: (v) {
-                setState(() => _gender = v);
-                _checkFormValid();
-              },
-            ),
-          ),
-
-          // --- Chọn ngày sinh ---
+          _dropdownGender(),
           _buildDatePickerField(_birthController),
-
-          // --- Mật khẩu ---
           _buildField(
-            controller: _passwordController,
-            label: 'Mật khẩu *',
+            _passwordController,
+            'Mật khẩu *',
             obscureText: true,
             validator: (v) {
-              if (v == null || v.isEmpty) {
-                return 'Vui lòng nhập mật khẩu';
-              }
-              if (v.length < 6) {
-                return 'Mật khẩu phải ít nhất 6 ký tự';
-              }
-              if (!RegExp(r'[0-9]').hasMatch(v)) {
-                return 'Mật khẩu phải chứa ít nhất 1 chữ số';
-              }
+              if (v == null || v.isEmpty) return 'Vui lòng nhập mật khẩu';
+              if (v.length < 6) return 'Mật khẩu phải ít nhất 6 ký tự';
+              if (!RegExp(r'[0-9]').hasMatch(v))
+                return 'Phải có ít nhất 1 chữ số';
               return null;
             },
           ),
-
           _buildField(
-            controller: _confirmPasswordController,
-            label: 'Nhập lại mật khẩu',
+            _confirmPasswordController,
+            'Nhập lại mật khẩu',
             obscureText: true,
             validator: (v) =>
                 v != _passwordController.text ? 'Mật khẩu không khớp' : null,
@@ -236,19 +190,107 @@ class _RegisterFormState extends State<RegisterForm> {
     );
   }
 
-  // ---------- Tiện ích ----------
-  InputDecoration _dropdownDecoration(String label) {
-    return InputDecoration(
-      labelText: label,
-      filled: true,
-      fillColor: AppColors.card,
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+  Widget _dropdownProvince() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: DropdownButtonFormField<String>(
+        value: _selectedProvinceCode,
+        isExpanded: true,
+        decoration: _dropdownDecoration('Tỉnh/TP *'),
+        items: _provinces
+            .map((p) => DropdownMenuItem(value: p.code, child: Text(p.name)))
+            .toList(),
+        onChanged: (v) {
+          setState(() => _selectedProvinceCode = v);
+          if (v != null) _loadWards(v);
+          _checkFormValid();
+        },
+        validator: (v) => v == null ? 'Chọn tỉnh/thành phố' : null,
+      ),
     );
   }
 
-  Widget _buildField({
-    required TextEditingController controller,
-    required String label,
+  Widget _dropdownWard() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: DropdownButtonFormField<String>(
+        value: _selectedWardCode,
+        isExpanded: true,
+        decoration: _dropdownDecoration('Xã/Phường *'),
+        items: _wards
+            .map((w) => DropdownMenuItem(value: w.code, child: Text(w.name)))
+            .toList(),
+        onChanged: (v) {
+          setState(() => _selectedWardCode = v);
+          _checkFormValid();
+        },
+        validator: (v) => v == null ? 'Chọn xã/phường' : null,
+      ),
+    );
+  }
+
+  Widget _dropdownGender() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: DropdownButtonFormField<String>(
+        value: _gender,
+        decoration: _dropdownDecoration('Giới tính'),
+        items: [
+          'Nam',
+          'Nữ',
+          'Khác',
+        ].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+        onChanged: (v) {
+          setState(() => _gender = v);
+          _checkFormValid();
+        },
+      ),
+    );
+  }
+
+  Widget _buildDatePickerField(TextEditingController controller) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: TextFormField(
+        controller: controller,
+        readOnly: true,
+        decoration: InputDecoration(
+          labelText: 'Ngày sinh *',
+          hintText: 'DD/MM/YYYY',
+          suffixIcon: const Icon(Icons.calendar_today),
+          filled: true,
+          fillColor: AppColors.card,
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+        validator: (v) => v!.isEmpty ? 'Vui lòng chọn ngày sinh' : null,
+        onTap: () async {
+          FocusScope.of(context).unfocus();
+          final now = DateTime.now();
+          final picked = await showDatePicker(
+            context: context,
+            initialDate: DateTime(now.year - 18),
+            firstDate: DateTime(1900),
+            lastDate: now,
+          );
+          if (picked != null) {
+            controller.text = DateFormat('dd/MM/yyyy').format(picked);
+            _checkFormValid();
+          }
+        },
+      ),
+    );
+  }
+
+  InputDecoration _dropdownDecoration(String label) => InputDecoration(
+    labelText: label,
+    filled: true,
+    fillColor: AppColors.card,
+    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+  );
+
+  Widget _buildField(
+    TextEditingController c,
+    String label, {
     String? hint,
     TextInputType keyboardType = TextInputType.text,
     bool obscureText = false,
@@ -257,7 +299,7 @@ class _RegisterFormState extends State<RegisterForm> {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: TextFormField(
-        controller: controller,
+        controller: c,
         obscureText: obscureText,
         keyboardType: keyboardType,
         decoration: InputDecoration(
@@ -268,49 +310,6 @@ class _RegisterFormState extends State<RegisterForm> {
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
         ),
         validator: validator,
-      ),
-    );
-  }
-
-  // --- Field chọn ngày sinh ---
-  Widget _buildDatePickerField(TextEditingController controller) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: TextFormField(
-        controller: controller,
-        readOnly: true,
-        decoration: InputDecoration(
-          labelText: 'Ngày sinh *',
-          hintText: 'DD/MM/YYYY',
-          suffixIcon: const Icon(Icons.calendar_today, color: Colors.grey),
-          filled: true,
-          fillColor: AppColors.card,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-        ),
-        validator: (v) => v!.isEmpty ? 'Vui lòng chọn ngày sinh' : null,
-        onTap: () async {
-          FocusScope.of(context).unfocus();
-
-          final now = DateTime.now();
-          final picked = await showDatePicker(
-            context: context,
-            initialDate: DateTime(now.year - 18),
-            firstDate: DateTime(1900),
-            lastDate: now,
-            builder: (context, child) => Theme(
-              data: Theme.of(context).copyWith(
-                colorScheme: const ColorScheme.light(primary: Colors.green),
-              ),
-              child: child!,
-            ),
-          );
-
-          if (picked != null && mounted) {
-            setState(() {
-              controller.text = DateFormat('dd/MM/yyyy').format(picked);
-            });
-          }
-        },
       ),
     );
   }

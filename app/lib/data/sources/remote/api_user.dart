@@ -29,6 +29,9 @@ class UserApi {
       print('Status code: ${response.statusCode}');
       print('Body: ${response.body}');
 
+      if (response.statusCode == 401) {
+        return {'Unauthorized', 401} as UserInfo;
+      }
       // --- Xử lý kết quả ---
       if (response.statusCode == 200) {
         try {
