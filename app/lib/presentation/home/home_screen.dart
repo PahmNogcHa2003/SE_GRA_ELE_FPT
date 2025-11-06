@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:hola_bike_app/domain/models/user_info.dart';
+import 'package:hola_bike_app/data/sources/remote/user_api.dart';
 import 'package:hola_bike_app/presentation/home/pages/qr/qr_page.dart';
 import 'package:hola_bike_app/presentation/navigation/bottom_nav.dart';
 import 'pages/home_content.dart';
@@ -14,19 +17,36 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  final secureStorage = const FlutterSecureStorage();
   int _index = 0;
-
-  final List<Widget> mainPages = [];
+  UserInfo? userInfo;
+  bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    mainPages.addAll([
-      HomeContent(onItemSelected: _handleMenuSelection),
-      const StationPage(),
-      const NotificationPage(),
-      const MorePage(),
-    ]);
+    _loadUserInfo();
+  }
+
+  Future<void> _loadUserInfo() async {
+    try {
+      final token = await secureStorage.read(key: 'access_token');
+      if (token == null) {
+        throw Exception('Không tìm thấy access token');
+      }
+
+      print('🔹 Gọi getUserInfo với token: $token');
+      final api = UserApi();
+      final info = await api.getUserInfo(token);
+
+      setState(() {
+        userInfo = info;
+        isLoading = false;
+      });
+    } catch (e) {
+      print('❌ Lỗi khi gọi getUserInfo: $e');
+      setState(() => isLoading = false);
+    }
   }
 
   void _handleMenuSelection(int index) {
@@ -39,6 +59,23 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (isLoading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    if (userInfo == null) {
+      return const Scaffold(
+        body: Center(child: Text('Không thể tải thông tin người dùng')),
+      );
+    }
+
+    final mainPages = [
+      HomeContent(onItemSelected: _handleMenuSelection, userInfo: userInfo!),
+      const StationPage(),
+      const NotificationPage(),
+      const MorePage(),
+    ];
+
     return Scaffold(
       body: AnimatedSwitcher(
         duration: const Duration(milliseconds: 300),

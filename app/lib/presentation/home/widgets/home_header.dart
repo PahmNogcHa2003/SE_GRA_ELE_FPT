@@ -3,9 +3,10 @@ import 'package:hola_bike_app/presentation/wallet/walet_page.dart';
 import '../../../theme/app_colors.dart';
 
 class HomeHeader extends StatelessWidget {
+  final String name;
   final int point;
 
-  const HomeHeader({super.key, required this.point});
+  const HomeHeader({super.key, required this.name, required this.point});
 
   @override
   Widget build(BuildContext context) {
@@ -22,15 +23,15 @@ class HomeHeader extends StatelessWidget {
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
-                Text(
+              children: [
+                const Text(
                   "Xin chào 👋",
                   style: TextStyle(color: Colors.white, fontSize: 20),
                 ),
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
                 Text(
-                  "EcoJourney",
-                  style: TextStyle(
+                  name,
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -39,7 +40,7 @@ class HomeHeader extends StatelessWidget {
               ],
             ),
           ),
-          // 💰 Phần điểm bên phải (có thể nhấn)
+          // 💰 Phần điểm bên phải
           GestureDetector(
             onTap: () {
               Navigator.push(

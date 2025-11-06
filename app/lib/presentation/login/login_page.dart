@@ -1,17 +1,66 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:hola_bike_app/presentation/home/home_screen.dart';
 import 'package:hola_bike_app/presentation/register/register_page.dart';
-
+import 'package:hola_bike_app/application/usecases/login_usecase.dart';
+import 'package:hola_bike_app/domain/models/login_response.dart';
 import '../../theme/app_colors.dart';
 
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final emailController = TextEditingController();
-    final passController = TextEditingController();
+  State<LoginScreen> createState() => _LoginScreenState();
+}
 
+class _LoginScreenState extends State<LoginScreen> {
+  final emailController = TextEditingController();
+  final passController = TextEditingController();
+  final loginUseCase = LoginUseCase();
+  final secureStorage = const FlutterSecureStorage();
+
+  bool isLoading = false;
+
+  Future<void> handleLogin() async {
+    setState(() => isLoading = true);
+
+    try {
+      final response = await loginUseCase.execute(
+        email: emailController.text.trim(),
+        password: passController.text.trim(),
+        deviceId: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
+        pushToken: 'push-token-demo',
+        platform: 'android',
+      );
+
+      if (response.success) {
+        await saveTokenSecurely(response.token);
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => HomeScreen()),
+        );
+      } else {
+        showError(response.message);
+      }
+    } catch (e) {
+      showError('Đăng nhập thất bại. Vui lòng thử lại.');
+    }
+
+    setState(() => isLoading = false);
+  }
+
+  Future<void> saveTokenSecurely(String token) async {
+    await secureStorage.write(key: 'access_token', value: token);
+  }
+
+  void showError(String message) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -31,7 +80,6 @@ class LoginScreen extends StatelessWidget {
               "Đăng nhập để tiếp tục",
               style: TextStyle(color: AppColors.textSecondary),
             ),
-
             const SizedBox(height: 30),
             TextField(
               controller: emailController,
@@ -43,26 +91,20 @@ class LoginScreen extends StatelessWidget {
               obscureText: true,
               decoration: const InputDecoration(labelText: "Mật khẩu"),
             ),
-
             const SizedBox(height: 30),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 minimumSize: const Size(double.infinity, 48),
               ),
-              onPressed: () {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (_) => HomeScreen()),
-                );
-              },
-              child: const Text(
-                "Đăng nhập",
-                style: TextStyle(fontSize: 16, color: AppColors.card),
-              ),
+              onPressed: isLoading ? null : handleLogin,
+              child: isLoading
+                  ? const CircularProgressIndicator(color: Colors.white)
+                  : const Text(
+                      "Đăng nhập",
+                      style: TextStyle(fontSize: 16, color: AppColors.card),
+                    ),
             ),
-
-            // 👉 Thêm nút dẫn sang đăng ký
             const SizedBox(height: 16),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -74,7 +116,7 @@ class LoginScreen extends StatelessWidget {
                 TextButton(
                   style: TextButton.styleFrom(
                     padding: EdgeInsets.zero,
-                    minimumSize: Size(0, 0),
+                    minimumSize: const Size(0, 0),
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
                   onPressed: () {
