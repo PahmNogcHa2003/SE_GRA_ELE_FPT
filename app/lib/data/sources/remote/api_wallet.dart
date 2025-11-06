@@ -1,12 +1,11 @@
-// lib/data/sources/remote/user_api.dart
-import 'dart:convert';
 import 'package:hola_bike_app/core/constants/api_constants.dart';
+import 'package:hola_bike_app/domain/models/info_wallet.dart';
 import 'package:http/http.dart' as http;
-import '../../../domain/models/info_user.dart';
+import 'dart:convert';
 
-class UserApi {
-  Future<UserInfo> getUserInfo(String token) async {
-    final url = Uri.parse('$baseUrl/Auth/me');
+class WalletApi {
+  Future<WalletInfo> getWalletInfo(String token) async {
+    final url = Uri.parse('$baseUrl/api/wallets');
     try {
       // --- Log request ---
       print('--- API REQUEST ---');
@@ -34,22 +33,20 @@ class UserApi {
         try {
           final json = jsonDecode(response.body);
           final data = json['data'];
-          return UserInfo.fromJson(data);
+          return WalletInfo.fromJson(data);
         } catch (e) {
           print('JSON decode error: $e');
-          throw Exception('Không thể parse dữ liệu người dùng từ server');
+          throw Exception('Không thể parse dữ liệu ví từ server');
         }
       } else {
-        print(
-          'Lấy thông tin người dùng thất bại với status: ${response.statusCode}',
-        );
+        print('Lấy thông tin ví thất bại với status: ${response.statusCode}');
         print('Response body: ${response.body}');
         throw Exception(
-          'Lỗi khi lấy thông tin người dùng: ${response.statusCode}, ${response.body}',
+          'Lỗi khi lấy thông tin ví: ${response.statusCode}, ${response.body}',
         );
       }
     } catch (e) {
-      print('Error calling getUserInfo API: $e');
+      print('Error calling getWalletInfo API: $e');
       rethrow; // cho phép hàm gọi bên ngoài xử lý tiếp
     }
   }
