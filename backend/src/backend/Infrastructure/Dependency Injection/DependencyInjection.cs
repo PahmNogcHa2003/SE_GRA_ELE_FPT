@@ -51,6 +51,13 @@ namespace Infrastructure.Dependency_Injection
             services.AddScoped<IManageUserTicketRepository, ManageUserTicketRepository>();
             services.AddScoped<IRepository<Rental, long>, RentalsRepository>();
             services.AddScoped<IRepository<UserDevice, long>, UserDevicesRepository>();
+            services.AddScoped<IRepository<BookingTicket, long>, BookingTicketRepository>();
+
+            //Test
+            services.AddScoped<IStationsRepository, StationsRepository>();
+            services.AddScoped<IVehicleRepository, VehicleRepository>();
+            services.AddScoped<IRentalsRepository, RentalsRepository>();
+            services.AddScoped<IBookingTicketRepository, BookingTicketRepository>();
 
 
             // --- Location API ---
@@ -81,7 +88,6 @@ namespace Infrastructure.Dependency_Injection
             services.AddScoped<IUserTicketService, UserTicketService>();
             services.AddScoped<IManageUserTicketService, ManageUserTicketService>();
             services.AddScoped<IUserProfilesService, UserProfilesService>();
-            services.AddScoped<IRentalsService, RentalsService>();
             services.AddScoped<IRentalsService, RentalsService>();
             services.AddScoped<IUserDevicesService, UserDevicesService>();
             services.AddScoped<IJwtTokenService, JwtTokenService>();

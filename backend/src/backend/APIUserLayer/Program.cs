@@ -121,6 +121,9 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
+builder.Services.AddHttpContextAccessor();
+
+
 // -------------------- Controllers & Swagger --------------------
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer(); // ✅ cần để Swagger hoạt động

@@ -1,100 +1,118 @@
-﻿using Application.DTOs;
-using Application.DTOs.Rental;
+﻿using Application.DTOs.Rental;
 using Application.Exceptions;
-using Application.Helpers;
 using Application.Interfaces;
-using Application.Interfaces.Base;
+using Application.Interfaces.Staff.Repository;
+using Application.Interfaces.User.Repository;
 using Application.Interfaces.User.Service;
-using Application.Services.Base;
 using AutoMapper;
 using Domain.Entities;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging; // ✅ 1. THÊM USING CHO LOGGER
+using Domain.Enums;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using System;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace Application.Services.User
 {
-    public class RentalsService : GenericService<Rental, RentalDTO, long>, IRentalsService
+    public class RentalsService : IRentalsService
     {
-        private readonly IRepository<Station, long> _stationRepo;
-        private readonly IRepository<Vehicle, long> _vehicleRepo;
-        private readonly ILogger<RentalsService> _logger; 
+        private readonly IStationsRepository _stationRepo;
+        private readonly IVehicleRepository _vehicleRepo;
+        private readonly IRentalsRepository _rentalRepo;
+        private readonly IBookingTicketRepository _bookingTicketRepo;
+        private readonly IUnitOfWork _uow;
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly ILogger<RentalsService> _logger;
 
         public RentalsService(
-            IRepository<Rental, long> repo,
-            IMapper mapper,
+            IStationsRepository stationRepo,
+            IVehicleRepository vehicleRepo,
+            IRentalsRepository rentalRepo,
+            IBookingTicketRepository bookingTicketRepo,
             IUnitOfWork uow,
-            IRepository<Station, long> stationRepo,
-            IRepository<Vehicle, long> vehicleRepo,
-            ILogger<RentalsService> logger) 
-            : base(repo, mapper, uow)
+            IHttpContextAccessor httpContextAccessor,
+            ILogger<RentalsService> logger)
         {
             _stationRepo = stationRepo;
             _vehicleRepo = vehicleRepo;
+            _rentalRepo = rentalRepo;
+            _bookingTicketRepo = bookingTicketRepo;
+            _uow = uow;
+            _httpContextAccessor = httpContextAccessor;
             _logger = logger;
         }
 
-        public async Task EndRentalAsync(long rentalId, EndRentalRequestDTO endRentalDto)
+        public async Task<bool> CreateRentalAsync(CreateRentalDTO createRentalDTO)
         {
-            try
+            // Lấy stationId từ vehicle
+            var startStationId = await _vehicleRepo.GetStationVehicle(createRentalDTO.VehicleId);
+            if (startStationId == 0)
             {
-                _logger.LogInformation("Attempting to end rental with ID: {RentalId}", rentalId);
-
-                var rental = await _repo.Query().FirstOrDefaultAsync(r => r.Id == rentalId);
-                if (rental == null || rental.Status != "Ongoing")
-                {
-                    throw new NotFoundException($"Không tìm thấy cuốc xe hợp lệ với ID {rentalId} hoặc cuốc xe đã kết thúc.");
-                }
-
-                var endStation = await _stationRepo.GetByIdAsync(endRentalDto.EndStationId);
-                if (endStation == null || !endStation.IsActive)
-                {
-                    throw new BadRequestException("Trạm trả xe không hợp lệ hoặc không hoạt động.");
-                }
-
-                const double allowedRadiusInMeters = 3.0;
-                double stationLat = (double)(endStation.Lat ?? 0.0m);
-                double stationLng = (double)(endStation.Lng ?? 0.0m);
-
-                var distance = GeolocationHelper.CalculateDistanceInMeters(
-                    endRentalDto.CurrentLatitude,
-                    endRentalDto.CurrentLongitude,
-                    stationLat,
-                    stationLng
-                );
-
-                if (distance > allowedRadiusInMeters)
-                {
-                    _logger.LogWarning("User {UserId} failed to end rental {RentalId} due to being out of range. Distance: {Distance}m", rental.UserId, rentalId, distance);
-                    throw new BadRequestException($"Bạn phải ở trong phạm vi {allowedRadiusInMeters}m của trạm để trả xe. Khoảng cách hiện tại của bạn là {distance:F2}m.");
-                }
-
-                var now = DateTimeOffset.UtcNow;
-                rental.EndStationId = endRentalDto.EndStationId;
-                rental.Status = "Ended";
-                rental.EndTime = now;
-                _repo.Update(rental);
-
-                var vehicle = await _vehicleRepo.GetByIdAsync(rental.VehicleId);
-                if (vehicle != null)
-                {
-                    vehicle.Status = "Available";
-                    vehicle.StationId = endRentalDto.EndStationId;
-                    _vehicleRepo.Update(vehicle);
-                }
-
-                await _uow.SaveChangesAsync();
-
-                _logger.LogInformation("Successfully ended rental with ID: {RentalId}", rentalId);
+                _logger.LogWarning("Xe ID {VehicleId} không tồn tại hoặc không ở trạm nào.", createRentalDTO.VehicleId);
+                throw new NotFoundException("Xe không tồn tại hoặc không ở trạm nào.");
             }
-            catch (Exception ex)
+
+            // Lấy userId từ Claims
+            var userIdClaim = _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userIdClaim) || !long.TryParse(userIdClaim, out long userId))
             {
-                // ✅ GHI LOG LỖI CHI TIẾT VÀ NÉM LẠI ĐỂ MIDDLEWARE BẮT
-                _logger.LogError(ex, "An unexpected error occurred while ending rental {RentalId}", rentalId);
-                throw;
+                _logger.LogWarning("Không tìm thấy User ID trong Claims.");
+                throw new UnauthorizedAccessException("User chưa đăng nhập.");
             }
+
+            // Kiểm tra Vehicle có tồn tại không
+            var vehicle = await _vehicleRepo.GetVehicleWithCategoryAsync(createRentalDTO.VehicleId);
+            if (vehicle == null)
+            {
+                _logger.LogWarning("Không tìm thấy thông tin loại xe cho Vehicle ID {VehicleId}.", createRentalDTO.VehicleId);
+                throw new NotFoundException("Không tìm thấy loại xe.");
+            }
+
+            if (vehicle.Status == VehicleStatus.InUse)
+            {
+                throw new BadRequestException("Xe này đang được sử dụng.");
+            }
+
+            // Tạo record Rental
+            var rental = new Rental
+            {
+                UserId = userId,
+                VehicleId = vehicle.Id,
+                StartStationId = startStationId,
+                StartTime = DateTimeOffset.UtcNow,
+                Status = "Ongoing",
+                CreatedAt = DateTimeOffset.UtcNow
+            };
+
+            await _rentalRepo.AddAsync(rental);
+            await _uow.SaveChangesAsync();
+
+            // Tạo Booking Ticket (gắn vé cho lượt thuê)
+            var bookingTicket = new BookingTicket
+            {
+                UserTicketId = createRentalDTO.UserTicketId,
+                RentalId = rental.Id,
+                AppliedAt = DateTimeOffset.UtcNow,
+                VehicleType = vehicle.Category.Name,
+                PlanPrice = 0
+            };
+
+            await _bookingTicketRepo.AddAsync(bookingTicket);
+
+            // Cập nhật trạng thái xe (đang được EF tracking)
+            vehicle.Status = VehicleStatus.InUse;
+            vehicle.StationId = null;
+
+            await _uow.SaveChangesAsync();
+
+            _logger.LogInformation("Rental {RentalId} created successfully for user {UserId}.", rental.Id, userId);
+            return true;
+        }
+
+        public Task<bool> EndRentalAsync(EndRentalRequestDTO endRentalDto)
+        {
+            throw new NotImplementedException();
         }
     }
 }
-

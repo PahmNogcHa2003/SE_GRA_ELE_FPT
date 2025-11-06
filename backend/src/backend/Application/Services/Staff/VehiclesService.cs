@@ -1,4 +1,5 @@
 ﻿using Application.DTOs;
+using Application.DTOs.Vehicle;
 using Application.Interfaces;
 using Application.Interfaces.Base;
 using Application.Interfaces.Staff.Service;
@@ -88,6 +89,11 @@ namespace Application.Services.Staff
                 default:
                     return base.ApplySort(query, sortOrder);
             }
+        }
+
+        public Task<int> GetStationVehicle(int vehicleId)
+        {
+            throw new NotImplementedException();
         }
     }
 }

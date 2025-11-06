@@ -8,10 +8,6 @@ namespace Application.DTOs.Rental
     /// </summary>
     public class EndRentalRequestDTO 
     {
-       
-        [Required]
-        public long EndStationId { get; set; }
-
         [Required(ErrorMessage = "Current latitude is required.")]
         [Range(-90.0, 90.0, ErrorMessage = "Invalid latitude value.")]
         public double CurrentLatitude { get; set; }
