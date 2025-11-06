@@ -1,5 +1,6 @@
 ﻿using Application.DTOs.Rental;
 using Application.Exceptions;
+using Application.Helpers;
 using Application.Interfaces;
 using Application.Interfaces.Staff.Repository;
 using Application.Interfaces.User.Repository;
@@ -8,6 +9,7 @@ using AutoMapper;
 using Domain.Entities;
 using Domain.Enums;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Security.Claims;
@@ -19,6 +21,7 @@ namespace Application.Services.User
     {
         private readonly IStationsRepository _stationRepo;
         private readonly IVehicleRepository _vehicleRepo;
+        private readonly IUserTicketRepository _userTicketRepository;
         private readonly IRentalsRepository _rentalRepo;
         private readonly IBookingTicketRepository _bookingTicketRepo;
         private readonly IUnitOfWork _uow;
@@ -28,6 +31,7 @@ namespace Application.Services.User
         public RentalsService(
             IStationsRepository stationRepo,
             IVehicleRepository vehicleRepo,
+            IUserTicketRepository userTicketRepository,
             IRentalsRepository rentalRepo,
             IBookingTicketRepository bookingTicketRepo,
             IUnitOfWork uow,
@@ -36,6 +40,7 @@ namespace Application.Services.User
         {
             _stationRepo = stationRepo;
             _vehicleRepo = vehicleRepo;
+            _userTicketRepository = userTicketRepository;
             _rentalRepo = rentalRepo;
             _bookingTicketRepo = bookingTicketRepo;
             _uow = uow;
@@ -88,6 +93,7 @@ namespace Application.Services.User
             await _rentalRepo.AddAsync(rental);
             await _uow.SaveChangesAsync();
 
+
             // Tạo Booking Ticket (gắn vé cho lượt thuê)
             var bookingTicket = new BookingTicket
             {
@@ -99,6 +105,8 @@ namespace Application.Services.User
             };
 
             await _bookingTicketRepo.AddAsync(bookingTicket);
+            await _uow.SaveChangesAsync();
+
 
             // Cập nhật trạng thái xe (đang được EF tracking)
             vehicle.Status = VehicleStatus.InUse;
@@ -110,9 +118,109 @@ namespace Application.Services.User
             return true;
         }
 
-        public Task<bool> EndRentalAsync(EndRentalRequestDTO endRentalDto)
+        public async Task<bool> EndRentalAsync(EndRentalRequestDTO endRentalDto)
         {
-            throw new NotImplementedException();
+            long rentalId = endRentalDto.RentalId;
+            try
+            {
+                
+                _logger.LogInformation("Attempting to end rental with ID: {RentalId}", rentalId);
+
+                // 1️⃣ Kiểm tra rental
+                var rental = await _rentalRepo.Query().Include(r => r.BookingTickets).FirstOrDefaultAsync(r => r.Id == rentalId);
+                if (rental == null || rental.Status != "Ongoing")
+                    throw new NotFoundException($"Không tìm thấy cuốc xe hợp lệ với ID {rentalId} hoặc cuốc xe đã kết thúc.");
+
+                // 2️⃣ Lấy danh sách trạm đang hoạt động
+                var stations = await _stationRepo.Query().Where(s => s.IsActive).ToListAsync();
+                if (!stations.Any())
+                    throw new BadRequestException("Không có trạm hoạt động nào khả dụng để trả xe.");
+
+                // 3️⃣ Tìm trạm gần nhất
+                var nearestStation = stations
+                    .Select(s => new
+                    {
+                        Station = s,
+                        Distance = GeolocationHelper.CalculateDistanceInMeters(
+                            endRentalDto.CurrentLatitude,
+                            endRentalDto.CurrentLongitude,
+                            (double)(s.Lat ?? 0),
+                            (double)(s.Lng ?? 0)
+                        )
+                    })
+                    .OrderBy(x => x.Distance)
+                    .First();
+
+                const double allowedRadius = 4.0;
+                if (nearestStation.Distance > allowedRadius)
+                {
+                    throw new BadRequestException($"Bạn cần ở trong phạm vi {allowedRadius}m của trạm gần nhất ({nearestStation.Station.Name}). Khoảng cách hiện tại là {nearestStation.Distance:F2}m.");
+                }
+
+                var now = DateTimeOffset.UtcNow;
+
+                // 4️⃣ Cập nhật thông tin chuyến đi
+                rental.EndStationId = nearestStation.Station.Id;
+                rental.EndTime = now;
+                rental.Status = RentalStatus.End;
+                _rentalRepo.Update(rental);
+
+                // 5️⃣ Cập nhật trạng thái xe
+                var vehicle = await _vehicleRepo.GetByIdAsync(rental.VehicleId);
+                if (vehicle != null)
+                {
+                    vehicle.Status = "Available";
+                    vehicle.StationId = nearestStation.Station.Id;
+                    _vehicleRepo.Update(vehicle);
+                }
+
+                // 6️⃣ Cập nhật vé người dùng (UserTicket)
+                var userTicket = await _userTicketRepository.Query()
+                    .FirstOrDefaultAsync(ut => ut.UserId == rental.UserId && ut.Status == "Active");
+
+                // Thời gian đi
+                var duration = (int)(now - rental.StartTime).TotalMinutes;
+                if (userTicket != null)
+                {
+                    if (userTicket.RemainingRides.HasValue && userTicket.RemainingRides > 0)
+                        userTicket.RemainingRides -= 1;
+
+                    if (userTicket.RemainingMinutes.HasValue)
+                    {
+                        userTicket.RemainingMinutes = Math.Max(0, userTicket.RemainingMinutes.Value - duration);
+                    }
+
+                    // Nếu hết vé => đổi trạng thái
+                    if ((userTicket.RemainingRides <= 0 && userTicket.RemainingRides != null)
+                        || (userTicket.RemainingMinutes <= 0 && userTicket.RemainingMinutes != null))
+                    {
+                        userTicket.Status = "Expired";
+                    }
+
+                    _userTicketRepository.Update(userTicket);
+                }
+
+                // 7️⃣ Cập nhật booking ticket (nếu có)
+                var bookingTicket = rental.BookingTickets.FirstOrDefault();
+                if (bookingTicket != null)
+                {
+                    bookingTicket.UsedMinutes = duration;
+                    bookingTicket.AppliedAt = DateTime.Now;
+                    _bookingTicketRepo.Update(bookingTicket);
+                }
+
+                await _uow.SaveChangesAsync();
+
+                _logger.LogInformation("Rental {RentalId} ended successfully at station {StationId}", rentalId, nearestStation.Station.Id);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error while ending rental {RentalId}", rentalId);
+                throw;
+            }
         }
+
+       
     }
 }
