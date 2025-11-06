@@ -22,9 +22,11 @@ namespace Infrastructure.Repositories.Staff
         {
             // Dùng AsNoTracking() vì đây là thao tác đọc để tối ưu hiệu suất.
             // Include() cả Author và Tags để có đầy đủ thông tin chi tiết.
-            return await _dbSet.AsNoTracking()
-                .Include(n => n.User)
-                .FirstOrDefaultAsync(n => n.Id == id);
+            return await _dbSet
+               .Include(n => n.TagNews)
+                   .ThenInclude(tn => tn.Tag)
+               .Include(n => n.User)
+               .FirstOrDefaultAsync(n => n.Id == id);
         }
 
         /// <summary>
@@ -34,6 +36,8 @@ namespace Infrastructure.Repositories.Staff
         {
             // Entity được trả về sẽ được DbContext theo dõi (tracking).
             return await _dbSet
+                .Include(n => n.TagNews)
+                    .ThenInclude(tn => tn.Tag)
                 .FirstOrDefaultAsync(n => n.Id == id);
         }
     }

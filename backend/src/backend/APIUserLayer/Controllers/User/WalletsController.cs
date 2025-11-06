@@ -1,6 +1,8 @@
 ﻿using Application.Common;
 using Application.DTOs;
 using Application.Interfaces.User.Service;
+using Application.Services.Identity;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -18,9 +20,11 @@ namespace APIUserLayer.Controllers.User
         }
 
         // GET: api/wallets/user/{userId}
-        [HttpGet("user/{userId:long}")] 
-        public async Task<IActionResult> GetWalletByUserId(long userId, CancellationToken ct)
+        [Authorize]
+        [HttpGet] 
+        public async Task<IActionResult> GetWalletByUserId(CancellationToken ct)
         {
+            var userId = User.GetUserIdAsLong();
             var walletDto = await _walletService.GetByUserIdAsync(userId, ct);
 
             if (walletDto == null)

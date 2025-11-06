@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 namespace Application.DTOs.Tickets
 {
+    public enum ActivationModeDTO { IMMEDIATE, ON_FIRST_USE }
     public class UserTicketPlanPriceDTO
     {
         public long Id { get; set; }
@@ -14,5 +15,8 @@ namespace Application.DTOs.Tickets
         public int? ValidityDays { get; set; }
         public int? DurationLimitMinutes { get; set; }
         public int? DailyFreeDurationMinutes { get; set; }
+        public decimal? OverageFeePer15Min { get; set; }
+        public ActivationModeDTO ActivationMode { get; set; }
+        public int? ActivationWindowDays { get; set; }
     }
 }
