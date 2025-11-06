@@ -12,6 +12,7 @@ using Domain.Entities;
 using Application.Interfaces.User.Service;
 using Microsoft.EntityFrameworkCore;
 using Application.Common;
+using AutoMapper.QueryableExtensions;
 
 namespace Application.Services.User
 {
@@ -135,6 +136,15 @@ namespace Application.Services.User
             var items = withDist.Skip((page - 1) * pageSize).Take(pageSize).ToList();
 
             return new PagedResult<StationDTO>(items, total, page, pageSize);
+        }
+        public async Task<IEnumerable<StationDTO>> GetAllAsync(CancellationToken ct = default)
+        {
+            var query = _repo.Query();
+            var stations = await query
+                .ProjectTo<StationDTO>(_mapper.ConfigurationProvider)
+                .ToListAsync(ct);
+
+            return stations;
         }
 
     }

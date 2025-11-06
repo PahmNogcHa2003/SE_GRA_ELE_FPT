@@ -55,10 +55,18 @@ namespace Infrastructure.Dependency_Injection
             services.AddScoped<IManageUserTicketRepository, ManageUserTicketRepository>();
             services.AddScoped<IRepository<Rental, long>, RentalsRepository>();
             services.AddScoped<IRepository<UserDevice, long>, UserDevicesRepository>();
+            services.AddScoped<IRepository<BookingTicket, long>, BookingTicketRepository>();
             services.AddScoped<IEmailRepository, MailRepository>();
             services.AddScoped<IContactRepository, ContactRepository>();
             services.AddScoped<IManageContactRepository, ManageContactRepository>();
             services.AddScoped<IReplyContactRepository, ReplyContactRepository>();
+
+
+            //Test
+            services.AddScoped<IStationsRepository, StationsRepository>();
+            services.AddScoped<IVehicleRepository, VehicleRepository>();
+            services.AddScoped<IRentalsRepository, RentalsRepository>();
+            services.AddScoped<IBookingTicketRepository, BookingTicketRepository>();
 
 
 
@@ -94,14 +102,13 @@ namespace Infrastructure.Dependency_Injection
             services.AddScoped<IManageUserTicketService, ManageUserTicketService>();
             services.AddScoped<IUserProfilesService, UserProfilesService>();
             services.AddScoped<IRentalsService, RentalsService>();
-            services.AddScoped<IRentalsService, RentalsService>();
             services.AddScoped<IUserDevicesService, UserDevicesService>();
             services.AddScoped<IJwtTokenService, JwtTokenService>();
             services.AddScoped<IEmailService, EmailService>();
             services.AddScoped<IContactService, ContactService>();
             services.AddScoped<IManageContactService, ManageContactService>();
             services.AddScoped<IReplyContactService, ReplyContactService>();
-
+      
 
             // --- AutoMapper ---
             services.AddAutoMapper(typeof(AppMappingProfile).Assembly);

@@ -1,13 +1,14 @@
 ﻿using Application.Interfaces.Base;
+using Domain.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Application.Interfaces.Staff.Service
+namespace Application.Interfaces.User.Repository
 {
-    public interface IVehicleService : IService<Domain.Entities.Vehicle, DTOs.Vehicle.VehicleDTO, long>
+    public interface IBookingTicketRepository : IRepository<BookingTicket, long>
     {
     }
 }

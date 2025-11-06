@@ -17,5 +17,6 @@ namespace Application.DTOs.Auth
         public string? Gender { get; set; }
         public string? AddressDetail { get; set; }
         public string[] Roles { get; set; } = Array.Empty<string>();
+        public decimal? WalletBalance { get; set; }
     }
 }

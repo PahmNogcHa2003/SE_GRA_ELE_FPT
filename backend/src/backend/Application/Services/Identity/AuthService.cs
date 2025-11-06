@@ -21,6 +21,7 @@ namespace Application.Services.Identity
         private readonly IUserDevicesService _userDevicesService;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IWalletService _walletService;
+        private readonly IUserWalletService _userWalletService;
 
         public AuthService(
             UserManager<AspNetUser> userManager,
@@ -29,7 +30,8 @@ namespace Application.Services.Identity
             IUserProfilesService userProfilesService,
             IUserDevicesService userDevicesService,
             IWalletService walletService,
-            IUnitOfWork unitOfWork)
+            IUnitOfWork unitOfWork,
+            IUserWalletService userWalletService)
         {
             _userManager = userManager;
             _signInManager = signInManager;
@@ -38,6 +40,7 @@ namespace Application.Services.Identity
             _userDevicesService = userDevicesService;
             _unitOfWork = unitOfWork;
             _walletService = walletService;
+            _userWalletService = userWalletService;
         }
 
         // --- REGISTER ---
@@ -146,7 +149,7 @@ namespace Application.Services.Identity
                 return new AuthResponseDTO { IsSuccess = false, Message = "Invalid credentials." };
 
             // Lưu thông tin thiết bị (nếu có)
-            if (model.DeviceId != Guid.Empty)
+            if (model.DeviceId != null)
             {
                 var userDeviceDto = new CreateUserDeviceDTO
                 {
@@ -197,7 +200,7 @@ namespace Application.Services.Identity
             var profile = await _profileService.GetByUserIdAsync(user.Id, ct);
             // Giả định bạn đã có method này trong IUserProfilesService
             // Nếu chưa có, bạn có thể thêm một method tương tự hoặc dùng Query service hiện có.
-
+            var wallet = await _userWalletService.GetByUserIdAsync(user.Id, ct);
             var me = new MeDTO
             {
                 UserId = user.Id,
@@ -208,7 +211,8 @@ namespace Application.Services.Identity
                 Dob = profile?.Dob,
                 Gender = profile?.Gender,
                 AddressDetail = profile?.AddressDetail,
-                Roles = roles?.ToArray() ?? Array.Empty<string>()
+                Roles = roles?.ToArray() ?? Array.Empty<string>(),
+                WalletBalance = wallet?.Balance ?? 0m
             };
 
             return me;

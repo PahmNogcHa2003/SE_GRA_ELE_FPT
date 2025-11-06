@@ -1,4 +1,5 @@
-﻿using Application.DTOs.Rental;
+﻿using Application.DTOs.BookingTicket;
+using Application.DTOs.Tickets;
 using Application.Interfaces.Base;
 using Domain.Entities;
 using System;
@@ -9,9 +10,7 @@ using System.Threading.Tasks;
 
 namespace Application.Interfaces.User.Service
 {
-    public interface IRentalsService
+    public interface IBookingTicketService : IService<BookingTicket, CreateBookingTicketDTO, long>, IService3DTO<BookingTicket, CreateBookingTicketDTO, long>
     {
-        Task<bool> CreateRentalAsync(CreateRentalDTO createRentalDTO);
-        Task<bool> EndRentalAsync(EndRentalRequestDTO endRentalDto);
     }
 }
