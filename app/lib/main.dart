@@ -26,7 +26,7 @@ void _setupLoading() {
     ..radius = 12
     ..backgroundColor = Colors
         .transparent // bỏ nền đen của hộp
-    ..indicatorColor = Colors.greenAccent
+    ..indicatorColor = AppColors.primary
     ..textColor = Colors
         .transparent // ẩn chữ
     // dùng Color.fromRGBO để chắc chắn không lỗi
