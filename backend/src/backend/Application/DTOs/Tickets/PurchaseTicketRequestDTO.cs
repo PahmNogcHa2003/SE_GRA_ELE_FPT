@@ -10,8 +10,6 @@ namespace Application.DTOs.Tickets
     public class PurchaseTicketRequestDTO
     {
         [Required]
-        public long UserId { get; set; } 
-        [Required]
         public long PlanPriceId { get; set; } 
     }
 }

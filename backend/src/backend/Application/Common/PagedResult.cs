@@ -31,24 +31,35 @@ namespace Application.Common
         }
 
         // SỬA LẠI: Toàn bộ phương thức tĩnh FromQueryableAsync
-        public static async Task<PagedResult<T>> FromQueryableAsync(
+        public static async Task<PagedResult<T>> FromQueryableAsync<T>(
             IQueryable<T> query,
             int page,
             int pageSize,
-            CancellationToken ct = default) // <-- THÊM CancellationToken ở đây
+            CancellationToken ct = default)
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 10;
 
-            // Sử dụng CancellationToken khi gọi các phương thức async
-            var totalCount = await query.CountAsync(ct);
+            try
+            {
+                // Nếu đã bị hủy thì trả nhanh
+                if (ct.IsCancellationRequested)
+                    return new PagedResult<T>(Array.Empty<T>(), 0, page, pageSize);
 
-            var items = await query
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .ToListAsync(ct); // <-- Thực thi query để lấy dữ liệu về List
+                var totalCount = await query.CountAsync(ct);
+                var items = await query
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .ToListAsync(ct);
 
-            return new PagedResult<T>(items, totalCount, page, pageSize);
+                return new PagedResult<T>(items, totalCount, page, pageSize);
+            }
+            catch (OperationCanceledException)
+            {
+                // Request bị cancel (user chuyển trang, refetch…) → trả rỗng, không log lỗi
+                return new PagedResult<T>(Array.Empty<T>(), 0, page, pageSize);
+            }
         }
+
     }
 }

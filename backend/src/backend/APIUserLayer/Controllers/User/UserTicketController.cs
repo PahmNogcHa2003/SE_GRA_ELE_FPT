@@ -1,11 +1,14 @@
 ﻿using Application.Common;
 using Application.DTOs.Tickets;
 using Application.Interfaces.User.Service;
+using Application.Services.Identity;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace APIUserLayer.Controllers.User
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class UserTicketController : ControllerBase
@@ -16,14 +19,41 @@ namespace APIUserLayer.Controllers.User
         {
             _svc = svc;
         }
+        // MARKET: hiển thị các gói & giá theo loại xe
+        // GET /api/user-tickets/market?vehicleType=Bike
+        // hoặc yêu cầu login tùy bạn
+        [HttpGet("market")]
+        public async Task<IActionResult> Market([FromQuery] string? vehicleType, CancellationToken ct)
+        {
+            var validTypes = new[] { "Bike", "Ebike"};
+            if (!string.IsNullOrEmpty(vehicleType) && !validTypes.Contains(vehicleType, StringComparer.OrdinalIgnoreCase))
+            {
+                return BadRequest(ApiResponse<string>.ErrorResponse(
+                    $"Invalid vehicle type '{vehicleType}'. Allowed values: {string.Join(", ", validTypes)}"
+                ));
+            }
 
+            var data = await _svc.GetTicketMarketAsync(vehicleType, ct);
+
+            if (data == null || !data.Any())
+            {
+                return NotFound(ApiResponse<IEnumerable<UserTicketPlanDTO>>.ErrorResponse(
+                    "No ticket plans found for the selected vehicle type."
+                ));
+            }
+
+            return Ok(ApiResponse<IEnumerable<UserTicketPlanDTO>>.SuccessResponse(
+                data,
+                "Fetched user ticket market successfully."
+            ));
+        }
         // GET: api/UserTicket/123
         [HttpGet("{id:long}")]
-        public async Task<ActionResult<ApiResponse<UserTicketDTO>>> GetById(
-            long id,
-            CancellationToken ct = default)
+        public async Task<ActionResult<ApiResponse<UserTicketDTO>>> GetById(long id, CancellationToken ct = default)
         {
-            var item = await _svc.GetAsync(id, ct);
+            var userId = User.GetUserIdAsLong();
+            var item = await _svc.GetIdByUserIdAsync(userId, id, ct); 
+
             if (item is null)
                 return NotFound(ApiResponse<UserTicketDTO>.ErrorResponse("User ticket not found."));
 
@@ -31,11 +61,11 @@ namespace APIUserLayer.Controllers.User
         }
 
         // GET: api/UserTicket/users/45/active
-        [HttpGet("users/{userId:long}/active")]
+        [HttpGet("active")]
         public async Task<ActionResult<ApiResponse<List<UserTicketDTO>>>> GetMyActiveTickets(
-            long userId,
             CancellationToken ct = default)
         {
+            var userId = User.GetUserIdAsLong();
             var list = await _svc.GetMyActiveTicketsAsync(userId, ct);
             return Ok(ApiResponse<List<UserTicketDTO>>.SuccessResponse(list, "Fetched active tickets successfully."));
         }
@@ -51,7 +81,8 @@ namespace APIUserLayer.Controllers.User
 
             try
             {
-                var created = await _svc.PurchaseTicketAsync(request, ct);
+                var userId = User.GetUserIdAsLong(); 
+                var created = await _svc.PurchaseTicketAsync(userId, request, ct);
                 return CreatedAtAction(nameof(GetById), new { id = created.Id },
                     ApiResponse<UserTicketDTO>.SuccessResponse(created, "Purchased ticket successfully."));
             }

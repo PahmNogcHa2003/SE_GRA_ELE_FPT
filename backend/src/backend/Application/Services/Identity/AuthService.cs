@@ -8,6 +8,7 @@ using Domain.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
+using System.Security.Claims;
 
 namespace Application.Services.Identity
 {
@@ -19,6 +20,8 @@ namespace Application.Services.Identity
         private readonly IUserProfilesService _profileService;
         private readonly IUserDevicesService _userDevicesService;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IWalletService _walletService;
+        private readonly IUserWalletService _userWalletService;
 
         public AuthService(
             UserManager<AspNetUser> userManager,
@@ -26,7 +29,9 @@ namespace Application.Services.Identity
             IJwtTokenService tokenService,
             IUserProfilesService userProfilesService,
             IUserDevicesService userDevicesService,
-            IUnitOfWork unitOfWork)
+            IWalletService walletService,
+            IUnitOfWork unitOfWork,
+            IUserWalletService userWalletService)
         {
             _userManager = userManager;
             _signInManager = signInManager;
@@ -34,6 +39,8 @@ namespace Application.Services.Identity
             _profileService = userProfilesService;
             _userDevicesService = userDevicesService;
             _unitOfWork = unitOfWork;
+            _walletService = walletService;
+            _userWalletService = userWalletService;
         }
 
         // --- REGISTER ---
@@ -87,8 +94,8 @@ namespace Application.Services.Identity
                 {
                     UserId = user.Id,
                     Dob = model.DateOfBirth,
-                    EmergencyName = model.FullName,
-                    EmergencyPhone = model.PhoneNumber,
+                    EmergencyName = model.EmergencyName,
+                    EmergencyPhone = model.EmergencyPhone,
                     NumberCard = model.IdentityNumber,
                     Gender = model.Gender,
                     FullName = model.FullName,
@@ -103,6 +110,16 @@ namespace Application.Services.Identity
 
                 await _profileService.CreateAsync(userProfileDto, ct);
 
+                var wallet = new WalletDTO
+                {
+                    UserId = user.Id,
+                    Balance = 0m,
+                    TotalDebt = 0m,
+                    Status = "Active",
+                    CreatedAt = now,
+                    UpdatedAt = now
+                };
+                await _walletService.CreateAsync(wallet, ct);
                 // 6) Lưu & commit
                 await _unitOfWork.SaveChangesAsync(ct);
                 await _unitOfWork.CommitTransactionAsync(tx, ct);
@@ -148,13 +165,57 @@ namespace Application.Services.Identity
 
             // Tạo JWT
             var jwt = await _tokenService.GenerateJwtTokenAsync(user);
-
+            var roles = await _userManager.GetRolesAsync(user);
+            var profile = await _profileService.GetByUserIdAsync(user.Id);
             return new AuthResponseDTO
             {
                 IsSuccess = true,
                 Message = "Login successful.",
-                Token = jwt
+                Token = jwt,
+                Roles = [.. roles]
+
             };
+        }
+        private long? GetUserIdAsLong(ClaimsPrincipal userPrincipal)
+        {
+            var idStr = _userManager.GetUserId(userPrincipal);
+            if (long.TryParse(idStr, out var id))
+                return id;
+            return null;
+        }
+
+        public async Task<MeDTO?> GetMeAsync(ClaimsPrincipal userPrincipal, CancellationToken ct = default)
+        {
+            // Lấy user hiện tại từ Claims
+            var userId = GetUserIdAsLong(userPrincipal);
+            if (userId == null) return null;
+
+            var user = await _userManager.Users.FirstOrDefaultAsync(u => u.Id == userId, ct);
+            if (user == null) return null;
+
+            // Lấy roles
+            var roles = await _userManager.GetRolesAsync(user);
+
+            // Lấy hồ sơ (nếu có)
+            var profile = await _profileService.GetByUserIdAsync(user.Id, ct);
+            // Giả định bạn đã có method này trong IUserProfilesService
+            // Nếu chưa có, bạn có thể thêm một method tương tự hoặc dùng Query service hiện có.
+            var wallet = await _userWalletService.GetByUserIdAsync(user.Id, ct);
+            var me = new MeDTO
+            {
+                UserId = user.Id,
+                Email = user.Email!,
+                FullName = profile?.FullName,
+                AvatarUrl = profile?.AvatarUrl,
+                CreatedDate = user.CreatedDate,
+                Dob = profile?.Dob,
+                Gender = profile?.Gender,
+                AddressDetail = profile?.AddressDetail,
+                Roles = roles?.ToArray() ?? Array.Empty<string>(),
+                WalletBalance = wallet?.Balance ?? 0m
+            };
+
+            return me;
         }
     }
 }

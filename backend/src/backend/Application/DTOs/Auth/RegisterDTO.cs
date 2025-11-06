@@ -20,6 +20,13 @@ namespace Application.DTOs.Auth
         [StringLength(15, MinimumLength = 9)]
         public string IdentityNumber { get; set; } // ĐÃ SỬA: string
 
+        [StringLength(150)]
+        public string? EmergencyName { get; set; }
+
+        [Required]
+        [StringLength(15)]
+        public string EmergencyPhone { get; set; }
+
         [Required]
         public int ProvinceId { get; set; }
 

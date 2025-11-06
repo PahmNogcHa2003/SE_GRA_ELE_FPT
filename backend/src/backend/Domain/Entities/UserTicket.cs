@@ -21,23 +21,31 @@ public partial class UserTicket : BaseEntity<long>
     [Column(TypeName = "decimal(18, 2)")]
     public decimal? PurchasedPrice { get; set; }
 
-    [Required]
-    [StringLength(20)]
-    [Unicode(false)]
-    public string Status { get; set; } = "Ready";
+    [Required, StringLength(20), Unicode(false)]
+    public string Status { get; set; } = "Ready"; // Ready | Active | Used | Expired | Refunded
 
     [Precision(0)]
     public DateTimeOffset? ActivatedAt { get; set; }
 
+    // ✅ NEW (Day/Month dùng để hiển thị & kiểm tra hiệu lực)
+    [Precision(0)]
+    public DateTimeOffset? ValidFrom { get; set; }
+
+    [Precision(0)]
+    public DateTimeOffset? ValidTo { get; set; }
+
+    // (tùy chọn nếu bạn dùng) hết hạn “vé” nói chung
     [Precision(0)]
     public DateTimeOffset? ExpiresAt { get; set; }
 
-    public int? RemainingMinutes { get; set; }
+    // ✅ NEW (vé lượt)
+    [Precision(0)]
+    public DateTimeOffset? ActivationDeadline { get; set; }
 
+    public int? RemainingMinutes { get; set; }
     public int? RemainingRides { get; set; }
 
-    [Required]
-    [Precision(0)]
+    [Required, Precision(0)]
     public DateTimeOffset CreatedAt { get; set; }
 
     [Timestamp]
