@@ -1,4 +1,4 @@
-﻿using Application.DTOs;
+﻿using Application.DTOs.UserProfile;
 using Application.Interfaces.Base;
 using System;
 using System.Collections.Generic;
@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Application.Interfaces.User.Service
 {
-    public interface IUserProfilesService : IService<Domain.Entities.UserProfile, DTOs.UserProfileDTO, long>
+    public interface IUserProfilesService : IService<Domain.Entities.UserProfile, UserProfileDTO, long>
     {
         Task<UserProfileDTO?> GetByUserIdAsync(long userId, CancellationToken ct = default);
 

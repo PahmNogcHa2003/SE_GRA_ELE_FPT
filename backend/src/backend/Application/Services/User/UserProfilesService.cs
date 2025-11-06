@@ -1,36 +1,41 @@
-﻿using Application.DTOs;
+﻿using Application.DTOs.UserProfile;
 using Application.Interfaces;
 using Application.Interfaces.Base;
-using Application.Interfaces.Staff.Service;
 using Application.Interfaces.User.Repository;
 using Application.Interfaces.User.Service;
 using Application.Services.Base;
 using AutoMapper;
 using Domain.Entities;
-using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Application.Services.User
 {
     public class UserProfilesService : GenericService<UserProfile, UserProfileDTO, long>, IUserProfilesService
     {
-        public UserProfilesService(IRepository<UserProfile, long> repo, IMapper mapper, IUnitOfWork uow) : base(repo, mapper, uow)
+        private readonly IUserProfilesRepository _userProfilesRepository;
+
+        public UserProfilesService(
+            IRepository<UserProfile, long> repo,
+            IMapper mapper,
+            IUnitOfWork uow,
+            IUserProfilesRepository userProfilesRepository) : base(repo, mapper, uow)
         {
+            _userProfilesRepository = userProfilesRepository;
         }
 
+        /// <summary>
+        /// Lấy UserProfile theo userId (gọi trực tiếp từ repository)
+        /// </summary>
         public async Task<UserProfileDTO?> GetByUserIdAsync(long userId, CancellationToken ct = default)
         {
-            var entity = await _repo.Query()
-                .AsNoTracking()
-                .Where(p => p.UserId == userId)
-                .OrderByDescending(p => p.UpdatedAt > p.CreatedAt ? p.UpdatedAt : p.CreatedAt)
-                .FirstOrDefaultAsync(ct);
+            if (userId <= 0)
+                return null;
 
-            return entity is null ? null : _mapper.Map<UserProfileDTO>(entity);
+            // Gọi repo lấy DTO kèm KYC
+            var userProfileDto = await _userProfilesRepository.GetUserProfileWithVerify(userId);
+
+            return userProfileDto;
         }
     }
 }
