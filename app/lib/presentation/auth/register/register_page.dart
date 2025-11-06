@@ -43,7 +43,7 @@ class _RegisterPageState extends State<RegisterPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Đăng ký thành công! ${response.message ?? ''}'),
+            content: Text('Đăng ký thành công! ${response.message}'),
             backgroundColor: Colors.green,
           ),
         );

@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:hola_bike_app/application/usecases/usecase_get_provice-info.dart';
 import 'package:hola_bike_app/core/constants/api_constants.dart';
 import 'package:hola_bike_app/domain/models/info_provice.dart';
 import 'package:http/http.dart' as http;

@@ -37,9 +37,6 @@ class _RegisterFormState extends State<RegisterForm> {
   List<Province> _provinces = [];
   List<Province> _wards = [];
 
-  bool _isLoadingProvince = false;
-  bool _isLoadingWard = false;
-
   final _provinceApi = ProvinceApi();
   final _wardsApi = WardsApi();
 
@@ -50,27 +47,21 @@ class _RegisterFormState extends State<RegisterForm> {
   }
 
   Future<void> _loadProvinces() async {
-    setState(() => _isLoadingProvince = true);
     try {
       final data = await _provinceApi.getProvinces();
       if (mounted) setState(() => _provinces = data);
-    } finally {
-      if (mounted) setState(() => _isLoadingProvince = false);
-    }
+    } finally {}
   }
 
   Future<void> _loadWards(String provinceCode) async {
     setState(() {
-      _isLoadingWard = true;
       _wards = [];
       _selectedWardCode = null;
     });
     try {
       final data = await _wardsApi.GetWardByProvice(provinceCode);
       if (mounted) setState(() => _wards = data);
-    } finally {
-      if (mounted) setState(() => _isLoadingWard = false);
-    }
+    } finally {}
   }
 
   void _checkFormValid() {
