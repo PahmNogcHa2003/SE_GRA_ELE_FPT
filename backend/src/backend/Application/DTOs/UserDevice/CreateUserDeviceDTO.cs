@@ -13,7 +13,7 @@ namespace Application.DTOs.UserDevice
         public long UserId { get; set; }
 
         [Required]
-        public Guid DeviceId { get; set; }
+        public string DeviceId { get; set; }
 
         [Required]
         [StringLength(1024)]

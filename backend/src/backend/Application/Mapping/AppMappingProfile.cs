@@ -19,7 +19,7 @@ namespace Application.Mapping
             CreateMap<Domain.Entities.AspNetUser, DTOs.UserDTO>().ReverseMap();
             CreateMap<Domain.Entities.Station, DTOs.StationDTO>().ReverseMap();
             CreateMap<Domain.Entities.CategoriesVehicle, DTOs.CategoriesVehicleDTO>().ReverseMap();
-            CreateMap<Domain.Entities.Vehicle, DTOs.VehicleDTO>().ReverseMap();
+            CreateMap<Domain.Entities.Vehicle, DTOs.Vehicle.VehicleDTO>().ReverseMap();
             CreateMap<Domain.Entities.Tag, DTOs.TagDTO>().ReverseMap();
             CreateMap<Wallet, WalletDTO>().ReverseMap();
             CreateMap<WalletTransaction, WalletTransactionDTO>().ReverseMap();
@@ -40,6 +40,7 @@ namespace Application.Mapping
                 .ForMember(dest => dest.PlanName, opt => opt.MapFrom(src => $"{src.PlanPrice.Plan.Name} - {src.PlanPrice.VehicleType}"));
             CreateMap<Domain.Entities.UserProfile, DTOs.UserProfileDTO>().ReverseMap();
             CreateMap<Domain.Entities.Province, DTOs.Location.LocationDTO>().ReverseMap();
+            CreateMap<Domain.Entities.BookingTicket, DTOs.BookingTicket.CreateBookingTicketDTO>().ReverseMap();
             CreateMap<Domain.Entities.Ward, DTOs.Location.LocationDTO>().ReverseMap();
             CreateMap<Domain.Entities.Rental, DTOs.RentalDTO>().ReverseMap();
             CreateMap<Domain.Entities.UserDevice, DTOs.UserDevice.UserDeviceDTO>().ReverseMap();
