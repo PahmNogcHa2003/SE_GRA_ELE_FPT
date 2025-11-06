@@ -12,6 +12,7 @@ using Microsoft.OpenApi.Models;
 using System.Reflection;
 using System.Text;
 
+
 var builder = WebApplication.CreateBuilder(args);
 
 // --- Service Registration ---
@@ -32,7 +33,7 @@ builder.Services.AddIdentity<AspNetUser, IdentityRole<long>>(options =>
 })
 .AddEntityFrameworkStores<HolaBikeContext>()
 .AddDefaultTokenProviders()
-.AddRoleManager<RoleManager<IdentityRole<long>>>();
+.AddRoleManager<RoleManager<IdentityRole<long>>>()
 .AddDefaultTokenProviders()
 .AddRoleManager<RoleManager<IdentityRole<long>>>(); 
 
@@ -165,6 +166,9 @@ builder.Services.AddSwaggerGen(c =>
         }
     });
 });
+
+builder.Services.AddHttpContextAccessor();
+
 
 // Add Authorization Policies
 builder.Services.AddAuthorization(options =>

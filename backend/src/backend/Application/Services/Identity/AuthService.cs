@@ -132,7 +132,7 @@ namespace Application.Services.Identity
                 return new AuthResponseDTO { IsSuccess = false, Message = "Invalid credentials." };
 
             // Lưu thông tin thiết bị (nếu có)
-            if (model.DeviceId != Guid.Empty)
+            if (model.DeviceId != null)
             {
                 var userDeviceDto = new CreateUserDeviceDTO
                 {
