@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:hola_bike_app/presentation/home/pages/notification/notification_page.dart';
 import 'package:hola_bike_app/presentation/home/pages/station/station_page.dart';
-import 'package:hola_bike_app/presentation/login/login_page.dart';
+import 'package:hola_bike_app/presentation/auth/login/login_page.dart';
 import 'package:hola_bike_app/presentation/more/page/change_password_page.dart';
 import 'package:hola_bike_app/presentation/more/page/profile_page.dart';
 import 'package:hola_bike_app/presentation/splash/splash_page.dart';
