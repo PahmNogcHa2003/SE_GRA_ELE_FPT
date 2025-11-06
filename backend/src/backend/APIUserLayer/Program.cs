@@ -7,7 +7,6 @@ using Infrastructure.Setting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Reflection;
@@ -15,12 +14,12 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// --- Service Registration ---
+// --- Đăng ký các dịch vụ (Service Registration) ---
 
-// Add MediatR
+// Thêm MediatR
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(Assembly.Load("Application")));
 
-// Add Infrastructure Layer (DbContext, Repositories, Services...)
+// Thêm các dịch vụ từ tầng Infrastructure (DbContext, Repositories, Services...)
 builder.Services.AddInfrastructure(builder.Configuration);
 
 builder.Services.AddIdentity<AspNetUser, IdentityRole<long>>(options =>
@@ -190,12 +189,10 @@ builder.Services.AddSwaggerGen(c =>
 builder.Services.AddHttpContextAccessor();
 
 
-// -------------------- Controllers & Swagger --------------------
-builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer(); // ✅ cần để Swagger hoạt động
-builder.Services.AddSwaggerGen();            // ✅ cần để tạo giao diện Swagger
+// Đăng ký cấu hình cho VnPay
 builder.Services.Configure<VnPaySettings>(builder.Configuration.GetSection("VnPaySettings"));
-// Add Authorization Policies
+
+// Cấu hình các chính sách Authorization
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
@@ -212,6 +209,16 @@ using (var scope = app.Services.CreateScope())
     try
     {
         await SeedIdentityAsync(services);
+        var roleManager = services.GetRequiredService<RoleManager<IdentityRole<long>>>();
+        string[] roleNames = { "Admin", "Staff", "User" };
+        foreach (var roleName in roleNames)
+        {
+            var roleExist = await roleManager.RoleExistsAsync(roleName);
+            if (!roleExist)
+            {
+                await roleManager.CreateAsync(new IdentityRole<long>(roleName));
+            }
+        }
     }
     catch (Exception ex)
     {
@@ -235,7 +242,7 @@ app.UseHttpsRedirection();
 
 app.UseRouting();
 
-app.UseCors("AllowAll"); // Use CORS Policy
+app.UseCors("AllowAll"); // Sử dụng chính sách CORS
 
 app.UseAuthentication(); // This must come before UseAuthorization
 
@@ -251,4 +258,3 @@ app.Run();
 // ✅ FIX: Make the auto-generated Program class public so test projects can access it.
 // Make the Program class public so it can be accessed from test projects
 public partial class Program { }
-
