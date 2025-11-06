@@ -23,8 +23,8 @@ namespace Application.Services.User
         {
         }
 
-        public async Task<PagedResult<WalletTransactionDTO>> GetTransactionsByUserIdAsync(
-            long userId,
+        public async Task<PagedResult<WalletTransactionDTO?>> GetTransactionsByUserIdAsync(
+            long? userId,
             int page,
             int pageSize,
             string? sortOrder,
@@ -43,7 +43,7 @@ namespace Application.Services.User
 
             var projectedQuery = query.ProjectTo<WalletTransactionDTO>(_mapper.ConfigurationProvider);
 
-            return await PagedResult<WalletTransactionDTO>.FromQueryableAsync(projectedQuery, page, pageSize, ct);
+            return await PagedResult<WalletTransactionDTO?>.FromQueryableAsync(projectedQuery, page, pageSize, ct);
         }
     }
 }

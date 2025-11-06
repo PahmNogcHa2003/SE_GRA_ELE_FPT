@@ -23,7 +23,7 @@ namespace Application.Services.User
         {
             // Giờ đây, FirstOrDefaultAsync đã được nhận diện
             var device = await _repo.Query()
-                .FirstOrDefaultAsync(d => d.UserId == dto.UserId && d.DeviceId == dto.DeviceId, ct);
+                .FirstOrDefaultAsync(d => d.UserId == dto.UserId && d.DeviceId.Equals(dto.DeviceId), ct);
 
             var now = DateTimeOffset.UtcNow;
 

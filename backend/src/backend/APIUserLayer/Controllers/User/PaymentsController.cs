@@ -1,46 +1,39 @@
-﻿using Application.DTOs.Payments;
-using Application.Interfaces.User.Service;
+﻿// APIUserLayer/Controllers/User/PaymentsController.cs
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
+using Application.DTOs.Payments;
+using Application.Interfaces.User.Service;
+using Azure.Core;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Primitives;
+// using ... ClaimsPrincipalExtensions
 
-namespace APIUserLayer.Controllers.User
+[Route("api/[controller]")]
+[ApiController]
+public class PaymentsController : ControllerBase
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class PaymentsController : ControllerBase
-    {
-        private readonly IPaymentService _paymentService;
+    private readonly IPaymentService _paymentService;
 
-        public PaymentsController(IPaymentService paymentService)
-        {
-            _paymentService = paymentService;
-        }
-        [HttpPost("vnpay/create-url")]
-        public async Task<IActionResult> CreateVnPayPaymentUrl(
+    public PaymentsController(IPaymentService paymentService)
+    {
+        _paymentService = paymentService;
+    }
+
+    // Người dùng tạo URL thanh toán → phải đăng nhập
+    [Authorize]
+    [HttpPost("vnpay/create-url")]
+    public async Task<IActionResult> CreateVnPayPaymentUrl(
         [FromBody] CreatePaymentRequestDTO request,
         CancellationToken cancellationToken)
-        {
-            var result = await _paymentService.CreateVnPayPaymentUrlAsync(request, HttpContext, cancellationToken);
-            return Ok(result);
-        }
+    {
+        // Không dùng request.UserId nữa — lấy từ token
+        var result = await _paymentService.CreateVnPayPaymentUrlAsync(request, HttpContext, cancellationToken);
+        return Ok(result);
+    }
 
-        // ReturnUrl: GET
-        [HttpGet("vnpay-return")]
-        public async Task<IActionResult> VnPayReturn(CancellationToken ct)
-        {
-            // Log inbound
-            Console.WriteLine($"[RETURN] {Request.Method} {Request.Path}{Request.QueryString}");
-            foreach (var h in Request.Headers) Console.WriteLine($"[H] {h.Key}: {h.Value}");
-
-            // Truyền nguyên Query (giữ nguyên method cũ)
-            var result = await _paymentService.ProcessVnPayCallbackAsync(Request.Query, ct);
-            // Tuỳ bạn: redirect về FE hoặc trả result
-            return Ok(result);
-        }
-
-      
+    // VNPay return/callback: thường KHÔNG cần [Authorize]
+    [HttpGet("vnpay-return")]
+    public async Task<IActionResult> VnPayReturn(CancellationToken ct)
+    {
+        var result = await _paymentService.ProcessVnPayCallbackAsync(Request.Query, ct);
+        return Ok(result);
     }
 }

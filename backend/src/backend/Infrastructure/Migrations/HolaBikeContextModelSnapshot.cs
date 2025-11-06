@@ -193,17 +193,14 @@ namespace Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
-                    b.Property<long?>("AssignedTo")
-                        .HasColumnType("bigint");
-
                     b.Property<DateTimeOffset?>("ClosedAt")
                         .HasPrecision(0)
                         .HasColumnType("datetimeoffset(0)");
 
                     b.Property<string>("Content")
                         .IsRequired()
-                        .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)");
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasPrecision(0)
@@ -213,9 +210,23 @@ namespace Infrastructure.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
+                    b.Property<bool>("IsReplySent")
+                        .HasColumnType("bit");
+
                     b.Property<string>("PhoneNumber")
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTimeOffset?>("ReplyAt")
+                        .HasPrecision(0)
+                        .HasColumnType("datetimeoffset(0)");
+
+                    b.Property<long?>("ReplyById")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("ReplyContent")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -228,14 +239,9 @@ namespace Infrastructure.Migrations
                         .HasMaxLength(150)
                         .HasColumnType("nvarchar(150)");
 
-                    b.Property<long?>("UserId")
-                        .HasColumnType("bigint");
-
                     b.HasKey("Id");
 
-                    b.HasIndex("AssignedTo");
-
-                    b.HasIndex("UserId");
+                    b.HasIndex("ReplyById");
 
                     b.ToTable("Contact");
                 });
@@ -731,6 +737,12 @@ namespace Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
+                    b.Property<int>("ActivationMode")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("ActivationWindowDays")
+                        .HasColumnType("int");
+
                     b.Property<int?>("DailyFreeDurationMinutes")
                         .HasColumnType("int");
 
@@ -748,14 +760,6 @@ namespace Infrastructure.Migrations
 
                     b.Property<decimal>("Price")
                         .HasColumnType("decimal(18, 2)");
-
-                    b.Property<DateTimeOffset?>("ValidFrom")
-                        .HasPrecision(0)
-                        .HasColumnType("datetimeoffset(0)");
-
-                    b.Property<DateTimeOffset?>("ValidTo")
-                        .HasPrecision(0)
-                        .HasColumnType("datetimeoffset(0)");
 
                     b.Property<int?>("ValidityDays")
                         .HasColumnType("int");
@@ -783,8 +787,9 @@ namespace Infrastructure.Migrations
                         .HasPrecision(0)
                         .HasColumnType("datetimeoffset(0)");
 
-                    b.Property<Guid>("DeviceId")
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<string>("DeviceId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<DateTimeOffset?>("LastLoginAt")
                         .HasPrecision(0)
@@ -948,6 +953,10 @@ namespace Infrastructure.Migrations
                         .HasPrecision(0)
                         .HasColumnType("datetimeoffset(0)");
 
+                    b.Property<DateTimeOffset?>("ActivationDeadline")
+                        .HasPrecision(0)
+                        .HasColumnType("datetimeoffset(0)");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasPrecision(0)
                         .HasColumnType("datetimeoffset(0)");
@@ -985,6 +994,14 @@ namespace Infrastructure.Migrations
 
                     b.Property<long>("UserId")
                         .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset?>("ValidFrom")
+                        .HasPrecision(0)
+                        .HasColumnType("datetimeoffset(0)");
+
+                    b.Property<DateTimeOffset?>("ValidTo")
+                        .HasPrecision(0)
+                        .HasColumnType("datetimeoffset(0)");
 
                     b.HasKey("Id");
 
@@ -1369,17 +1386,11 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Domain.Entities.Contact", b =>
                 {
-                    b.HasOne("Domain.Entities.AspNetUser", "Assignee")
+                    b.HasOne("Domain.Entities.AspNetUser", "Reply")
                         .WithMany("AssignedContacts")
-                        .HasForeignKey("AssignedTo");
+                        .HasForeignKey("ReplyById");
 
-                    b.HasOne("Domain.Entities.AspNetUser", "User")
-                        .WithMany("Contacts")
-                        .HasForeignKey("UserId");
-
-                    b.Navigation("Assignee");
-
-                    b.Navigation("User");
+                    b.Navigation("Reply");
                 });
 
             modelBuilder.Entity("Domain.Entities.KycForm", b =>
@@ -1673,8 +1684,6 @@ namespace Infrastructure.Migrations
                     b.Navigation("AssignedContacts");
 
                     b.Navigation("AuthoredNews");
-
-                    b.Navigation("Contacts");
 
                     b.Navigation("KycForms");
 

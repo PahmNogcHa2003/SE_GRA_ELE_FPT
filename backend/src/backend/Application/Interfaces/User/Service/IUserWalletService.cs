@@ -11,7 +11,7 @@ namespace Application.Interfaces.User.Service
 {
         public interface IUserWalletService : IService<Wallet, WalletDTO, long>
         {
-            Task<WalletDTO?> GetByUserIdAsync(long userId, CancellationToken ct = default);
+            Task<WalletDTO?> GetByUserIdAsync(long? userId, CancellationToken ct = default);
    
     }
 }

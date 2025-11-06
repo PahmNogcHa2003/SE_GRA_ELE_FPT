@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Application.Interfaces.Staff.Service
 {
-    public interface IVehicleService : IService<Domain.Entities.Vehicle, DTOs.VehicleDTO, long>
+    public interface IVehicleService : IService<Domain.Entities.Vehicle, DTOs.Vehicle.VehicleDTO, long>
     {
     }
 }

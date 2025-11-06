@@ -12,8 +12,8 @@ namespace Application.Interfaces.User.Service
 {
     public interface IWalletTransactionService : IService<WalletTransaction, WalletTransactionDTO, long>
     {
-        Task<PagedResult<WalletTransactionDTO>> GetTransactionsByUserIdAsync(
-            long userId,
+        Task<PagedResult<WalletTransactionDTO?>> GetTransactionsByUserIdAsync(
+            long? userId,
             int page,
             int pageSize,
             string? sortOrder,

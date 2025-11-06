@@ -10,6 +10,8 @@ namespace Application.DTOs.Payments
     {
         public bool IsSuccess { get; set; }
         public string Message { get; set; } = string.Empty;
-        public string RspCode { get; set; } = "99"; // Default to failure
+        public string RspCode { get; set; } = "99";
+        public object? Order { get; set; }
+        public object? Transaction { get; set; }
     }
 }

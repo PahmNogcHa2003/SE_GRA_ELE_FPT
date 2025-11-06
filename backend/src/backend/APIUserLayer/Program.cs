@@ -22,7 +22,6 @@ builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(Assembly.Loa
 // Thêm các dịch vụ từ tầng Infrastructure (DbContext, Repositories, Services...)
 builder.Services.AddInfrastructure(builder.Configuration);
 
-// Cấu hình Identity
 builder.Services.AddIdentity<AspNetUser, IdentityRole<long>>(options =>
 {
     options.Password.RequireDigit = true;
@@ -35,7 +34,6 @@ builder.Services.AddIdentity<AspNetUser, IdentityRole<long>>(options =>
 .AddDefaultTokenProviders()
 .AddRoleManager<RoleManager<IdentityRole<long>>>();
 
-// Thêm Controllers và tùy chỉnh lỗi Validation
 builder.Services.AddControllers()
     .ConfigureApiBehaviorOptions(options =>
     {
@@ -55,7 +53,20 @@ builder.Services.AddControllers()
         };
     });
 
-// Cấu hình CORS
+// --- Add HttpClient for Province API ---
+builder.Services.AddHttpClient("ProvincesAPI", client =>
+{
+#if DEBUG
+    // Local dev dùng HTTP cho đỡ lỗi SSL
+    client.BaseAddress = new Uri("http://provinces.open-api.vn/api/v2/");
+#else
+    // Production dùng HTTPS an toàn
+    client.BaseAddress = new Uri("https://provinces.open-api.vn/api/v2/");
+#endif
+});
+
+
+// Add CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll",
@@ -64,41 +75,8 @@ builder.Services.AddCors(options =>
                           .AllowAnyHeader());
 });
 
-// Cấu hình Swagger/OpenAPI
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(c =>
-{
-    c.SwaggerDoc("v1", new OpenApiInfo { Title = "HolaBike API", Version = "v1" });
 
-    // Cấu hình để Swagger hỗ trợ JWT Bearer
-    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-    {
-        Name = "Authorization",
-        Type = SecuritySchemeType.Http,
-        Scheme = "bearer",
-        BearerFormat = "JWT",
-        In = ParameterLocation.Header,
-        Description = "JWT Authorization header using the Bearer scheme. \r\n\r\n Enter your token in the text input below.\r\n\r\nExample: '12345abcdef'"
-    });
-
-    // Thêm yêu cầu bảo mật vào tất cả các endpoint
-    c.AddSecurityRequirement(new OpenApiSecurityRequirement
-    {
-        {
-            new OpenApiSecurityScheme
-            {
-                Reference = new OpenApiReference
-                {
-                    Type = ReferenceType.SecurityScheme,
-                    Id = "Bearer"
-                }
-            },
-            new string[] {}
-        }
-    });
-});
-
-// Cấu hình Authentication và JWT
+// Add Authentication & JWT
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -117,6 +95,100 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
+// Add Authorization Policies
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
+    options.AddPolicy("StaffOrAdmin", policy => policy.RequireRole("Admin", "Staff"));
+    options.AddPolicy("UserOnly", policy => policy.RequireRole("User"));
+});
+
+async Task SeedIdentityAsync(IServiceProvider services)
+{
+    var userManager = services.GetRequiredService<UserManager<AspNetUser>>();
+    var roleManager = services.GetRequiredService<RoleManager<IdentityRole<long>>>();
+
+    string[] roles = { "Admin", "Staff", "User" };
+    foreach (var r in roles)
+    {
+        if (!await roleManager.RoleExistsAsync(r))
+            await roleManager.CreateAsync(new IdentityRole<long>(r));
+    }
+
+    string adminEmail = "admin@ecojourney.com";
+    string adminPassword = "Admin@123";
+
+    var adminUser = await userManager.FindByEmailAsync(adminEmail);
+    if (adminUser == null)
+    {
+        adminUser = new AspNetUser
+        {
+            UserName = "admin",
+            Email = adminEmail,
+            EmailConfirmed = true,
+            PhoneNumber = "0123456789",
+            SecurityStamp = Guid.NewGuid().ToString()
+        };
+
+        var create = await userManager.CreateAsync(adminUser, adminPassword);
+        if (!create.Succeeded)
+            throw new Exception("Create admin failed: " + string.Join(", ", create.Errors.Select(e => e.Description)));
+
+        var addRole = await userManager.AddToRoleAsync(adminUser, "Admin");
+        if (!addRole.Succeeded)
+            throw new Exception("Add role failed: " + string.Join(", ", addRole.Errors.Select(e => e.Description)));
+
+        Console.WriteLine("✅ Admin user created and assigned Admin role.");
+    }
+    else
+    {
+        // đảm bảo đã có role
+        if (!await userManager.IsInRoleAsync(adminUser, "Admin"))
+            await userManager.AddToRoleAsync(adminUser, "Admin");
+
+        Console.WriteLine("ℹ️ Admin user already exists.");
+    }
+}
+
+// Add CORS
+builder.Services.AddCors(o => o.AddPolicy("frontend", p =>
+    p.WithOrigins("http://localhost:5173")
+     .AllowAnyHeader().AllowAnyMethod().AllowCredentials()
+));
+
+// Add Swagger with Auth support
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "HolaBike API", Version = "v1" });
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "JWT Authorization header using the Bearer scheme."
+    });
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            new string[] {}
+        }
+    });
+});
+
+builder.Services.AddHttpContextAccessor();
+
+
 // Đăng ký cấu hình cho VnPay
 builder.Services.Configure<VnPaySettings>(builder.Configuration.GetSection("VnPaySettings"));
 
@@ -127,16 +199,16 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("StaffOrAdmin", policy => policy.RequireRole("Admin", "Staff"));
     options.AddPolicy("UserOnly", policy => policy.RequireRole("User"));
 });
-
-
+builder.Services.Configure<VnPaySettings>(builder.Configuration.GetSection("VnPaySettings"));
 var app = builder.Build();
 
-// --- Seed Roles vào Database khi ứng dụng khởi chạy ---
+// Seed roles + admin
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     try
     {
+        await SeedIdentityAsync(services);
         var roleManager = services.GetRequiredService<RoleManager<IdentityRole<long>>>();
         string[] roleNames = { "Admin", "Staff", "User" };
         foreach (var roleName in roleNames)
@@ -151,13 +223,11 @@ using (var scope = app.Services.CreateScope())
     catch (Exception ex)
     {
         var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "An error occurred while seeding the database roles.");
+        logger.LogError(ex, "Seeding identity failed.");
     }
 }
 
-
-// --- Cấu hình Middleware Pipeline ---
-
+// --- Middleware Pipeline Configuration ---
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -165,6 +235,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
+app.UseMiddleware<ValidationMiddleware>();
+app.UseMiddleware<ResponseMiddleware>();
 
 app.UseHttpsRedirection();
 
@@ -172,12 +244,17 @@ app.UseRouting();
 
 app.UseCors("AllowAll"); // Sử dụng chính sách CORS
 
-app.UseAuthentication(); // Bắt buộc phải có trước UseAuthorization
+app.UseAuthentication(); // This must come before UseAuthorization
+
+app.UseCors("frontend");
+
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
 
 app.Run();
 
-// Dòng này rất hữu ích để các project test có thể truy cập được class Program
+// ✅ FIX: Make the auto-generated Program class public so test projects can access it.
+// Make the Program class public so it can be accessed from test projects
 public partial class Program { }

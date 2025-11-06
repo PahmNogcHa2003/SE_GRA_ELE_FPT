@@ -8,8 +8,9 @@ namespace Domain.Entities
 {
     public class Ward 
     {
-        public int Code { get; set; }
-        public string Name { get; set; }
-        public int ProvinceCode { get; set; }
+        public string Code { get; set; } = "";
+        public string Name { get; set; } = "";
+        public string Type { get; set; } = "";
+        public string Province_Code { get; set; } = "";
     }
 }

@@ -49,8 +49,10 @@ namespace Application.Services.Base
             {
                 var query = GetQueryWithIncludes();
 
+                var projectedQuery = ProjectToDto(query);
+
                 // 1. Apply Search (Search)
-                if (!string.IsNullOrWhiteSpace(searchQuery))
+                 if (!string.IsNullOrWhiteSpace(searchQuery))
                 {
                     query = ApplySearch(query, searchQuery);
                 }
@@ -63,8 +65,6 @@ namespace Application.Services.Base
 
                 // 3. Apply Sort (Sort)
                 query = ApplySort(query, sortOrder);
-
-                var projectedQuery = query.ProjectTo<TDto>(_mapper.ConfigurationProvider);
 
                 return await Application.Common.PagedResult<TDto>.FromQueryableAsync(projectedQuery, page, pageSize, ct);
             }
@@ -115,6 +115,8 @@ namespace Application.Services.Base
                 return query.Where($"{filterField} == @0", typedValue);
             }
         }
+        protected virtual IQueryable<TDto> ProjectToDto(IQueryable<TEntity> query)
+             => query.ProjectTo<TDto>(_mapper.ConfigurationProvider);
 
         protected virtual IQueryable<TEntity> ApplySort(IQueryable<TEntity> query, string? sortOrder)
         {
