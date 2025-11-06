@@ -1,6 +1,5 @@
 ﻿using APIUserLayer.Controllers.Base;
 using Application.Common;
-using Application.DTOs;
 using Application.DTOs.Rental;
 using Application.Interfaces.User.Service;
 using Microsoft.AspNetCore.Authorization;
@@ -11,7 +10,7 @@ namespace APIUserLayer.Controllers.User
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize] 
+    [Authorize]
     public class RentalsController : UserBaseController
     {
         private readonly IRentalsService _rentalsService;
@@ -28,7 +27,9 @@ namespace APIUserLayer.Controllers.User
         public async Task<IActionResult> CreateRental([FromBody] CreateRentalDTO createRentalDto)
         {
             if (!ModelState.IsValid)
-                return BadRequest(ApiResponse<object>.ErrorResponse("Invalid rental request", new[] { "Invalid model data" }));
+                return BadRequest(ApiResponse<object>.ErrorResponse(
+                    "Invalid rental request",
+                    new[] { "Invalid model data" }));
 
             var result = await _rentalsService.CreateRentalAsync(createRentalDto);
 
@@ -40,13 +41,24 @@ namespace APIUserLayer.Controllers.User
 
         /// <summary>
         /// Người dùng kết thúc chuyến thuê xe
-        /// (sẽ xử lý sau trong EndRentalAsync)
         /// </summary>
         [HttpPut("{id}/end")]
         public async Task<IActionResult> EndRental(long id, [FromBody] EndRentalRequestDTO endRentalDto)
         {
-            await _rentalsService.EndRentalAsync(endRentalDto);
-            return Ok(ApiResponse<object>.SuccessResponse(null, "Rental ended successfully"));
+            if (!ModelState.IsValid)
+                return BadRequest(ApiResponse<object>.ErrorResponse(
+                    "Invalid rental request",
+                    new[] { "Invalid model data" }));
+
+            // Gán rentalId từ route vào DTO (phòng khi client không truyền)
+            endRentalDto.RentalId = id;
+
+            var result = await _rentalsService.EndRentalAsync(endRentalDto);
+
+            if (result)
+                return Ok(ApiResponse<object>.SuccessResponse(null, "Rental ended successfully"));
+
+            return BadRequest(ApiResponse<object>.ErrorResponse("Failed to end rental"));
         }
     }
 }
