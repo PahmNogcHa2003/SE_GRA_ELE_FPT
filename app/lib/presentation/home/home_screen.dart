@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:hola_bike_app/domain/models/user_info.dart';
-import 'package:hola_bike_app/data/sources/remote/user_api.dart';
+import 'package:hola_bike_app/domain/models/info_user.dart';
+import 'package:hola_bike_app/data/sources/remote/api_user.dart';
 import 'package:hola_bike_app/presentation/home/pages/qr/qr_page.dart';
 import 'package:hola_bike_app/presentation/navigation/bottom_nav.dart';
 import 'pages/home_content.dart';

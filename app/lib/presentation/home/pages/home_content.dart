@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:hola_bike_app/domain/models/user_info.dart';
+import 'package:hola_bike_app/domain/models/info_user.dart';
 import '../widgets/home_header.dart';
 import '../widgets/home_menu.dart';
 import '../widgets/home_promo.dart';
