@@ -2,7 +2,6 @@
 using Application.Interfaces.Base;
 using Application.Interfaces.Identity;
 using Application.Interfaces.Location;
-using Application.Interfaces.Ocr;
 using Application.Interfaces.Photo;
 using Application.Interfaces.Staff.Repository;
 using Application.Interfaces.Staff.Service;
@@ -16,7 +15,6 @@ using Application.Services.User;
 using Domain.Entities;
 using Infrastructure.Persistence;
 using Infrastructure.Repositories.Location;
-using Infrastructure.Repositories.Ocr;
 using Infrastructure.Repositories.Photo;
 using Infrastructure.Repositories.Staff;
 using Infrastructure.Repositories.User;
@@ -65,10 +63,6 @@ namespace Infrastructure.Dependency_Injection
 
             // --- Cloud Services / External Repositories ---
             services.AddScoped<IPhotoRepository, PhotoRepository>();
-
-            // === THAY ĐỔI: Chuyển sang dùng OCR.space thay vì Google Vision ===
-            // services.AddScoped<IOcrRepository, GoogleVisionOcrRepository>();
-            services.AddScoped<IOcrRepository, OcrSpaceRepository>();
 
             // --- Location API & HTTP Client Factory ---
             // Thêm HttpClientFactory để các service khác (như OcrSpaceRepository) có thể sử dụng

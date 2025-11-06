@@ -12,7 +12,8 @@ namespace Application.DTOs.Kyc
 {
     public class CreateKycRequestDTO 
     {
-
+        [Required]
+        public string JsonData { get; set; }
         [Required]
         public IFormFile FrontImage { get; set; }
 

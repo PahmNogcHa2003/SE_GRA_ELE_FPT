@@ -36,8 +36,8 @@ namespace APIUserLayer.Controllers.User
             }
 
             // Gọi service với các file lấy từ DTO
-            var result = await _kycService.SubmitKycImagesAsync(userId, request.FrontImage, request.BackImage);
-
+            //var result = await _kycService.SubmitKycImagesAsync(userId, request.FrontImage, request.BackImage);
+            var result = true;
             return Ok(ApiResponse<bool>.SuccessResponse(result, "Yêu cầu đã được gửi. Chúng tôi sẽ xử lý và thông báo cho bạn."));
         }
 

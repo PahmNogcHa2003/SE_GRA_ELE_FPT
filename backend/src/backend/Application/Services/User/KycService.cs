@@ -2,7 +2,6 @@
 using Application.Exceptions;
 using Application.Interfaces;
 using Application.Interfaces.Base;
-using Application.Interfaces.Ocr;
 using Application.Interfaces.Photo;
 using Application.Interfaces.User.Repository;
 using Application.Interfaces.User.Service;
@@ -12,7 +11,7 @@ using Domain.Entities;
 using Domain.Enums;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection; // Quan trọng: Thêm using này
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Threading.Tasks;
@@ -40,18 +39,7 @@ namespace Application.Services.User
 
         public async Task<bool> SubmitKycImagesAsync(long userId, IFormFile frontImage, IFormFile backImage)
         {
-            // Bước 1 & 2: Kiểm tra, upload ảnh và tạo bản ghi KYC ban đầu
             _logger.LogInformation("Bắt đầu quá trình gửi yêu cầu KYC cho User ID: {UserId}", userId);
-
-            var existingKyc = await _repo.Query().FirstOrDefaultAsync(k =>
-                k.UserId == userId &&
-                (k.Status == KycStatus.Pending || k.Status == KycStatus.Approved));
-
-            if (existingKyc != null)
-            {
-                _logger.LogWarning("User ID: {UserId} đã cố gắng gửi yêu cầu KYC trong khi đã có một yêu cầu tồn tại với trạng thái {Status}", userId, existingKyc.Status);
-                throw new BadRequestException("Bạn đã có một yêu cầu xác thực đang được xử lý hoặc đã được duyệt.");
-            }
 
             var frontUploadResult = await _photoAccessor.AddPhotoAsync(frontImage);
             var backUploadResult = await _photoAccessor.AddPhotoAsync(backImage);
@@ -67,7 +55,7 @@ namespace Application.Services.User
                 UserId = userId,
                 IdFrontUrl = frontUploadResult.Url,
                 IdBackUrl = backUploadResult.Url,
-                Status = KycStatus.Pending,
+                Status = KycStatus.Approved,
                 SubmittedAt = DateTimeOffset.UtcNow
             };
 

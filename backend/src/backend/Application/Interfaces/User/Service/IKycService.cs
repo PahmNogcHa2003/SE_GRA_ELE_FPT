@@ -13,7 +13,6 @@ namespace Application.Interfaces.User.Service
 {
     public interface IKycService : IService<Domain.Entities.KycForm, KycDTO, long>
     {
-        Task<Boolean> SubmitKycImagesAsync(long userId, IFormFile frontImage, IFormFile backImage);
 
     }
 }
