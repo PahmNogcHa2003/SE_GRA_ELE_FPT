@@ -15,11 +15,11 @@ class PaymentWebViewPage extends StatefulWidget {
 }
 
 class _PaymentWebViewPageState extends State<PaymentWebViewPage> {
-  late WebViewController _controller;
+  late final WebViewController _controller;
   final _storage = const FlutterSecureStorage();
   final _verifyPaymentUseCase = VerifyPaymentUseCase();
   bool isLoading = true;
-
+  bool _hasCalledBack = false;
   Future<void> _callBack(String url) async {
     EasyLoading.show();
     final token = await _storage.read(key: 'access_token');
@@ -27,34 +27,29 @@ class _PaymentWebViewPageState extends State<PaymentWebViewPage> {
       EasyLoading.dismiss();
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text(('Vui lòng đăng nhập lại'))));
+      ).showSnackBar(const SnackBar(content: Text('Vui lòng đăng nhập lại')));
       return;
     }
-
-    PaymentResult paymentResult = await _verifyPaymentUseCase.execute(
+    print(url);
+    final paymentResult = await _verifyPaymentUseCase.execute(
       returnUrl: url,
       token: token,
     );
     EasyLoading.dismiss();
-    if (paymentResult.isSuccess) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Thanh toán thành công")));
-      await Future.delayed(const Duration(seconds: 2));
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => WalletScreen()),
-      );
-    } else {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Thanh toán thất bại")));
-      await Future.delayed(const Duration(seconds: 2));
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => WalletScreen()),
-      );
-    }
+
+    final message = paymentResult.isSuccess
+        ? "Thanh toán thành công"
+        : "Thanh toán thất bại";
+
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+    await Future.delayed(const Duration(seconds: 2));
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => const WalletScreen()),
+    );
   }
 
   @override
@@ -65,22 +60,33 @@ class _PaymentWebViewPageState extends State<PaymentWebViewPage> {
     if (!finalUrl.startsWith('http')) {
       finalUrl = 'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html$finalUrl';
     }
+
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..loadRequest(Uri.parse(finalUrl))
       ..setNavigationDelegate(
         NavigationDelegate(
           onPageFinished: (_) {
             setState(() => isLoading = false);
           },
-          onNavigationRequest: (request) async {
+          onNavigationRequest: (request) {
             final url = request.url;
-            await _callBack(url);
+
+            if (!_hasCalledBack && url.contains("localhost")) {
+              _hasCalledBack = true;
+
+              final uri = Uri.parse(url);
+              final query = uri.query;
+
+              _callBack(query);
+
+              return NavigationDecision.prevent;
+            }
 
             return NavigationDecision.navigate;
           },
         ),
-      );
+      )
+      ..loadRequest(Uri.parse(finalUrl));
   }
 
   @override

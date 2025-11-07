@@ -131,7 +131,7 @@ class _RecentTransactionsState extends State<RecentTransactions> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  tx.source ?? 'Không rõ nguồn', // sửa typo: tx.source
+                  tx.source, // sửa typo: tx.source
                   style: const TextStyle(
                     fontWeight: FontWeight.w600,
                     fontSize: 14,
