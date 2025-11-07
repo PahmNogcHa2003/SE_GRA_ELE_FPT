@@ -7,6 +7,7 @@ using Infrastructure.Setting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Reflection;
@@ -201,6 +202,21 @@ builder.Services.AddAuthorization(options =>
 });
 builder.Services.Configure<VnPaySettings>(builder.Configuration.GetSection("VnPaySettings"));
 var app = builder.Build();
+
+// --- Tự động apply migrations khi khởi động ---
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<HolaBikeContext>();
+    try
+    {
+        db.Database.Migrate(); // <- chạy tự động update-database
+        Console.WriteLine(" Database migrated successfully.");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine(" Database migration failed: " + ex.Message);
+    }
+}
 
 // Seed roles + admin
 using (var scope = app.Services.CreateScope())

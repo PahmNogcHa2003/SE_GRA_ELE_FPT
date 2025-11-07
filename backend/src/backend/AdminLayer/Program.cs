@@ -146,6 +146,21 @@ builder.Services.AddAuthorization(options =>
 
 var app = builder.Build();
 
+// --- Tự động apply migrations khi khởi động ---
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<HolaBikeContext>();
+    try
+    {
+        db.Database.Migrate(); // <- chạy tự động update-database
+        Console.WriteLine(" Database migrated successfully.");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine(" Database migration failed: " + ex.Message);
+    }
+}
+
 // --- Seed Roles to Database ---
 // This block ensures the roles "Admin", "Staff", and "User" exist in the database.
 using (var scope = app.Services.CreateScope())

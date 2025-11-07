@@ -2,6 +2,7 @@
 using Application.DTOs.Auth;
 using Application.DTOs.UserDevice;
 using Application.DTOs.UserProfile;
+using Application.DTOs.Wallet;
 using Application.Interfaces;
 using Application.Interfaces.Identity;
 using Application.Interfaces.User.Service;

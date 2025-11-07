@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Application.Common;
 using Application.DTOs;
+using Application.DTOs.WalletTransaction;
 using Application.Interfaces.Base;
 using Domain.Entities;
 

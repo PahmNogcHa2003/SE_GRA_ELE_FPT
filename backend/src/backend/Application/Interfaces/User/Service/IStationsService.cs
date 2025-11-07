@@ -5,11 +5,12 @@ using System.Text;
 using System.Threading.Tasks;
 using Application.Common;
 using Application.DTOs;
+using Application.DTOs.Station;
 using Application.Interfaces.Base;
 
 namespace Application.Interfaces.User.Service
 {
-    public interface IStationsService : IService<Domain.Entities.Station, DTOs.StationDTO, long>
+    public interface IStationsService : IService<Domain.Entities.Station, StationDTO, long>
     {
         Task<PagedResult<StationDTO>> GetNearbyPagedAsync(double lat, double lng, double radiusKm, int page, int pageSize, CancellationToken ct = default);
         Task<IEnumerable<StationDTO>> GetAllAsync(CancellationToken ct = default);

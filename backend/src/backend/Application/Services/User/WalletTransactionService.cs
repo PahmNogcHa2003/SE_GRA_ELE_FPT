@@ -13,6 +13,7 @@ using Application.Interfaces.Base;
 using Microsoft.EntityFrameworkCore;
 using Application.Common;
 using AutoMapper.QueryableExtensions;
+using Application.DTOs.WalletTransaction;
 
 namespace Application.Services.User
 {
