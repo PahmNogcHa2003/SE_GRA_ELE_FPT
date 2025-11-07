@@ -31,7 +31,7 @@ namespace Application.Common
         }
 
         // SỬA LẠI: Toàn bộ phương thức tĩnh FromQueryableAsync
-        public static async Task<PagedResult<T>> FromQueryableAsync<T>(
+        public static async Task<PagedResult<T>> FromQueryableAsync(
             IQueryable<T> query,
             int page,
             int pageSize,
@@ -42,7 +42,6 @@ namespace Application.Common
 
             try
             {
-                // Nếu đã bị hủy thì trả nhanh
                 if (ct.IsCancellationRequested)
                     return new PagedResult<T>(Array.Empty<T>(), 0, page, pageSize);
 
@@ -56,10 +55,10 @@ namespace Application.Common
             }
             catch (OperationCanceledException)
             {
-                // Request bị cancel (user chuyển trang, refetch…) → trả rỗng, không log lỗi
                 return new PagedResult<T>(Array.Empty<T>(), 0, page, pageSize);
             }
         }
+
 
     }
 }
