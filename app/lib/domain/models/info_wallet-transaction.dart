@@ -1,16 +1,25 @@
-// class WalletTransactionInfo {
-// final
-// }
-// {
-//   "success": true,
-//   "message": "Operation successful.",
-//   "data": {
-//     "items": [],
-//     "page": 1,
-//     "pageSize": 10,
-//     "totalCount": 0,
-//     "totalPages": 0,
-//     "hasNextPage": false,
-//     "hasPreviousPage": false
-//   }
-// }
+class WalletTransactionInfo {
+  final String direction;
+  final double amount;
+  final String source;
+  final double balanceAfter;
+  final DateTime createdAt;
+
+  WalletTransactionInfo({
+    required this.direction,
+    required this.amount,
+    required this.source,
+    required this.balanceAfter,
+    required this.createdAt,
+  });
+
+  factory WalletTransactionInfo.fromJson(Map<String, dynamic> json) {
+    return WalletTransactionInfo(
+      direction: json['direction'],
+      amount: json['amount'].toDouble(),
+      source: json['source'],
+      balanceAfter: json['balanceAfter'].toDouble(),
+      createdAt: DateTime.parse(json['createdAt']),
+    );
+  }
+}
