@@ -48,7 +48,8 @@ namespace Infrastructure.Dependency_Injection
             services.AddScoped<IOrderRepository, OrderRepository>();
             services.AddScoped<IWalletRepository, WalletRepository>();
             services.AddScoped<IWalletDebtRepository, WalletDebtRepository>();
-            services.AddScoped<IWalletTransactionRepository, WalletTransactionRepository>();
+            services.AddScoped<Application.Interfaces.Staff.Repository.IWalletTransactionRepository, Repositories.Staff.WalletTransactionRepository>();
+            services.AddScoped<Application.Interfaces.User.Repository.IWalletTransactionRepository, Repositories.User.WalletTransactionRepository>();
             services.AddScoped<IManageTicketPlanRepository, ManageTicketPlanRepository>();
             services.AddScoped<ITicketPlanPriceRepository, TicketPlanPriceRepository>();
             services.AddScoped<IUserTicketRepository, UserTicketRepository>();
@@ -59,7 +60,7 @@ namespace Infrastructure.Dependency_Injection
             services.AddScoped<IContactRepository, ContactRepository>();
             services.AddScoped<IManageContactRepository, ManageContactRepository>();
             services.AddScoped<IReplyContactRepository, ReplyContactRepository>();
-
+            services.AddScoped<IOrderRepository, OrderRepository>();
 
 
             // --- Location API ---
@@ -101,7 +102,7 @@ namespace Infrastructure.Dependency_Injection
             services.AddScoped<IContactService, ContactService>();
             services.AddScoped<IManageContactService, ManageContactService>();
             services.AddScoped<IReplyContactService, ReplyContactService>();
-
+            services.AddScoped<ITransactionService, TransactionService>();
 
             // --- AutoMapper ---
             services.AddAutoMapper(typeof(AppMappingProfile).Assembly);
