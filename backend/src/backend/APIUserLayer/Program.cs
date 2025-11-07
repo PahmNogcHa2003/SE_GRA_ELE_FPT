@@ -192,15 +192,6 @@ builder.Services.AddHttpContextAccessor();
 
 // Đăng ký cấu hình cho VnPay
 builder.Services.Configure<VnPaySettings>(builder.Configuration.GetSection("VnPaySettings"));
-
-// Cấu hình các chính sách Authorization
-builder.Services.AddAuthorization(options =>
-{
-    options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
-    options.AddPolicy("StaffOrAdmin", policy => policy.RequireRole("Admin", "Staff"));
-    options.AddPolicy("UserOnly", policy => policy.RequireRole("User"));
-});
-builder.Services.Configure<VnPaySettings>(builder.Configuration.GetSection("VnPaySettings"));
 var app = builder.Build();
 
 // --- Tự động apply migrations khi khởi động ---
