@@ -5,7 +5,7 @@ import 'dart:convert';
 
 class WalletApi {
   Future<WalletInfo> getWalletInfo(String token) async {
-    final url = Uri.parse('$baseUrl/api/wallets');
+    final url = Uri.parse('$baseUrl/wallets');
     try {
       // --- Log request ---
       print('--- API REQUEST ---');
