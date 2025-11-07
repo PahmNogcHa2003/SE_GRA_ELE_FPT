@@ -1,5 +1,6 @@
 ﻿using Application.Common;
 using Application.DTOs;
+using Application.DTOs.New;
 using Domain.Entities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -16,7 +17,7 @@ namespace APIUserLayer.Controllers.User
             _newsService = newsService;
         }
         [HttpGet]
-        public async Task<ActionResult<Application.Common.ApiResponse<Application.Common.PagedResult<Application.DTOs.NewsDTO>>>> Get(
+        public async Task<ActionResult<Application.Common.ApiResponse<Application.Common.PagedResult<NewsDTO>>>> Get(
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 10,
             [FromQuery] string? search = null,
@@ -26,7 +27,7 @@ namespace APIUserLayer.Controllers.User
             CancellationToken ct = default)
         {
             var data = await _newsService.GetPagedAsync(page, pageSize, search, filterField, filterValue, sortOrder, ct);
-            return Ok(Application.Common.ApiResponse<Application.Common.PagedResult<Application.DTOs.NewsDTO>>.SuccessResponse(data, "Fetched news"));
+            return Ok(Application.Common.ApiResponse<Application.Common.PagedResult<NewsDTO>>.SuccessResponse(data, "Fetched news"));
         }
         [HttpGet("{id}")]
         [ProducesResponseType(typeof(ApiResponse<NewsDTO>), StatusCodes.Status200OK)]
@@ -43,13 +44,13 @@ namespace APIUserLayer.Controllers.User
             return Ok(ApiResponse<NewsDTO>.SuccessResponse(newsItem, "Fetched news item successfully."));
         }
         [HttpGet("related")]
-        public async Task<ActionResult<Application.Common.ApiResponse<IEnumerable<Application.DTOs.NewsDTO>>>> GetRelatedNews(
+        public async Task<ActionResult<Application.Common.ApiResponse<IEnumerable<NewsDTO>>>> GetRelatedNews(
             [FromQuery] long newsId,
             [FromQuery] int limit = 5,
             CancellationToken ct = default)
         {
             var data = await _newsService.GetRelatedNewsAsync(newsId, limit, ct);
-            return Ok(Application.Common.ApiResponse<IEnumerable<Application.DTOs.NewsDTO>>.SuccessResponse(data, "Fetched related news"));
+            return Ok(Application.Common.ApiResponse<IEnumerable<NewsDTO>>.SuccessResponse(data, "Fetched related news"));
         }
     }
 }

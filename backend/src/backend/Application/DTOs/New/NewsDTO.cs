@@ -4,9 +4,10 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Application.DTOs.BaseDTO;
 using Microsoft.EntityFrameworkCore;
 
-namespace Application.DTOs
+namespace Application.DTOs.New
 {
     public class NewsDTO : BaseDTO<long>
     {

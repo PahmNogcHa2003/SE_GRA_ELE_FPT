@@ -1,4 +1,5 @@
-﻿using Application.Interfaces.Base;
+﻿using Application.DTOs.Station;
+using Application.Interfaces.Base;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Application.Interfaces.Staff.Service
 {
-    public interface IStationsService : IService<Domain.Entities.Station, DTOs.StationDTO, long>
+    public interface IStationsService : IService<Domain.Entities.Station, StationDTO, long>
     {
     }
 }

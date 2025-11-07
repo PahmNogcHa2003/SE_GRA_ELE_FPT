@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Application.DTOs;
+using Application.DTOs.Wallet;
 using Application.Interfaces.Base;
 using Domain.Entities;
 

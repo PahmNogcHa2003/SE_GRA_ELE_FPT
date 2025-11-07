@@ -4,6 +4,7 @@ using System.Net.Http.Json;
 using System.Threading.Tasks;
 using Application.Common;
 using Application.DTOs;
+using Application.DTOs.Station;
 using FluentAssertions;
 using Xunit;
 

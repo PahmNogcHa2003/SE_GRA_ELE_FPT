@@ -1,5 +1,6 @@
 ﻿using Application.Common;
 using Application.DTOs;
+using Application.DTOs.New;
 using Application.Interfaces;
 using Application.Interfaces.Base;
 using Application.Interfaces.Staff.Repository;
