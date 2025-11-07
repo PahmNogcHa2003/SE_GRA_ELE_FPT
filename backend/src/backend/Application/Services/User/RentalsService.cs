@@ -221,6 +221,72 @@ namespace Application.Services.User
             }
         }
 
-       
+        public async Task<VehicleDetailDTO> GetVehicleByCode(RequestVehicleDTO requestVehicleDTO)
+        {
+
+            const double allowedRadius = 5.0;
+
+            try
+            {
+                // Lấy station Lat/Lng của trạm mà xe đang thuộc về
+                var station = await _stationRepo.Query()
+                    .Where(s => s.Vehicles.Any(v => v.Id == requestVehicleDTO.VehicleId))
+                    .FirstOrDefaultAsync();
+
+                if (station == null || station.Lat == null || station.Lng == null)
+                {
+                    _logger.LogWarning("Xe ID {BikeCode} không thuộc trạm hợp lệ hoặc trạm thiếu tọa độ.", requestVehicleDTO.VehicleId);
+                    throw new NotFoundException("Không tìm thấy trạm xe hợp lệ cho mã xe này.");
+                }
+
+                // Tính khoảng cách người dùng đến trạm
+                double distance = GeolocationHelper.CalculateDistanceInMeters(
+                    requestVehicleDTO.CurrentLatitude,
+                    requestVehicleDTO.CurrentLongitude,
+                    (double)station.Lat.Value,
+                    (double)station.Lng.Value
+                );
+
+                // So sánh khoảng cách với bán kính cho phép
+                if (distance > allowedRadius)
+                {
+                    _logger.LogWarning("User ID {UserId} cố gắng quét QR code từ xa. Khoảng cách: {Distance:F2}m.",
+                        _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier), distance);
+
+                    throw new BadRequestException($"Bạn cần ở trong phạm vi {allowedRadius}m của trạm xe ({station.Name}) để quét QR. Khoảng cách hiện tại là {distance:F2}m.");
+                }
+
+                // Nếu kiểm tra vị trí thành công: Lấy thông tin chi tiết của xe
+                var vehicle = await _vehicleRepo.GetVehicleWithCategoryAsync(requestVehicleDTO.VehicleId);
+
+                if (vehicle == null)
+                {
+                    // Dù đã tìm thấy trạm, vẫn cần kiểm tra xe có sẵn sàng không
+                    _logger.LogWarning("Không tìm thấy thông tin chi tiết xe ID {BikeCode} hoặc xe không ở trạng thái sẵn sàng.", requestVehicleDTO.VehicleId);
+                    throw new NotFoundException("Thông tin xe không khả dụng.");
+                }
+
+                var vehicleDetailDTO = new VehicleDetailDTO
+                {
+                    BikeCode = vehicle.BikeCode,
+                    CategoryName = vehicle.Category?.Name,
+                    StationName = vehicle.Station.Name.ToString(),
+                    VehicleStatus = vehicle.Status,
+                };
+
+                // Trả về thông tin xe (VehicleDetailDTO)
+                return vehicleDetailDTO; // Trả về DTO chứa thông tin chi tiết xe
+            }
+            catch (Exception ex) when (ex is NotFoundException || ex is BadRequestException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                // Chú ý: Bạn đã thay đổi tên DTO trong log error (vehicleDetailDTO -> requestVehicleDTO)
+                _logger.LogError(ex, "Error in GetVehicleByCode with BikeCode: {BikeCode}", requestVehicleDTO.VehicleId);
+                throw new Exception("Lỗi hệ thống khi xử lý yêu cầu.");
+            }
+        }
     }
 }
