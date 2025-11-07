@@ -1,5 +1,6 @@
 ﻿using Application.Common;
 using Application.DTOs;
+using Application.DTOs.New;
 using Application.Interfaces.Staff.Service;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
