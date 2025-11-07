@@ -1,5 +1,6 @@
 ﻿using Application.Common;
 using Application.DTOs;
+using Application.DTOs.Vehicle;
 using Application.Interfaces.Staff.Service;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

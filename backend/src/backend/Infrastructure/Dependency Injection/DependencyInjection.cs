@@ -3,6 +3,7 @@ using Application.Interfaces.Base;
 using Application.Interfaces.Email;
 using Application.Interfaces.Identity;
 using Application.Interfaces.Location;
+using Application.Interfaces.Photo;
 using Application.Interfaces.Staff.Repository;
 using Application.Interfaces.Staff.Service;
 using Application.Interfaces.User.Repository;
@@ -17,12 +18,15 @@ using Domain.Entities;
 using Infrastructure.Persistence;
 using Infrastructure.Repositories.Email;
 using Infrastructure.Repositories.Location;
+using Infrastructure.Repositories.Photo;
 using Infrastructure.Repositories.Staff;
 using Infrastructure.Repositories.User;
+using Infrastructure.Setting;
 using Infrastructure.VNPay;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using System;
 
 namespace Infrastructure.Dependency_Injection
 {
@@ -34,10 +38,14 @@ namespace Infrastructure.Dependency_Injection
             services.AddDbContext<HolaBikeContext>(options =>
                 options.UseSqlServer(config.GetConnectionString("DefaultConnection")));
 
+            // --- Settings / Configurations ---
+            services.Configure<CloudinarySettings>(config.GetSection("CloudinarySettings"));
+
             // --- Unit of Work & Repositories ---
             services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddScoped(typeof(IRepository<,>), typeof(BaseRepository<,>));
-            //services.AddScoped<IRepository<AspNetUser, long>, UserRepository>();
+
+            // Repositories cụ thể
             services.AddScoped<IRepository<Station, long>, StationsRepository>();
             services.AddScoped<IRepository<CategoriesVehicle, long>, CategoriesVehicleRepository>();
             services.AddScoped<IRepository<Vehicle, long>, VehicleRepository>();
@@ -56,11 +64,23 @@ namespace Infrastructure.Dependency_Injection
             services.AddScoped<IManageUserTicketRepository, ManageUserTicketRepository>();
             services.AddScoped<IRepository<Rental, long>, RentalsRepository>();
             services.AddScoped<IRepository<UserDevice, long>, UserDevicesRepository>();
+            services.AddScoped<IRepository<BookingTicket, long>, BookingTicketRepository>();
             services.AddScoped<IEmailRepository, MailRepository>();
             services.AddScoped<IContactRepository, ContactRepository>();
             services.AddScoped<IManageContactRepository, ManageContactRepository>();
             services.AddScoped<IReplyContactRepository, ReplyContactRepository>();
             services.AddScoped<IOrderRepository, OrderRepository>();
+            services.AddScoped<IKycRepository, KycRepository>();
+            services.AddScoped<IUserProfilesRepository, UserProfileRepository>();
+            services.AddScoped<IIdentificationPhotoRepository, IdentificationPhotoRepository>();
+
+
+            //Test
+            services.AddScoped<IStationsRepository, StationsRepository>();
+            services.AddScoped<IVehicleRepository, VehicleRepository>();
+            services.AddScoped<IRentalsRepository, RentalsRepository>();
+            services.AddScoped<IBookingTicketRepository, BookingTicketRepository>();
+
 
 
             // --- Location API ---
@@ -68,9 +88,7 @@ namespace Infrastructure.Dependency_Injection
             {
                 client.BaseAddress = new Uri("https://provinces.open-api.vn/api/v2/");
             });
-            //  cache
             services.AddMemoryCache();
-            //LocationRepository
             services.AddScoped<ILocationRepository, LocationRepository>();
             services.Configure<Setting.MailSettings>(config.GetSection("MailSettings"));
 
@@ -84,7 +102,7 @@ namespace Infrastructure.Dependency_Injection
             services.AddScoped<Application.Interfaces.User.Service.INewsService, Application.Services.User.NewsService>();
             services.AddScoped<Application.Interfaces.Staff.Service.INewsService, Application.Services.Staff.NewsService>();
             services.AddScoped<ITagService, TagService>();
-            services.AddScoped<IPaymentService, PaymentService>(); 
+            services.AddScoped<IPaymentService, PaymentService>();
             services.AddScoped<IWalletService, WalletService>();
             services.AddScoped<IPaymentGatewayService, VnPayService>();
             services.AddScoped<IUserWalletService, UserWalletService>();
@@ -95,8 +113,8 @@ namespace Infrastructure.Dependency_Injection
             services.AddScoped<IManageUserTicketService, ManageUserTicketService>();
             services.AddScoped<IUserProfilesService, UserProfilesService>();
             services.AddScoped<IRentalsService, RentalsService>();
-            services.AddScoped<IRentalsService, RentalsService>();
             services.AddScoped<IUserDevicesService, UserDevicesService>();
+            services.AddScoped<IKycService, KycService>();
             services.AddScoped<IJwtTokenService, JwtTokenService>();
             services.AddScoped<IEmailService, EmailService>();
             services.AddScoped<IContactService, ContactService>();
@@ -104,14 +122,15 @@ namespace Infrastructure.Dependency_Injection
             services.AddScoped<IReplyContactService, ReplyContactService>();
             services.AddScoped<ITransactionService, TransactionService>();
 
+
             // --- AutoMapper ---
             services.AddAutoMapper(typeof(AppMappingProfile).Assembly);
 
-            //  Add AuthService (Identity + JWT)
+            //  --- Add AuthService (Identity + JWT) ---
             services.AddScoped<IAuthService, AuthService>();
-
 
             return services;
         }
     }
 }
+

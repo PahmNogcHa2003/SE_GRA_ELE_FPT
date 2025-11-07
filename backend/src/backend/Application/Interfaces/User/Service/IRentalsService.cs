@@ -9,9 +9,10 @@ using System.Threading.Tasks;
 
 namespace Application.Interfaces.User.Service
 {
-    public interface IRentalsService : IService<Domain.Entities.Rental, DTOs.RentalDTO, long>
+    public interface IRentalsService
     {
-        Task EndRentalAsync(long rentalId, EndRentalRequestDTO endRentalDto);
-
+        Task<VehicleDetailDTO> GetVehicleByCode(RequestVehicleDTO requestVehicleDTO);
+        Task<bool> CreateRentalAsync(CreateRentalDTO createRentalDTO);
+        Task<bool> EndRentalAsync(EndRentalRequestDTO endRentalDto);
     }
 }

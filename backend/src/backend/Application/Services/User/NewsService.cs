@@ -13,6 +13,7 @@ using Application.Interfaces.User.Repository;
 using Application.Interfaces.User.Service;
 using Microsoft.EntityFrameworkCore;
 using AutoMapper.QueryableExtensions;
+using Application.DTOs.New;
 
 namespace Application.Services.User
 {

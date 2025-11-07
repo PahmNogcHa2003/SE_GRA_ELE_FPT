@@ -15,12 +15,12 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// --- Service Registration ---
+// --- Đăng ký các dịch vụ (Service Registration) ---
 
-// Add MediatR
+// Thêm MediatR
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(Assembly.Load("Application")));
 
-// Add Infrastructure Layer (DbContext, Repositories, Services...)
+// Thêm các dịch vụ từ tầng Infrastructure (DbContext, Repositories, Services...)
 builder.Services.AddInfrastructure(builder.Configuration);
 
 builder.Services.AddIdentity<AspNetUser, IdentityRole<long>>(options =>
@@ -187,7 +187,13 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// Add Authorization Policies
+builder.Services.AddHttpContextAccessor();
+
+
+// Đăng ký cấu hình cho VnPay
+builder.Services.Configure<VnPaySettings>(builder.Configuration.GetSection("VnPaySettings"));
+
+// Cấu hình các chính sách Authorization
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
@@ -197,6 +203,21 @@ builder.Services.AddAuthorization(options =>
 builder.Services.Configure<VnPaySettings>(builder.Configuration.GetSection("VnPaySettings"));
 var app = builder.Build();
 
+// --- Tự động apply migrations khi khởi động ---
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<HolaBikeContext>();
+    try
+    {
+        db.Database.Migrate(); // <- chạy tự động update-database
+        Console.WriteLine(" Database migrated successfully.");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine(" Database migration failed: " + ex.Message);
+    }
+}
+
 // Seed roles + admin
 using (var scope = app.Services.CreateScope())
 {
@@ -204,6 +225,16 @@ using (var scope = app.Services.CreateScope())
     try
     {
         await SeedIdentityAsync(services);
+        var roleManager = services.GetRequiredService<RoleManager<IdentityRole<long>>>();
+        string[] roleNames = { "Admin", "Staff", "User" };
+        foreach (var roleName in roleNames)
+        {
+            var roleExist = await roleManager.RoleExistsAsync(roleName);
+            if (!roleExist)
+            {
+                await roleManager.CreateAsync(new IdentityRole<long>(roleName));
+            }
+        }
     }
     catch (Exception ex)
     {
@@ -227,7 +258,7 @@ app.UseHttpsRedirection();
 
 app.UseRouting();
 
-app.UseCors("AllowAll"); // Use CORS Policy
+app.UseCors("AllowAll"); // Sử dụng chính sách CORS
 
 app.UseAuthentication(); // This must come before UseAuthorization
 
@@ -243,4 +274,3 @@ app.Run();
 // ✅ FIX: Make the auto-generated Program class public so test projects can access it.
 // Make the Program class public so it can be accessed from test projects
 public partial class Program { }
-

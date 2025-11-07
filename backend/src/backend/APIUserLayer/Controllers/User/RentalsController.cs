@@ -1,18 +1,16 @@
 ﻿using APIUserLayer.Controllers.Base;
 using Application.Common;
-using Application.DTOs;
 using Application.DTOs.Rental;
-using Application.Interfaces.Staff.Service;
 using Application.Interfaces.User.Service;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using System.Threading.Tasks;
 
 namespace APIUserLayer.Controllers.User
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class RentalsController : UserBaseController
     {
         private readonly IRentalsService _rentalsService;
@@ -22,65 +20,74 @@ namespace APIUserLayer.Controllers.User
             _rentalsService = rentalsService;
         }
 
-        // GET: api/Rentals
-        [HttpGet]
-        public async Task<ActionResult<ApiResponse<PagedResult<RentalDTO>>>> GetRentals(
-            [FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] string? search = null,
-            [FromQuery] string? filterField = null, [FromQuery] string? filterValue = null, [FromQuery] string? sortOrder = null)
+        /// <summary>
+        /// Người dùng bắt đầu thuê xe
+        /// </summary>
+        [HttpPost("start")]
+        public async Task<IActionResult> CreateRental([FromBody] CreateRentalDTO createRentalDto)
         {
-            var pagedRentals = await _rentalsService.GetPagedAsync(page, pageSize, search, filterField, filterValue, sortOrder);
-            return Ok(ApiResponse<PagedResult<RentalDTO>>.SuccessResponse(pagedRentals, "Fetched Rentals successfully"));
+            if (!ModelState.IsValid)
+                return BadRequest(ApiResponse<object>.ErrorResponse(
+                    "Invalid rental request",
+                    new[] { "Invalid model data" }));
+
+            var result = await _rentalsService.CreateRentalAsync(createRentalDto);
+
+            if (result)
+                return Ok(ApiResponse<object>.SuccessResponse(null, "Rental created successfully"));
+
+            return BadRequest(ApiResponse<object>.ErrorResponse("Failed to create rental"));
         }
 
-        // GET: api/Rentals/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<ApiResponse<RentalDTO>>> GetStationById(long id)
-        {
-            var rental = await _rentalsService.GetAsync(id);
-            // Service sẽ ném KeyNotFoundException nếu không tìm thấy, Middleware sẽ bắt
-            return Ok(ApiResponse<RentalDTO>.SuccessResponse(rental, "Fetched rental successfully"));
-        }
-
-        // POST: api/Rentals
-        [HttpPost]
-        public async Task<ActionResult<ApiResponse<RentalDTO>>> CreateStation([FromBody] RentalDTO createDto)
-        {
-            // ModelState được [ApiController] tự động kiểm tra
-            var createdStation = await _rentalsService.CreateAsync(createDto);
-            var response = ApiResponse<RentalDTO>.SuccessResponse(createdStation, "rental created successfully");
-            return CreatedAtAction(nameof(GetStationById), new { id = createdStation.Id }, response);
-        }
-
+        /// <summary>
+        /// Người dùng kết thúc chuyến thuê xe
+        /// </summary>
         [HttpPut("{id}/end")]
         public async Task<IActionResult> EndRental(long id, [FromBody] EndRentalRequestDTO endRentalDto)
         {
-            // (Tùy chọn) Thêm kiểm tra để đảm bảo người dùng đang kết thúc đúng chuyến đi của mình
-            // Logic này có thể được đặt trong service
-            await _rentalsService.EndRentalAsync(id, endRentalDto);
-            return Ok(ApiResponse<object>.SuccessResponse(null, "rental ended successfully"));
+            if (!ModelState.IsValid)
+                return BadRequest(ApiResponse<object>.ErrorResponse(
+                    "Invalid rental request",
+                    new[] { "Invalid model data" }));
 
+            // Gán rentalId từ route vào DTO (phòng khi client không truyền)
+            endRentalDto.RentalId = id;
+
+            var result = await _rentalsService.EndRentalAsync(endRentalDto);
+
+            if (result)
+                return Ok(ApiResponse<object>.SuccessResponse(null, "Rental ended successfully"));
+
+            return BadRequest(ApiResponse<object>.ErrorResponse("Failed to end rental"));
         }
 
-        // PUT: api/Rentals/5
-        [HttpPut("{id}")]
-        public async Task<ActionResult<ApiResponse<object>>> UpdateStation(long id, [FromBody] RentalDTO updateDto)
+        /// <summary>
+        /// Lấy thông tin xe bằng mã QR code (BikeCode) và kiểm tra vị trí người dùng.
+        /// </summary>
+        /// <param name="requestVehicleDTO">Chứa BikeCode, UserLatitude, và UserLongitude.</param>
+        /// <returns>VehicleDetailDTO nếu vị trí hợp lệ.</returns>
+        [HttpPost("scan-vehicle")]
+        public async Task<IActionResult> GetVehicleInfoByScan([FromBody] RequestVehicleDTO requestVehicleDTO)
         {
-            if (updateDto.Id != 0 && id != updateDto.Id)
+            if (!ModelState.IsValid)
+                return BadRequest(ApiResponse<object>.ErrorResponse(
+                    "Invalid id request",
+                    new[] { "Invalid model data" }));
+
+            var vehicleDetail = await _rentalsService.GetVehicleByCode(requestVehicleDTO);
+
+            // Kiểm tra kết quả trả về từ service
+            if (vehicleDetail != null)
             {
-                var errorResponse = ApiResponse<object>.ErrorResponse("Route ID and Body ID do not match", new[] { "Invalid ID parameter" });
-                return BadRequest(errorResponse);
+                // Kiểm tra thành công (Vị trí OK và thông tin xe được tìm thấy)
+                return Ok(ApiResponse<VehicleDetailDTO>.SuccessResponse(
+                    vehicleDetail,
+                    "Vehicle information retrieved and location verified successfully."));
             }
 
-            await _rentalsService.UpdateAsync(id, updateDto);
-            return Ok(ApiResponse<object>.SuccessResponse(null, "rental updated successfully"));
-        }
-
-        // DELETE: api/Rentals/5
-        [HttpDelete("{id}")]
-        public async Task<ActionResult<ApiResponse<object>>> DeleteStation(long id)
-        {
-            await _rentalsService.DeleteAsync(id);
-            return Ok(ApiResponse<object>.SuccessResponse(null, "rental deleted successfully"));
+            // Mặc định, nếu service không ném exception mà trả về null (tùy vào cách bạn thiết kế service)
+            // thì coi như yêu cầu không hợp lệ hoặc không tìm thấy.
+            return NotFound(ApiResponse<object>.ErrorResponse("Không tìm thấy xe hoặc vị trí không hợp lệ."));
         }
     }
 }

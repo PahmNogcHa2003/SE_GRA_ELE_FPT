@@ -32,7 +32,9 @@ builder.Services.AddIdentity<AspNetUser, IdentityRole<long>>(options =>
 })
 .AddEntityFrameworkStores<HolaBikeContext>()
 .AddDefaultTokenProviders()
-.AddRoleManager<RoleManager<IdentityRole<long>>>();
+.AddRoleManager<RoleManager<IdentityRole<long>>>()
+.AddDefaultTokenProviders()
+.AddRoleManager<RoleManager<IdentityRole<long>>>(); 
 
 // Controllers + Validation response
 builder.Services.AddControllers()
@@ -94,7 +96,15 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("UserOnly", policy => policy.RequireRole("User"));
 });
 
-// Swagger: CHỈ KHAI BÁO 1 LẦN Ở ĐÂY
+
+// Add CORS
+builder.Services.AddCors(o => o.AddPolicy("frontend", p =>
+    p.WithOrigins("http://localhost:5173")
+     .AllowAnyHeader().AllowAnyMethod().AllowCredentials()
+));
+
+// Add Swagger with Auth support
+builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "AdminLayer API", Version = "v1" });
@@ -123,9 +133,65 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
+builder.Services.AddHttpContextAccessor();
+
+
+// Add Authorization Policies
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
+    options.AddPolicy("StaffOrAdmin", policy => policy.RequireRole("Admin", "Staff"));
+    options.AddPolicy("UserOnly", policy => policy.RequireRole("User"));
+});
+
 var app = builder.Build();
 
-// Seeding: GỘP THÀNH 1 KHỐI (tránh tạo 2 admin khác nhau)
+// --- Tự động apply migrations khi khởi động ---
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<HolaBikeContext>();
+    try
+    {
+        db.Database.Migrate(); // <- chạy tự động update-database
+        Console.WriteLine(" Database migrated successfully.");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine(" Database migration failed: " + ex.Message);
+    }
+}
+
+// --- Seed Roles to Database ---
+// This block ensures the roles "Admin", "Staff", and "User" exist in the database.
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        var roleManager = services.GetRequiredService<RoleManager<IdentityRole<long>>>();
+        string[] roleNames = { "Admin", "Staff", "User" };
+        foreach (var roleName in roleNames)
+        {
+            // Use await directly because of top-level statements
+            var roleExist = await roleManager.RoleExistsAsync(roleName);
+            if (!roleExist)
+            {
+                await roleManager.CreateAsync(new IdentityRole<long>(roleName));
+            }
+        }
+    }
+    catch (Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "An error occurred while seeding the database roles.");
+    }
+}
+
+
+// --- Middleware Pipeline Configuration ---
+
+
+// ✅ --- SEED DATABASE ON STARTUP ---
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;

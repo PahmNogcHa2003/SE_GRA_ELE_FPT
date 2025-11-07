@@ -254,25 +254,6 @@ namespace Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasPrecision(0)
-                        .HasColumnType("datetimeoffset(0)");
-
-                    b.Property<DateTime?>("Dob")
-                        .HasColumnType("date");
-
-                    b.Property<DateTimeOffset?>("ExpiryDate")
-                        .HasPrecision(7)
-                        .HasColumnType("datetimeoffset(7)");
-
-                    b.Property<string>("FullName")
-                        .HasMaxLength(150)
-                        .HasColumnType("nvarchar(150)");
-
-                    b.Property<string>("Gender")
-                        .HasMaxLength(10)
-                        .HasColumnType("nvarchar(10)");
-
                     b.Property<string>("IdBackUrl")
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
@@ -281,37 +262,9 @@ namespace Infrastructure.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
-                    b.Property<string>("IssuedBy")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<DateTimeOffset?>("IssuedDate")
-                        .HasPrecision(7)
-                        .HasColumnType("datetimeoffset(7)");
-
                     b.Property<string>("NumberCard")
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("PlaceOfOrigin")
-                        .HasMaxLength(150)
-                        .HasColumnType("nvarchar(150)");
-
-                    b.Property<string>("PlaceOfResidence")
-                        .HasMaxLength(150)
-                        .HasColumnType("nvarchar(150)");
-
-                    b.Property<string>("RejectReason")
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
-
-                    b.Property<DateTimeOffset?>("ReviewedAt")
-                        .HasPrecision(0)
-                        .HasColumnType("datetimeoffset(0)");
-
-                    b.Property<string>("SelfieUrl")
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -319,10 +272,6 @@ namespace Infrastructure.Migrations
                         .HasColumnType("nvarchar(20)");
 
                     b.Property<DateTimeOffset?>("SubmittedAt")
-                        .HasPrecision(0)
-                        .HasColumnType("datetimeoffset(0)");
-
-                    b.Property<DateTimeOffset>("UpdatedAt")
                         .HasPrecision(0)
                         .HasColumnType("datetimeoffset(0)");
 
@@ -787,8 +736,9 @@ namespace Infrastructure.Migrations
                         .HasPrecision(0)
                         .HasColumnType("datetimeoffset(0)");
 
-                    b.Property<Guid>("DeviceId")
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<string>("DeviceId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<DateTimeOffset?>("LastLoginAt")
                         .HasPrecision(0)

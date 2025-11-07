@@ -13,7 +13,7 @@ public partial class UserDevice : BaseEntity<long>
     public long UserId { get; set; }
 
     [Required]
-    public Guid DeviceId { get; set; }
+    public string DeviceId { get; set; }
 
     [StringLength(50)]
     public string? Platform { get; set; } = "ANDROID";

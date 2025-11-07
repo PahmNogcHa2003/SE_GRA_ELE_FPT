@@ -1,5 +1,6 @@
 ﻿using Application.Common;
 using Application.DTOs;
+using Application.DTOs.Wallet;
 using Application.Interfaces.User.Service;
 using Application.Services.Identity;
 using Microsoft.AspNetCore.Authorization;

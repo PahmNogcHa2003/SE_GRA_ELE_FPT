@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Application.DTOs
 {
-    public class RentalDTO : BaseDTO<long>
+    public class RentalDTO 
     {
         [Required]
         public long UserId { get; set; }

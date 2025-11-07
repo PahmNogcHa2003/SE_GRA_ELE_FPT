@@ -4,10 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Application.DTOs
+namespace Application.DTOs.Vehicle
 {
-    public abstract class BaseDTO<TKey>
+    public class ResponseStationVehicle
     {
-        public TKey Id { get; set; } = default!;
+        public int StationID { get; set; }
     }
 }

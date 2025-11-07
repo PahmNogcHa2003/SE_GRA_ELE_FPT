@@ -13,6 +13,7 @@ using Application.Interfaces.User.Service;
 using Microsoft.EntityFrameworkCore;
 using Application.Common;
 using AutoMapper.QueryableExtensions;
+using Application.DTOs.Station;
 
 namespace Application.Services.User
 {
@@ -137,14 +138,16 @@ namespace Application.Services.User
 
             return new PagedResult<StationDTO>(items, total, page, pageSize);
         }
+
         public async Task<IEnumerable<StationDTO>> GetAllAsync(CancellationToken ct = default)
         {
-            var query = _repo.Query();
-            var stations = await query
-                .ProjectTo<StationDTO>(_mapper.ConfigurationProvider)
-                .ToListAsync(ct);
+            var query = GetQueryWithIncludes();
+            
+            //  Hàm này đã có logic đếm s.Vehicles.Count(v => v.Status == "Available")
+            var dtoQuery = ProjectToDto(query);
 
-            return stations;
+            //  Thực thi query và trả về kết quả
+            return await dtoQuery.ToListAsync(ct);
         }
 
     }

@@ -1,6 +1,8 @@
 ﻿using Application.DTOs;
 using Application.DTOs.Auth;
 using Application.DTOs.UserDevice;
+using Application.DTOs.UserProfile;
+using Application.DTOs.Wallet;
 using Application.Interfaces;
 using Application.Interfaces.Identity;
 using Application.Interfaces.User.Service;
@@ -149,7 +151,7 @@ namespace Application.Services.Identity
                 return new AuthResponseDTO { IsSuccess = false, Message = "Invalid credentials." };
 
             // Lưu thông tin thiết bị (nếu có)
-            if (model.DeviceId != Guid.Empty)
+            if (model.DeviceId != null)
             {
                 var userDeviceDto = new CreateUserDeviceDTO
                 {

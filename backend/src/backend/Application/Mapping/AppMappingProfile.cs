@@ -1,5 +1,13 @@
 ﻿using Application.DTOs;
+using Application.DTOs.CategoriesVehicle;
+using Application.DTOs.Kyc;
+using Application.DTOs.New;
+using Application.DTOs.Station;
+using Application.DTOs.Tag;
 using Application.DTOs.Tickets;
+using Application.DTOs.User;
+using Application.DTOs.Wallet;
+using Application.DTOs.WalletTransaction;
 using AutoMapper;
 using Domain.Entities;
 using System;
@@ -16,11 +24,11 @@ namespace Application.Mapping
         {
             // Example mapping configuration
             // CreateMap<Source, Destination>();
-            CreateMap<Domain.Entities.AspNetUser, DTOs.UserDTO>().ReverseMap();
-            CreateMap<Domain.Entities.Station, DTOs.StationDTO>().ReverseMap();
-            CreateMap<Domain.Entities.CategoriesVehicle, DTOs.CategoriesVehicleDTO>().ReverseMap();
-            CreateMap<Domain.Entities.Vehicle, DTOs.VehicleDTO>().ReverseMap();
-            CreateMap<Domain.Entities.Tag, DTOs.TagDTO>().ReverseMap();
+            CreateMap<Domain.Entities.AspNetUser, UserDTO>().ReverseMap();
+            CreateMap<Domain.Entities.Station, StationDTO>().ReverseMap();
+            CreateMap<Domain.Entities.CategoriesVehicle, CategoriesVehicleDTO>().ReverseMap();
+            CreateMap<Domain.Entities.Vehicle, DTOs.Vehicle.VehicleDTO>().ReverseMap();
+            CreateMap<Domain.Entities.Tag, TagDTO>().ReverseMap();
             CreateMap<Wallet, WalletDTO>().ReverseMap();
             CreateMap<WalletTransaction, WalletTransactionDTO>().ReverseMap();
             CreateMap<CreateTicketPlanDTO, TicketPlan>();
@@ -38,8 +46,9 @@ namespace Application.Mapping
             CreateMap<UserTicket, ManageUserTicketDTO>()
                 .ForMember(dest => dest.UserEmail, opt => opt.MapFrom(src => src.User.Email)) 
                 .ForMember(dest => dest.PlanName, opt => opt.MapFrom(src => $"{src.PlanPrice.Plan.Name} - {src.PlanPrice.VehicleType}"));
-            CreateMap<Domain.Entities.UserProfile, DTOs.UserProfileDTO>().ReverseMap();
+            CreateMap<Domain.Entities.UserProfile, DTOs.UserProfile.UserProfileDTO>().ReverseMap();
             CreateMap<Domain.Entities.Province, DTOs.Location.LocationDTO>().ReverseMap();
+            CreateMap<Domain.Entities.BookingTicket, DTOs.BookingTicket.CreateBookingTicketDTO>().ReverseMap();
             CreateMap<Domain.Entities.Ward, DTOs.Location.LocationDTO>().ReverseMap();
             CreateMap<Domain.Entities.Rental, DTOs.RentalDTO>().ReverseMap();
             CreateMap<Domain.Entities.UserDevice, DTOs.UserDevice.UserDeviceDTO>().ReverseMap();
@@ -49,8 +58,7 @@ namespace Application.Mapping
             CreateMap<Domain.Entities.Contact, DTOs.Contact.CreateContactDTO>().ReverseMap();
             CreateMap<Domain.Entities.Contact, DTOs.Contact.ReplyContactDTO>().ReverseMap();
             CreateMap<Domain.Entities.Contact, DTOs.Contact.ManageContactDTO>().ReverseMap();
-
-
+            CreateMap<Domain.Entities.KycForm, DTOs.Kyc.CreateKycRequestDTO>().ReverseMap();
 
             ConfigureNewsMapping();
 
@@ -68,7 +76,7 @@ namespace Application.Mapping
             // === DÒNG QUAN TRỌNG NHẤT ĐỂ SỬA LỖI ===
             // Chiều từ DTO -> Entity (Khi tạo mới/cập nhật)
             // BẮT BUỘC Bỏ qua (Ignore) việc map thuộc tính Tags.
-            CreateMap<DTOs.NewsDTO, Domain.Entities.News>()
+            CreateMap<NewsDTO, Domain.Entities.News>()
                 .ForMember(dest => dest.TagNews, opt => opt.Ignore());
         }
     }
