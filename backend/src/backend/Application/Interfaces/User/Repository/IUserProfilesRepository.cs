@@ -1,4 +1,5 @@
-﻿using Application.Interfaces.Base;
+﻿using Application.DTOs.UserProfile;
+using Application.Interfaces.Base;
 using Domain.Entities;
 using System;
 using System.Collections.Generic;
@@ -10,5 +11,8 @@ namespace Application.Interfaces.User.Repository
 {
     public interface IUserProfilesRepository : IRepository<UserProfile, long>
     {
+        Task<string> GetIdentityNumberProfile(long userId);
+
+        Task<UserProfileDTO> GetUserProfileWithVerify(long userId);
     }
 }

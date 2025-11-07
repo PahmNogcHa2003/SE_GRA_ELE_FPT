@@ -7,12 +7,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Application.DTOs
+namespace Application.DTOs.UserProfile
 {
     public class UserProfileDTO
     {
         [Key]
         public long UserId { get; set; }
+        public string? IsVerify { get; set; }
 
         [StringLength(150)]
         public string? FullName { get; set; }
