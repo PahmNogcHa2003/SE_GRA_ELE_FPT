@@ -11,6 +11,7 @@ namespace Application.Interfaces.User.Service
 {
     public interface IRentalsService
     {
+        Task<VehicleDetailDTO> GetVehicleByCode(RequestVehicleDTO requestVehicleDTO);
         Task<bool> CreateRentalAsync(CreateRentalDTO createRentalDTO);
         Task<bool> EndRentalAsync(EndRentalRequestDTO endRentalDto);
     }

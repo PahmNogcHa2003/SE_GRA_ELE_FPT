@@ -60,5 +60,34 @@ namespace APIUserLayer.Controllers.User
 
             return BadRequest(ApiResponse<object>.ErrorResponse("Failed to end rental"));
         }
+
+        /// <summary>
+        /// Lấy thông tin xe bằng mã QR code (BikeCode) và kiểm tra vị trí người dùng.
+        /// </summary>
+        /// <param name="requestVehicleDTO">Chứa BikeCode, UserLatitude, và UserLongitude.</param>
+        /// <returns>VehicleDetailDTO nếu vị trí hợp lệ.</returns>
+        [HttpPost("scan-vehicle")]
+        public async Task<IActionResult> GetVehicleInfoByScan([FromBody] RequestVehicleDTO requestVehicleDTO)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ApiResponse<object>.ErrorResponse(
+                    "Invalid id request",
+                    new[] { "Invalid model data" }));
+
+            var vehicleDetail = await _rentalsService.GetVehicleByCode(requestVehicleDTO);
+
+            // Kiểm tra kết quả trả về từ service
+            if (vehicleDetail != null)
+            {
+                // Kiểm tra thành công (Vị trí OK và thông tin xe được tìm thấy)
+                return Ok(ApiResponse<VehicleDetailDTO>.SuccessResponse(
+                    vehicleDetail,
+                    "Vehicle information retrieved and location verified successfully."));
+            }
+
+            // Mặc định, nếu service không ném exception mà trả về null (tùy vào cách bạn thiết kế service)
+            // thì coi như yêu cầu không hợp lệ hoặc không tìm thấy.
+            return NotFound(ApiResponse<object>.ErrorResponse("Không tìm thấy xe hoặc vị trí không hợp lệ."));
+        }
     }
 }

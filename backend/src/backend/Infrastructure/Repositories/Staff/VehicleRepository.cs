@@ -30,7 +30,7 @@ namespace Infrastructure.Repositories.Staff
         public async Task<Vehicle?> GetVehicleWithCategoryAsync(long vehicleId)
         {
             return await _dbContext.Vehicles
-                  .Include(v => v.Category)
+                  .Include(v => v.Category).Include(s => s.Station)
                   .FirstOrDefaultAsync(v => v.Id == vehicleId);
         }
     }
