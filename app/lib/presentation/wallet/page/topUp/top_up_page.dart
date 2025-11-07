@@ -1,5 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:hola_bike_app/application/usecases/usecase_post-payment.dart';
+import 'package:hola_bike_app/domain/models/info_payment.dart';
+import 'package:hola_bike_app/presentation/wallet/page/topUp/payment_web_view.dart';
 import 'package:hola_bike_app/theme/app_colors.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 
 class TopUpPage extends StatefulWidget {
   const TopUpPage({super.key});
@@ -11,6 +17,51 @@ class TopUpPage extends StatefulWidget {
 class _TopUpPageState extends State<TopUpPage> {
   final List<int> amounts = [50000, 100000, 200000, 300000];
   int? selectedAmount;
+  final _storage = const FlutterSecureStorage();
+  final _paymentUseCase = PostPaymentUseCase();
+
+  Future<void> _handleTopUp() async {
+    if (selectedAmount == null) return;
+
+    try {
+      EasyLoading.show();
+
+      final token = await _storage.read(key: 'access_token');
+      if (token == null) {
+        EasyLoading.dismiss();
+        EasyLoading.showError('Vui lòng đăng nhập lại');
+        return;
+      }
+
+      // 🔹 Gọi API tạo session thanh toán
+      final PaymentInfo payment = await _paymentUseCase.execute(
+        amount: selectedAmount!.toDouble(),
+        token: token,
+      );
+
+      EasyLoading.dismiss();
+
+      if (payment.url.isNotEmpty) {
+        // 🔹 Mở trang thanh toán VNPay
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => PaymentWebViewPage(url: payment.url),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Không thể tạo giao dịch")),
+        );
+      }
+    } catch (e) {
+      EasyLoading.dismiss();
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Lỗi khi tạo giao dịch: $e")));
+      print(e);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -59,7 +110,7 @@ class _TopUpPageState extends State<TopUpPage> {
 
               const SizedBox(height: 24),
 
-              // ✅ Chọn số tiền nằm ngang
+              // ✅ Chọn số tiền
               const Text(
                 "Số tiền muốn nạp (VND)",
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
@@ -122,11 +173,7 @@ class _TopUpPageState extends State<TopUpPage> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  onPressed: selectedAmount != null
-                      ? () {
-                          // TODO: xử lý xác nhận nạp
-                        }
-                      : null,
+                  onPressed: selectedAmount != null ? _handleTopUp : null,
                   child: const Text("Xác nhận nạp điểm"),
                 ),
               ),
