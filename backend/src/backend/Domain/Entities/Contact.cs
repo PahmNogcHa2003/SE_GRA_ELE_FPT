@@ -25,9 +25,7 @@ public class Contact : BaseEntity<long>
     [Required]
     [StringLength(20)]
     [Unicode(false)]
-    public string Status { get; set; } = "Open"; // e.g. Open, Replied, Closed
-
-    // Nếu bạn dùng AspNetUser PK là long
+    public string Status { get; set; } 
     public long? ReplyById { get; set; }
 
     [StringLength(4000)]
