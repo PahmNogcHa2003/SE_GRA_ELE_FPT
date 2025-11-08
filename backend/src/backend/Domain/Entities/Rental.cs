@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace Domain.Entities;
@@ -46,6 +47,17 @@ public class Rental : BaseEntity<long>
     [InverseProperty(nameof(BookingTicket.Rental))]
     public ICollection<BookingTicket> BookingTickets { get; set; } = new List<BookingTicket>();
 
+    public void EndRental(DateTimeOffset endTime, long endStationId)
+    {
+        if (endTime < StartTime)
+            throw new InvalidOperationException("End time cannot be before start time.");
 
+        if (Status == RentalStatus.End)
+            throw new InvalidOperationException("Rental already end.");
+
+        EndTime = endTime;
+        EndStationId = endStationId;
+        Status = RentalStatus.End;
+    }
 }
 
