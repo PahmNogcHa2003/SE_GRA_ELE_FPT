@@ -12,7 +12,7 @@ namespace Domain.UnitTests.Base
     {
         public static void ShouldBeCompleted(this Rental rental, DateTimeOffset expectedEndTime, long expectedEndStation)
         {
-            rental.Status.Should().Be("Completed");
+            rental.Status.Should().Be("End");
             rental.EndTime.Should().Be(expectedEndTime);
             rental.EndStationId.Should().Be(expectedEndStation);
         }

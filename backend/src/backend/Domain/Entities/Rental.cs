@@ -31,7 +31,7 @@ public class Rental : BaseEntity<long>
     [Required]
     [StringLength(20)]
     [Unicode(false)]
-    public string Status { get; set; } = "Ongoing";
+    public string Status { get; set; }
     [Required]
     [Precision(0)]
     public DateTimeOffset CreatedAt { get; set; }
