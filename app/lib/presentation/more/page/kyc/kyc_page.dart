@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:hola_bike_app/application/usecases/usecase_kyc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:hola_bike_app/presentation/more/page/kyc/widgets/kyc_ocr.dart';
 import 'package:hola_bike_app/presentation/more/page/kyc/widgets/kyc_widgets.dart';
@@ -12,7 +15,7 @@ class KycPage extends StatefulWidget {
 
 class _KycPageState extends State<KycPage> {
   final _formKey = GlobalKey<FormState>();
-
+  final secureStorage = const FlutterSecureStorage();
   final fullNameController = TextEditingController();
   final idNumberController = TextEditingController();
   final dobController = TextEditingController();
@@ -25,6 +28,8 @@ class _KycPageState extends State<KycPage> {
   XFile? frontImage;
   XFile? backImage;
   final ImagePicker picker = ImagePicker();
+
+  final KycUsecase _kycUsecase = KycUsecase();
 
   Future<void> _processOcr() async {
     if (frontImage != null && backImage != null) {
@@ -55,7 +60,56 @@ class _KycPageState extends State<KycPage> {
     }
   }
 
-  @override
+  /// 🧩 Gửi dữ liệu KYC thực tế lên server
+  Future<void> _handleSubmit() async {
+    final token = await secureStorage.read(key: 'access_token');
+    if (token == null) {
+      throw Exception('Không tìm thấy access token');
+    }
+    if (!_formKey.currentState!.validate()) return;
+
+    if (frontImage == null || backImage == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Vui lòng chụp đủ 2 mặt CCCD')),
+      );
+      return;
+    }
+
+    try {
+      // Ghép chuỗi dữ liệu JsonData bằng dấu "|"
+      final jsonDataString = [
+        idNumberController.text,
+        fullNameController.text,
+        dobController.text,
+        gender,
+        nationality,
+        origin,
+        addressController.text,
+      ].join('|');
+      print(jsonDataString);
+      EasyLoading.show();
+
+      final response = await _kycUsecase.execute(
+        token: token,
+        jsonDataString: jsonDataString,
+        frontImage: frontImage!,
+        backImage: backImage!,
+      );
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('✅ Gửi KYC thành công')));
+
+      Navigator.pop(context);
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('❌ Lỗi gửi KYC: $e')));
+    } finally {
+      EasyLoading.dismiss();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final hasBothImages = frontImage != null && backImage != null;
@@ -90,7 +144,6 @@ class _KycPageState extends State<KycPage> {
               ),
               const SizedBox(height: 24),
 
-              // Thông tin chỉ hiển thị khi có đủ 2 ảnh
               if (hasBothImages) ...[
                 buildTextField(
                   'Họ và tên',
@@ -118,23 +171,13 @@ class _KycPageState extends State<KycPage> {
                 const SizedBox(height: 24),
               ],
 
-              // Button luôn hiển thị nhưng disable nếu chưa đủ ảnh
               ElevatedButton(
                 onPressed:
-                    (frontImage != null &&
-                        backImage != null &&
-                        fullNameController.text.isNotEmpty)
-                    ? () {
-                        if (_formKey.currentState!.validate()) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Đã gửi thông tin KYC'),
-                            ),
-                          );
-                          Navigator.pop(context);
-                        }
-                      }
-                    : null, // disable khi chưa có dữ liệu OCR
+                    (hasBothImages &&
+                        fullNameController.text.isNotEmpty &&
+                        idNumberController.text.isNotEmpty)
+                    ? _handleSubmit
+                    : null,
                 child: const Text('Gửi thông tin KYC'),
               ),
             ],

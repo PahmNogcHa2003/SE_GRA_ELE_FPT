@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:hola_bike_app/application/usecases/usecase_post-payment.dart';
-import 'package:hola_bike_app/domain/models/info_payment.dart';
 import 'package:hola_bike_app/presentation/wallet/walet_page.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
