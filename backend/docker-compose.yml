@@ -4,28 +4,8 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: webapi
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__DefaultConnection=Server=sqlserver,1433;Database=HolaBike;User Id=sa;Password=B!ch2003;TrustServerCertificate=True;
-      - Jwt__Key=ThisIsMySuperLongAndVerySecureSecretKeyForHolaBikeApp2025!
-      - Jwt__Issuer=HolaBikeAPI
-      - Jwt__Audience=HolaBikeClient
-      - VnPaySettings__Url=https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
-      - VnPaySettings__ReturnUrl=http://localhost:5173/payment/payment-return
-      - VnPaySettings__TmnCode=KGL4TZZ3
-      - VnPaySettings__HashSecret=9GKL260D9F64YKSS7E9FPPVSDU1TA7FB
-      - VnPaySettings__ApiVersion=2.0.0
-      - MailSettings__Host=sandbox.smtp.mailtrap.io
-      - MailSettings__Port=2525
-      - MailSettings__UserName=43fb44a9f8bb01
-      - MailSettings__Password=2478949b75cc1f
-      - MailSettings__EmailId=from@example.com
-      - MailSettings__Name=Mailtrap Test Sender
-      - MailSettings__DefaultCredentials=false
-      - MailSettings__UseSSL=false
-      - CloudinarySettings__CloudName=dt7e4s6mr
-      - CloudinarySettings__ApiKey=737651163243514
-      - CloudinarySettings__ApiSecret=Xg2W0iytEU_2OMm_B8VSopWVyZs
+    env_file:
+      - .env
     ports:
       - "8080:8080"
     restart: always

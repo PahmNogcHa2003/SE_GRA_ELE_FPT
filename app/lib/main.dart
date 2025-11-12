@@ -4,6 +4,7 @@ import 'package:hola_bike_app/presentation/home/pages/notification/notification_
 import 'package:hola_bike_app/presentation/home/pages/station/station_page.dart';
 import 'package:hola_bike_app/presentation/auth/login/login_page.dart';
 import 'package:hola_bike_app/presentation/more/page/change_password_page.dart';
+import 'package:hola_bike_app/presentation/more/page/kyc/kyc_page.dart';
 import 'package:hola_bike_app/presentation/more/page/profile_page.dart';
 import 'package:hola_bike_app/presentation/splash/splash_page.dart';
 import 'package:hola_bike_app/presentation/trip/trip_tracking_history_page.dart';
@@ -83,7 +84,7 @@ class MyApp extends StatelessWidget {
         '/trip-tracking': (context) => const TripTrackingPage(isRenting: false),
         '/trip-tracking-history': (context) => const TripTrackingHistoryPage(),
         // // Các chức năng tài khoản
-        // '/verify': (context) => const VerifyAccountPage(),
+        '/verify': (context) => const KycPage(),
         '/change-password': (context) => const ChangePasswordPage(),
         // '/delete-account': (context) => const DeleteAccountPage(),
         // // Các trang thông tin
