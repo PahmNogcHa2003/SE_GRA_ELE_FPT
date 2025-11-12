@@ -95,12 +95,17 @@ class KycOcr {
       }
 
       // --- Place of origin ---
-      if (line.toLowerCase().contains('place of origin')) {
+      if (line.toLowerCase().contains('place of origin') ||
+          line.toLowerCase().contains('quê quán')) {
         final buffer = StringBuffer();
         int j = i + 1;
-        while (j < lines.length &&
-            !lines[j].toLowerCase().contains('place of residence') &&
-            lines[j].isNotEmpty) {
+        while (j < lines.length && lines[j].isNotEmpty) {
+          final nextLine = lines[j].toLowerCase();
+          // Nếu gặp "place of residence" hoặc "thường trú" thì dừng ngay
+          if (nextLine.contains('place of residence') ||
+              nextLine.contains('thường trú')) {
+            break;
+          }
           buffer.write(lines[j].trim() + ' ');
           j++;
         }
@@ -108,7 +113,8 @@ class KycOcr {
       }
 
       // --- Address / Place of residence ---
-      if (line.toLowerCase().contains('place of residence')) {
+      if (line.toLowerCase().contains('place of residence') ||
+          line.toLowerCase().contains('thường trú')) {
         final buffer = StringBuffer();
         int j = i + 1;
         while (j < lines.length && lines[j].isNotEmpty) {
