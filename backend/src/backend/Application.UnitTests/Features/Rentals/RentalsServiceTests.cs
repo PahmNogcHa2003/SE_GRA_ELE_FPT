@@ -205,6 +205,14 @@ namespace Application.UnitTests.Features.Rentals
             _context.Rentals.Add(ongoingRental); // Booking ticket được thêm gián tiếp
             await _context.SaveChangesAsync();
 
+            // =================================================================
+            // ⭐ FIX: THÊM DÒNG NÀY
+            // Ngừng theo dõi (detach) tất cả các entity đã seed ở trên.
+            // Điều này giải phóng DbContext để service có thể 'Update'
+            // các entity mới mà không bị xung đột tracking.
+            _context.ChangeTracker.Clear();
+            // =================================================================
+
             var endRentalDto = new EndRentalRequestDTO
             {
                 RentalId = 1,
@@ -221,17 +229,21 @@ namespace Application.UnitTests.Features.Rentals
             Assert.True(result);
 
             // Kiểm tra cuốc xe
+            // (Lưu ý: dùng FindAsync vì context đã bị clear)
             var rentalInDb = await _context.Rentals.FindAsync(1L);
+            Assert.NotNull(rentalInDb); // Thêm kiểm tra null
             Assert.Equal(RentalStatus.End, rentalInDb.Status);
             Assert.Equal(99, rentalInDb.EndStationId);
 
             // Kiểm tra xe
             var vehicleInDb = await _context.Vehicles.FindAsync(1L);
+            Assert.NotNull(vehicleInDb); // Thêm kiểm tra null
             Assert.Equal("Available", vehicleInDb.Status);
             Assert.Equal(99, vehicleInDb.StationId);
 
             // Kiểm tra vé
             var ticketInDb = await _context.UserTickets.FindAsync(10L);
+            Assert.NotNull(ticketInDb); // Thêm kiểm tra null
             Assert.Equal(4, ticketInDb.RemainingRides);
         }
     }

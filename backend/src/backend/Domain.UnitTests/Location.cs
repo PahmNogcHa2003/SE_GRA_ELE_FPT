@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Application.UnitTests.Features.Rentals
+namespace Domain.UnitTests
 {
-    public class EndRentalCommandHandlerTests
+    internal class Location
     {
     }
 }
