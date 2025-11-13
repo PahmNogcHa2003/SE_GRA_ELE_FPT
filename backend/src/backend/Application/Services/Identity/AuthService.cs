@@ -9,7 +9,7 @@ using Application.Interfaces.User.Service;
 using Domain.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using System.Linq;
+using System.Data;
 using System.Security.Claims;
 
 namespace Application.Services.Identity
@@ -45,19 +45,27 @@ namespace Application.Services.Identity
             _userWalletService = userWalletService;
         }
 
-        // --- REGISTER ---
+        // === REGISTER ===
         public async Task<AuthResponseDTO> RegisterAsync(RegisterDTO model, CancellationToken ct = default)
         {
-            // 1) Validate đơn giản (nên validate ở DTO/FluentValidation)
+            // 1) Kiểm tra đơn giản
             if (model.Password != model.ConfirmPassword)
             {
-                return new AuthResponseDTO { IsSuccess = false, Message = "Password and Confirm Password do not match." };
+                return new AuthResponseDTO
+                {
+                    IsSuccess = false,
+                    Message = "Password and Confirm Password do not match."
+                };
             }
 
             var existingUser = await _userManager.FindByEmailAsync(model.Email);
             if (existingUser != null)
             {
-                return new AuthResponseDTO { IsSuccess = false, Message = "Email already exists." };
+                return new AuthResponseDTO
+                {
+                    IsSuccess = false,
+                    Message = "Email already exists."
+                };
             }
             if (!string.IsNullOrEmpty(model.PhoneNumber))
             {
@@ -82,11 +90,10 @@ namespace Application.Services.Identity
                 CreatedDate = now
             };
 
-            // 2) Transaction (đúng cách)
             await using var tx = await _unitOfWork.BeginTransactionAsync(ct);
             try
             {
-                // 3) Tạo user
+                // 2) Tạo user
                 var createResult = await _userManager.CreateAsync(user, model.Password);
                 if (!createResult.Succeeded)
                 {
@@ -95,7 +102,7 @@ namespace Application.Services.Identity
                     return new AuthResponseDTO { IsSuccess = false, Message = msg };
                 }
 
-                // 4) Gán role (không có ct trong API Identity)
+                // 3) Gán role
                 var roleResult = await _userManager.AddToRoleAsync(user, "User");
                 if (!roleResult.Succeeded)
                 {
@@ -104,7 +111,7 @@ namespace Application.Services.Identity
                     return new AuthResponseDTO { IsSuccess = false, Message = msg };
                 }
 
-                // 5) Tạo hồ sơ người dùng (Application DbContext)
+                // 4) Tạo hồ sơ người dùng
                 var userProfileDto = new UserProfileDTO
                 {
                     UserId = user.Id,
@@ -125,6 +132,7 @@ namespace Application.Services.Identity
 
                 await _profileService.CreateAsync(userProfileDto, ct);
 
+                // 5) Tạo ví người dùng
                 var wallet = new WalletDTO
                 {
                     UserId = user.Id,
@@ -135,11 +143,16 @@ namespace Application.Services.Identity
                     UpdatedAt = now
                 };
                 await _walletService.CreateAsync(wallet, ct);
-                // 6) Lưu & commit
+
+                // 6) Lưu và commit
                 await _unitOfWork.SaveChangesAsync(ct);
                 await _unitOfWork.CommitTransactionAsync(tx, ct);
 
-                return new AuthResponseDTO { IsSuccess = true, Message = "Registration successful." };
+                return new AuthResponseDTO
+                {
+                    IsSuccess = true,
+                    Message = "Registration successful."
+                };
             }
             catch (Exception)
             {
@@ -152,7 +165,7 @@ namespace Application.Services.Identity
             }
         }
 
-        // --- LOGIN ---
+        // === LOGIN ===
         public async Task<AuthResponseDTO> LoginAsync(LoginDTO model, CancellationToken ct = default)
         {
             var user = await _userManager.FindByEmailAsync(model.Email);
@@ -164,12 +177,12 @@ namespace Application.Services.Identity
                 return new AuthResponseDTO { IsSuccess = false, Message = "Invalid credentials." };
 
             // Lưu thông tin thiết bị (nếu có)
-            if (model.DeviceId != null)
+            if (!string.IsNullOrEmpty(model.DeviceId))
             {
                 var userDeviceDto = new CreateUserDeviceDTO
                 {
                     UserId = user.Id,
-                    DeviceId = model.DeviceId, 
+                    DeviceId = model.DeviceId,
                     PushToken = model.PushToken,
                     Platform = model.Platform
                 };
@@ -177,46 +190,39 @@ namespace Application.Services.Identity
                 await _userDevicesService.HandleDeviceLoginAsync(userDeviceDto, ct);
             }
 
-
             // Tạo JWT
             var jwt = await _tokenService.GenerateJwtTokenAsync(user);
             var roles = await _userManager.GetRolesAsync(user);
-            var profile = await _profileService.GetByUserIdAsync(user.Id);
+
             return new AuthResponseDTO
             {
                 IsSuccess = true,
                 Message = "Login successful.",
                 Token = jwt,
-                Roles = [.. roles]
-
+                Roles = roles.ToList()
             };
         }
+
+        // === GET CURRENT USER INFO ===
         private long? GetUserIdAsLong(ClaimsPrincipal userPrincipal)
         {
             var idStr = _userManager.GetUserId(userPrincipal);
-            if (long.TryParse(idStr, out var id))
-                return id;
-            return null;
+            return long.TryParse(idStr, out var id) ? id : null;
         }
 
         public async Task<MeDTO?> GetMeAsync(ClaimsPrincipal userPrincipal, CancellationToken ct = default)
         {
-            // Lấy user hiện tại từ Claims
             var userId = GetUserIdAsLong(userPrincipal);
             if (userId == null) return null;
 
             var user = await _userManager.Users.FirstOrDefaultAsync(u => u.Id == userId, ct);
             if (user == null) return null;
 
-            // Lấy roles
             var roles = await _userManager.GetRolesAsync(user);
-
-            // Lấy hồ sơ (nếu có)
             var profile = await _profileService.GetByUserIdAsync(user.Id, ct);
-            // Giả định bạn đã có method này trong IUserProfilesService
-            // Nếu chưa có, bạn có thể thêm một method tương tự hoặc dùng Query service hiện có.
             var wallet = await _userWalletService.GetByUserIdAsync(user.Id, ct);
-            var me = new MeDTO
+
+            return new MeDTO
             {
                 UserId = user.Id,
                 Email = user.Email!,
@@ -225,11 +231,9 @@ namespace Application.Services.Identity
                 CreatedDate = user.CreatedDate,
                 Gender = profile?.Gender,
                 AddressDetail = profile?.AddressDetail,
-                Roles = roles?.ToArray() ?? Array.Empty<string>(),
+                Roles = roles.ToArray(),
                 WalletBalance = wallet?.Balance ?? 0m
             };
-
-            return me;
         }
     }
 }

@@ -48,7 +48,7 @@ namespace Application.Services.User
             _logger = logger;
         }
 
-        public async Task<bool> CreateRentalAsync(CreateRentalDTO createRentalDTO)
+        public async Task<long> CreateRentalAsync(CreateRentalDTO createRentalDTO)
         {
             // Lấy stationId từ vehicle
             var startStationId = await _vehicleRepo.GetStationVehicle(createRentalDTO.VehicleId);
@@ -115,7 +115,7 @@ namespace Application.Services.User
             await _uow.SaveChangesAsync();
 
             _logger.LogInformation("Rental {RentalId} created successfully for user {UserId}.", rental.Id, userId);
-            return true;
+            return rental.Id;
         }
 
         public async Task<bool> EndRentalAsync(EndRentalRequestDTO endRentalDto)
