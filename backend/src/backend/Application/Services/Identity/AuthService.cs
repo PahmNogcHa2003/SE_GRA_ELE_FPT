@@ -59,7 +59,20 @@ namespace Application.Services.Identity
             {
                 return new AuthResponseDTO { IsSuccess = false, Message = "Email already exists." };
             }
-
+            if (!string.IsNullOrEmpty(model.PhoneNumber))
+            {
+                var existingPhoneUser = await _userManager.Users
+                    .FirstOrDefaultAsync(u => u.PhoneNumber == model.PhoneNumber, ct);
+                if (existingPhoneUser != null)
+                {
+                    return new AuthResponseDTO { IsSuccess = false, Message = "Phone number already exists." };
+                }
+            }
+            var identityExist = await _profileService.IsIdentityNumberDuplicateAsync(model.IdentityNumber, ct);
+            if (identityExist)
+            {
+                return new AuthResponseDTO { IsSuccess = false, Message = "Identity number already exists." };
+            }
             var now = DateTimeOffset.UtcNow;
             var user = new AspNetUser
             {
@@ -210,7 +223,6 @@ namespace Application.Services.Identity
                 FullName = profile?.FullName,
                 AvatarUrl = profile?.AvatarUrl,
                 CreatedDate = user.CreatedDate,
-                Dob = profile?.Dob,
                 Gender = profile?.Gender,
                 AddressDetail = profile?.AddressDetail,
                 Roles = roles?.ToArray() ?? Array.Empty<string>(),

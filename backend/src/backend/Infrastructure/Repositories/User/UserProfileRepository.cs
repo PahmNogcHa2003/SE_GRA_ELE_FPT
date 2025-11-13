@@ -56,5 +56,10 @@ namespace Infrastructure.Repositories.User
                 IsVerify = latestKyc?.Status  
             };
         }
+        public async Task<bool> IsIdentityNumberDuplicateAsync(string identityNumber, CancellationToken ct = default)
+        {
+            return await _dbContext.UserProfiles
+                .AnyAsync(p => p.NumberCard == identityNumber, ct);
+        }
     }
 }

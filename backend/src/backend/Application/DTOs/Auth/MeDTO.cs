@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using Application.DTOs.JsonConvert;
 
 namespace Application.DTOs.Auth
 {
@@ -13,7 +15,6 @@ namespace Application.DTOs.Auth
         public string? FullName { get; set; }
         public string? AvatarUrl { get; set; }
         public DateTimeOffset CreatedDate { get; set; }
-        public DateTimeOffset? Dob { get; set; }
         public string? Gender { get; set; }
         public string? AddressDetail { get; set; }
         public string[] Roles { get; set; } = Array.Empty<string>();

@@ -10,14 +10,16 @@ namespace Application.DTOs.Auth
     public class RegisterDTO
     {
         [Required]
-        [StringLength(15, MinimumLength = 9)]
+        [StringLength(11, MinimumLength = 9)]
+        [RegularExpression(@"^(0|\+84|84)(3|5|7|8|9)[0-9]{8}$",
+        ErrorMessage = "Số điện thoại không hợp lệ (phải là số điện thoại Việt Nam).")]
         public string PhoneNumber { get; set; } // ĐÃ SỬA: string
 
         [Required]
         public string FullName { get; set; }
 
         [Required]
-        [StringLength(15, MinimumLength = 9)]
+        [StringLength(12)]
         public string IdentityNumber { get; set; } // ĐÃ SỬA: string
 
         [StringLength(150)]

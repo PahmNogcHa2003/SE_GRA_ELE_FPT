@@ -14,5 +14,6 @@ namespace Application.Interfaces.User.Repository
         Task<string> GetIdentityNumberProfile(long userId);
 
         Task<UserProfileDTO> GetUserProfileWithVerify(long userId);
+        Task<bool> IsIdentityNumberDuplicateAsync(string identityNumber, CancellationToken ct = default);
     }
 }
