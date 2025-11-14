@@ -12,6 +12,7 @@ using Application.Mapping;
 using Application.Services.Base;
 using Application.Services.Email;
 using Application.Services.Identity;
+using Application.Services.Photo;
 using Application.Services.Staff;
 using Application.Services.User;
 using Domain.Entities;
@@ -73,7 +74,7 @@ namespace Infrastructure.Dependency_Injection
             services.AddScoped<IKycRepository, KycRepository>();
             services.AddScoped<IUserProfilesRepository, UserProfileRepository>();
             services.AddScoped<IIdentificationPhotoRepository, IdentificationPhotoRepository>();
-
+            services.AddScoped<IPhotoRepository, PhotoRepository>();
 
             //Test
             services.AddScoped<IStationsRepository, StationsRepository>();
@@ -121,7 +122,7 @@ namespace Infrastructure.Dependency_Injection
             services.AddScoped<IManageContactService, ManageContactService>();
             services.AddScoped<IReplyContactService, ReplyContactService>();
             services.AddScoped<ITransactionService, TransactionService>();
-
+            services.AddScoped<IPhotoService, PhotoService>();
 
             // --- AutoMapper ---
             services.AddAutoMapper(typeof(AppMappingProfile).Assembly);

@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace Infrastructure.Repositories.User
 {
@@ -17,49 +18,68 @@ namespace Infrastructure.Repositories.User
         {
         }
 
-        public async Task<string> GetIdentityNumberProfile(long userId)
-        {
-            var numberCard = await _dbContext.UserProfiles
-                .Where(up => up.UserId == userId && up.NumberCard != null)
-                .Select(up => up.NumberCard)
-                .FirstOrDefaultAsync(); 
-            return numberCard;
-        }
-
-        public async Task<UserProfileDTO?> GetUserProfileWithVerify(long userId)
-        {
-            var userProfile = await Query()
-                .Include(up => up.User)                       
-                    .ThenInclude(u => u.KycForms)            
-                .Where(up => up.UserId == userId)
-                .OrderByDescending(up => up.UpdatedAt > up.CreatedAt ? up.UpdatedAt : up.CreatedAt)
-                .FirstOrDefaultAsync();
-
-            if (userProfile == null)
-                return null;
-
-            // Lấy KYC mới nhất
-            var latestKyc = userProfile.User.KycForms
-                .OrderByDescending(k => k.SubmittedAt)
-                .FirstOrDefault();
-
-            // Mapping sang DTO
-            return new UserProfileDTO
-            {
-                UserId = userProfile.UserId,
-                FullName = userProfile.FullName,
-                NumberCard = userProfile.NumberCard,
-                Dob = userProfile.Dob,
-                Gender = userProfile.Gender,
-                AvatarUrl = userProfile.AvatarUrl,
-                AddressDetail = userProfile.AddressDetail,
-                IsVerify = latestKyc?.Status  
-            };
-        }
-        public async Task<bool> IsIdentityNumberDuplicateAsync(string identityNumber, CancellationToken ct = default)
+        public async Task<string?> GetIdentityNumberProfile(long userId, CancellationToken ct = default)
         {
             return await _dbContext.UserProfiles
-                .AnyAsync(p => p.NumberCard == identityNumber, ct);
+                .AsNoTracking()
+                .Where(up => up.UserId == userId && up.NumberCard != null)
+                .Select(up => up.NumberCard)
+                .FirstOrDefaultAsync();
         }
+        public async Task<bool> IsIdentityNumberDuplicateAsync(
+            string identityNumber,
+            CancellationToken ct = default)
+        {
+            var query = _dbContext.UserProfiles
+                    .AsNoTracking()
+                    .Where(p => p.NumberCard == identityNumber);
+            return await query.AnyAsync();
+        }
+
+        public async Task<UserProfileDTO?> GetUserProfileWithVerify(long userId, CancellationToken ct = default)
+        {
+            var q =
+                 from up in _dbContext.Set<UserProfile>().AsNoTracking()
+                 join u in _dbContext.Set<AspNetUser>().AsNoTracking()
+                     on up.UserId equals u.Id
+                 join k in _dbContext.Set<KycForm>().AsNoTracking()
+                     on up.UserId equals k.UserId into kycGroup
+                 from kyc in kycGroup
+                     .OrderByDescending(x => x.SubmittedAt)
+                     .Take(1)
+                     .DefaultIfEmpty()
+                 where up.UserId == userId
+                 select new UserProfileDTO
+                 {
+                     UserId = userId,
+                     FullName = up.FullName,
+                     Email = u.Email,
+                     PhoneNumber = u.PhoneNumber,
+                     Dob = up.Dob,
+                     Gender = up.Gender,
+                     AvatarUrl = up.AvatarUrl,
+                     EmergencyName = up.EmergencyName,
+                     EmergencyPhone = up.EmergencyPhone,
+                     ProvinceCode = up.ProvinceCode,
+                     ProvinceName = up.ProvinceName,
+                     WardCode = up.WardCode,
+                     WardName = up.WardName,
+                     AddressDetail = up.AddressDetail,
+
+                     NumberCard = up.NumberCard,
+                     PlaceOfOrigin = up.PlaceOfOrigin,
+                     PlaceOfResidence = up.PlaceOfResidence,
+                     IssuedDate = up.IssuedDate,
+                     ExpiryDate = up.ExpiryDate,
+                     IssuedBy = up.IssuedBy,
+
+                     CreatedAt = up.CreatedAt,
+                     UpdatedAt = up.UpdatedAt,
+
+                     IsVerify = kyc != null ? kyc.Status : "None"
+                 };
+            return await q.FirstOrDefaultAsync(ct);
+        }
+  
     }
 }

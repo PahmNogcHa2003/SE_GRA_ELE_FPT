@@ -16,6 +16,8 @@ namespace Application.DTOs.UserProfile
         [Key]
         public long UserId { get; set; }
         public string? IsVerify { get; set; }
+        public string? Email { get; set; }
+        public string? PhoneNumber { get; set; }
 
         [StringLength(150)]
         public string? FullName { get; set; }
@@ -30,6 +32,7 @@ namespace Application.DTOs.UserProfile
 
         [StringLength(255)]
         public string? AvatarUrl { get; set; }
+        public string? AvatarPublicId { get; set; }
 
         [StringLength(150)]
         public string? EmergencyName { get; set; }
