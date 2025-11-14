@@ -5,7 +5,6 @@ import type { AuthResponseData, User } from '../../../types/auth';
 import { getMeApi } from '../../../services/auth.service'; 
 import type { ApiResponse } from '../../../types/api';
 
-// ... (Interface AuthContextType giữ nguyên) ...
 interface AuthContextType {
   isLoggedIn: boolean;
   token: string | null;
@@ -17,10 +16,10 @@ interface AuthContextType {
   openLoginModal: () => void;
   closeLoginModal: () => void;
   hasRole: (...roles: string[]) => boolean;
+  updateUser: (updater: (prev: User | null) => User | null) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [token, setToken] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
@@ -98,14 +97,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     localStorage.setItem('authToken', data.token); // Interceptor sẽ đọc từ đây
     
     setIsLoadingUser(true); 
-    await fetchUserByToken(); // <-- Không cần truyền token
+    await fetchUserByToken(); 
     
     closeLoginModal();
   };
 
   const openLoginModal = () => setIsLoginModalOpen(true);
   const closeLoginModal = () => setIsLoginModalOpen(false);
-
+const updateUser = (updater: (prev: User | null) => User | null) => {
+  setUser(prev => updater(prev));
+};
   const value = {
     isLoggedIn: !!token && !!user, 
     token,
@@ -119,7 +120,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     hasRole: (...allowed: string[]) => {
     if (!user?.roles?.length) return false;
     return user.roles.some((r) => allowed.includes(r));
-  },
+    },
+    updateUser,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

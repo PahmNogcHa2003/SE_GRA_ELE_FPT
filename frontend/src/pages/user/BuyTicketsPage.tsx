@@ -23,20 +23,60 @@ import {
 import { currencyVN } from "../../utils/datetime";
 
 // ======= local icon components (tránh thêm lib) =======
-const IconBase: React.FC<{ className?: string; label?: string; children?: React.ReactNode }> = ({ className, label, children }) => (
+const IconBase: React.FC<{ className?: string; label?: string; children?: React.ReactNode }> = ({
+  className,
+  label,
+  children,
+}) => (
   <span role="img" aria-label={label} className={className} style={{ display: "inline-flex", alignItems: "center" }}>
     {children}
   </span>
 );
-const Bike: React.FC<{ className?: string }> = ({ className }) => <IconBase label="bike" className={className}>🚲</IconBase>;
-const BikeElectric: React.FC<{ className?: string }> = ({ className }) => <IconBase label="ebike" className={className}>🚲⚡</IconBase>;
-const Clock3: React.FC<{ className?: string }> = ({ className }) => <IconBase label="clock" className={className}>🕒</IconBase>;
-const Info: React.FC<{ className?: string }> = ({ className }) => <IconBase label="info" className={className}>ℹ️</IconBase>;
-const ShieldCheck: React.FC<{ className?: string }> = ({ className }) => <IconBase label="shield" className={className}>🛡️</IconBase>;
-const Ticket: React.FC<{ className?: string }> = ({ className }) => <IconBase label="ticket" className={className}>🎫</IconBase>;
-const Timer: React.FC<{ className?: string }> = ({ className }) => <IconBase label="timer" className={className}>⏱️</IconBase>;
-const WalletIcon: React.FC<{ className?: string }> = ({ className }) => <IconBase label="wallet" className={className}>👛</IconBase>;
-const RefreshCcw: React.FC<{ className?: string }> = ({ className }) => <IconBase label="refresh" className={className}>🔄</IconBase>;
+const Bike: React.FC<{ className?: string }> = ({ className }) => (
+  <IconBase label="bike" className={className}>
+    🚲
+  </IconBase>
+);
+const BikeElectric: React.FC<{ className?: string }> = ({ className }) => (
+  <IconBase label="ebike" className={className}>
+    🚲⚡
+  </IconBase>
+);
+const Clock3: React.FC<{ className?: string }> = ({ className }) => (
+  <IconBase label="clock" className={className}>
+    🕒
+  </IconBase>
+);
+const Info: React.FC<{ className?: string }> = ({ className }) => (
+  <IconBase label="info" className={className}>
+    ℹ️
+  </IconBase>
+);
+const ShieldCheck: React.FC<{ className?: string }> = ({ className }) => (
+  <IconBase label="shield" className={className}>
+    🛡️
+  </IconBase>
+);
+const Ticket: React.FC<{ className?: string }> = ({ className }) => (
+  <IconBase label="ticket" className={className}>
+    🎫
+  </IconBase>
+);
+const Timer: React.FC<{ className?: string }> = ({ className }) => (
+  <IconBase label="timer" className={className}>
+    ⏱️
+  </IconBase>
+);
+const WalletIcon: React.FC<{ className?: string }> = ({ className }) => (
+  <IconBase label="wallet" className={className}>
+    👛
+  </IconBase>
+);
+const RefreshCcw: React.FC<{ className?: string }> = ({ className }) => (
+  <IconBase label="refresh" className={className}>
+    🔄
+  </IconBase>
+);
 
 const toVehicleLabel = (v: string | undefined) => (v?.toLowerCase() === "ebike" ? "Xe điện" : "Xe đạp");
 
@@ -53,8 +93,10 @@ const prettyErr = (e: any) => {
   }
   return "Đã có lỗi xảy ra";
 };
+
 const mapMode = (m: number | string | undefined): "IMMEDIATE" | "ON_FIRST_USE" =>
   m === 1 || m === "ON_FIRST_USE" ? "ON_FIRST_USE" : "IMMEDIATE";
+
 const isSubscription = (price: any) =>
   typeof price?.validityDays === "number" && price.validityDays > 0;
 
@@ -79,7 +121,10 @@ const PlanRibbon: React.FC<{ code?: string | null; type?: string | null }> = ({ 
 };
 
 const ModeBadge: React.FC<{ mode: "IMMEDIATE" | "ON_FIRST_USE" }> = ({ mode }) => (
-  <Badge color={mode === "ON_FIRST_USE" ? "purple" : ecoGreen.main} text={mode === "ON_FIRST_USE" ? "Kích hoạt khi dùng" : "Kích hoạt ngay"} />
+  <Badge
+    color={mode === "ON_FIRST_USE" ? "purple" : ecoGreen.main}
+    text={mode === "ON_FIRST_USE" ? "Kích hoạt khi dùng" : "Kích hoạt ngay"}
+  />
 );
 
 const VIcon: React.FC<{ type?: string | null; className?: string }> = ({ type, className }) =>
@@ -89,16 +134,23 @@ const VIcon: React.FC<{ type?: string | null; className?: string }> = ({ type, c
 const BuyTicketsPage: React.FC = () => {
   const [vehicleTab, setVehicleTab] = useState<"bike" | "ebike">("bike");
 
-
   const { isLoggedIn, isLoadingUser } = useAuth();
   const { notification, modal } = App.useApp();
   const qc = useQueryClient();
 
   const vehicleParam = vehicleTab === "bike" ? "bike" : "ebike";
+
+  // ⚠️ SỬA 1: đảm bảo marketQ.data là MẢNG
   const marketQ = useQuery({
     queryKey: ["ticketMarket", vehicleParam],
     queryFn: () => getTicketMarket(vehicleParam),
     enabled: isLoggedIn && !isLoadingUser,
+    select: (res: any) => {
+      // nếu là AxiosResponse<ApiResponse<Plan[]>> thì:
+      // res.data = ApiResponse, res.data.data = Plan[]
+      const api = res?.data ?? res;
+      return api?.data ?? api ?? [];
+    },
   });
 
   const walletQ = useQuery({
@@ -117,7 +169,6 @@ const BuyTicketsPage: React.FC = () => {
         message: "Mua vé thành công",
         description: `Đã thêm vé: ${data?.planName ?? "Gói vé"}`,
       });
-      // làm mới các query liên quan
       qc.invalidateQueries({ queryKey: ["wallet"] });
       qc.invalidateQueries({ queryKey: ["walletTransactions"] });
       qc.invalidateQueries({ queryKey: ["myActiveTickets"] });
@@ -126,14 +177,15 @@ const BuyTicketsPage: React.FC = () => {
       notification.error({ message: "Mua vé thất bại", description: prettyErr(e) }),
   });
 
+  // ⚠️ SỬA 2: phòng thủ nếu data không phải mảng
   const plansFiltered = useMemo(() => {
-    const list = marketQ.data ?? [];
+    const list = Array.isArray(marketQ.data) ? marketQ.data : [];
+
     return list
       .map((p: any) => ({
         ...p,
-        prices: (p.prices ?? []).filter(
-          (pr: any) =>
-            (vehicleParam ? pr?.vehicleType?.toLowerCase() === vehicleParam.toLowerCase() : true)
+        prices: (Array.isArray(p.prices) ? p.prices : []).filter((pr: any) =>
+          vehicleParam ? pr?.vehicleType?.toLowerCase() === vehicleParam.toLowerCase() : true
         ),
       }))
       .filter((p: any) => p.prices.length > 0);
@@ -169,8 +221,12 @@ const BuyTicketsPage: React.FC = () => {
       <div className="container mx-auto px-4 pt-8 pb-4">
         <div className="rounded-3xl bg-white shadow-sm border border-emerald-100 p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <div className="text-2xl md:text-3xl font-bold tracking-tight text-emerald-800">Mua gói vé EcoJourney</div>
-            <div className="text-gray-600 mt-1">Chọn gói phù hợp – thanh toán bằng ví – dùng ngay.</div>
+            <div className="text-2xl md:text-3xl font-bold tracking-tight text-emerald-800">
+              Mua gói vé EcoJourney
+            </div>
+            <div className="text-gray-600 mt-1">
+              Chọn gói phù hợp – thanh toán bằng ví – dùng ngay.
+            </div>
             <div className="mt-3 flex items-center gap-3 text-gray-700 text-sm">
               <ShieldCheck className="w-4 h-4" /> An toàn • Nhanh chóng • Tiện lợi
             </div>
@@ -224,10 +280,16 @@ const BuyTicketsPage: React.FC = () => {
                   suffix=" đ"
                   valueStyle={{ fontSize: 18, color: ecoGreen.main }}
                 />
-                <Tag color={walletQ.data.status === "Active" ? "green" : "red"}>{walletQ.data.status}</Tag>
+                <Tag color={walletQ.data.status === "Active" ? "green" : "red"}>
+                  {walletQ.data.status}
+                </Tag>
               </Space>
             ) : (
-              <Alert type="warning" showIcon message="Bạn chưa có ví hoặc không lấy được thông tin ví." />
+              <Alert
+                type="warning"
+                showIcon
+                message="Bạn chưa có ví hoặc không lấy được thông tin ví."
+              />
             )}
           </div>
         </Card>
@@ -257,93 +319,103 @@ const BuyTicketsPage: React.FC = () => {
                   )}
 
                   {plansFiltered.map((plan: any) =>
-  plan.prices.map((price: any) => (
-    <Card
-      key={`${plan.id}-${price.id}`}
-      className="rounded-2xl shadow-md hover:shadow-lg transition-all border border-emerald-100 hover:border-emerald-400"
-      // bỏ title/extra để tránh bị cắt
-    >
-      {/* Header tự custom trong body, cho wrap */}
-      {/* Header chia 2 dòng: dòng 1 là tên + Tag, dòng 2 là badge kích hoạt */}
-<div className="mb-3 flex flex-col gap-1">
-  {/* Dòng 1 */}
-  <div className="flex items-center justify-between gap-2 flex-wrap">
-    <Space align="center" size={8} className="min-w-0 flex-1 flex-wrap">
-      <Ticket className="w-4 h-4" />
-      <span className="font-semibold text-emerald-800 truncate">{plan.name}</span>
-      <PlanRibbon code={plan.code} type={plan.type} />
-      {isSubscription(price) ? (
-        <Tag color="blue">Gói theo thời gian</Tag>
-      ) : (
-        <Tag color="purple">Vé lượt</Tag>
-      )}
-    </Space>
-    <VIcon type={price.vehicleType} className="w-10 h-5" />
-  </div>
+                    plan.prices.map((price: any) => (
+                      <Card
+                        key={`${plan.id}-${price.id}`}
+                        className="rounded-2xl shadow-md hover:shadow-lg transition-all border border-emerald-100 hover:border-emerald-400"
+                      >
+                        {/* Header 2 dòng */}
+                        <div className="mb-3 flex flex-col gap-1">
+                          {/* Dòng 1 */}
+                          <div className="flex items-center justify-between gap-2 flex-wrap">
+                            <Space
+                              align="center"
+                              size={8}
+                              className="min-w-0 flex-1 flex-wrap"
+                            >
+                              <Ticket className="w-4 h-4" />
+                              <span className="font-semibold text-emerald-800 truncate">
+                                {plan.name}
+                              </span>
+                              <PlanRibbon code={plan.code} type={plan.type} />
+                              {isSubscription(price) ? (
+                                <Tag color="blue">Gói theo thời gian</Tag>
+                              ) : (
+                                <Tag color="purple">Vé lượt</Tag>
+                              )}
+                            </Space>
+                            <VIcon type={price.vehicleType} className="w-10 h-5" />
+                          </div>
 
-  {/* Dòng 2 */}
-  <div className="flex items-center justify-start mt-1">
-    <ModeBadge mode={mapMode(price.activationMode)} />
-  </div>
-</div>
+                          {/* Dòng 2 */}
+                          <div className="flex items-center justify-start mt-1">
+                            <ModeBadge mode={mapMode(price.activationMode)} />
+                          </div>
+                        </div>
 
+                        <div className="space-y-3">
+                          <div className="flex items-end gap-2">
+                            <div className="text-3xl font-bold leading-none text-emerald-700">
+                              {currencyVN(price.price)}
+                            </div>
+                            <span className="text-gray-500 mb-1">
+                              /{toVehicleLabel(price.vehicleType)}
+                            </span>
+                          </div>
 
-      <div className="space-y-3">
-        <div className="flex items-end gap-2">
-          <div className="text-3xl font-bold leading-none text-emerald-700">
-            {currencyVN(price.price)}
-          </div>
-          <span className="text-gray-500 mb-1">/{toVehicleLabel(price.vehicleType)}</span>
-        </div>
+                          <div className="grid grid-cols-2 gap-2 text-sm text-gray-700">
+                            {typeof price.durationLimitMinutes === "number" && (
+                              <div className="flex items-center gap-2">
+                                <Timer className="w-4 h-4" /> Giới hạn:{" "}
+                                {price.durationLimitMinutes} phút / ngày
+                              </div>
+                            )}
+                            {typeof price.overageFeePer15Min === "number" && (
+                              <div className="flex items-center gap-2">
+                                <Clock3 className="w-4 h-4" /> Phí vượt/15p:{" "}
+                                {currencyVN(price.overageFeePer15Min)}
+                              </div>
+                            )}
+                            {plan.type === "Day" && (
+                              <div className="col-span-2 text-gray-600">
+                                Hiệu lực trong ngày theo giờ địa phương
+                              </div>
+                            )}
+                            {plan.type === "Month" && (
+                              <div className="col-span-2 text-gray-600">
+                                Hiệu lực {price.validityDays ?? 30} ngày từ thời điểm mua
+                              </div>
+                            )}
+                            {mapMode(price.activationMode) === "ON_FIRST_USE" && (
+                              <div className="col-span-2 flex items-center gap-2 text-gray-700">
+                                <Info className="w-4 h-4" /> Kích hoạt khi mở khoá lần
+                                đầu (hạn kích hoạt:{" "}
+                                {price.activationWindowDays ?? 30} ngày)
+                              </div>
+                            )}
+                          </div>
 
-        <div className="grid grid-cols-2 gap-2 text-sm text-gray-700">
-          {typeof price.durationLimitMinutes === "number" && (
-            <div className="flex items-center gap-2">
-              <Timer className="w-4 h-4" /> Giới hạn: {price.durationLimitMinutes} phút / ngày
-            </div>
-          )}
-          {typeof price.overageFeePer15Min === "number" && (
-            <div className="flex items-center gap-2">
-              <Clock3 className="w-4 h-4" /> Phí vượt/15p: {currencyVN(price.overageFeePer15Min)}
-            </div>
-          )}
-          {plan.type === "Day" && (
-            <div className="col-span-2 text-gray-600">Hiệu lực trong ngày theo giờ địa phương</div>
-          )}
-          {plan.type === "Month" && (
-            <div className="col-span-2 text-gray-600">
-              Hiệu lực {price.validityDays ?? 30} ngày từ thời điểm mua
-            </div>
-          )}
-          {mapMode(price.activationMode) === "ON_FIRST_USE" && (
-            <div className="col-span-2 flex items-center gap-2 text-gray-700">
-              <Info className="w-4 h-4" /> Kích hoạt khi mở khoá lần đầu (hạn kích hoạt:{" "}
-              {price.activationWindowDays ?? 30} ngày)
-            </div>
-          )}
-        </div>
+                          <Divider className="my-2 border-emerald-100" />
 
-        <Divider className="my-2 border-emerald-100" />
-
-        <div className="flex items-center justify-between flex-wrap gap-3">
-          <Space size={8}>
-            <WalletIcon className="w-4 h-4" />
-            <span className="text-gray-600">Thanh toán bằng ví</span>
-          </Space>
-          <Button
-            type="primary"
-            shape="round"
-            loading={purchaseMut.isPending}
-            onClick={() => onBuy(plan, price)}
-            style={ecoBtnStyle}
-          >
-            Mua ngay
-          </Button>
-        </div>
-      </div>
-    </Card>
-  ))
-)}
+                          <div className="flex items-center justify-between flex-wrap gap-3">
+                            <Space size={8}>
+                              <WalletIcon className="w-4 h-4" />
+                              <span className="text-gray-600">Thanh toán bằng ví</span>
+                            </Space>
+                            <Button
+                              type="primary"
+                              shape="round"
+                              loading={purchaseMut.isPending}
+                              onClick={() => onBuy(plan, price)}
+                              style={ecoBtnStyle}
+                            >
+                              Mua ngay
+                            </Button>
+                          </div>
+                        </div>
+                      </Card>
+                    ))
+                  )}
                 </div>
               ),
             },
@@ -353,8 +425,14 @@ const BuyTicketsPage: React.FC = () => {
               children: (
                 <Card className="rounded-2xl border-emerald-100">
                   <div className="space-y-2 text-gray-700">
-                    <div>• Vé lượt (RIDE) <b>không kích hoạt ngay</b>; kích hoạt khi bạn bắt đầu chuyến.</div>
-                    <div>• Vé ngày/tháng (IMMEDIATE) <b>kích hoạt ngay khi mua</b>. Vé ngày có hiệu lực theo giờ địa phương.</div>
+                    <div>
+                      • Vé lượt (RIDE) <b>không kích hoạt ngay</b>; kích hoạt khi bạn
+                      bắt đầu chuyến.
+                    </div>
+                    <div>
+                      • Vé ngày/tháng (IMMEDIATE) <b>kích hoạt ngay khi mua</b>. Vé ngày
+                      có hiệu lực theo giờ địa phương.
+                    </div>
                     <div>• Cần hỗ trợ hoá đơn, vui lòng liên hệ CSKH.</div>
                   </div>
                 </Card>

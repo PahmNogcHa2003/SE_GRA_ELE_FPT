@@ -13,6 +13,7 @@ import BuyTicketsPage from '../pages/user/BuyTicketsPage';
 import ContactPage  from '../pages/user/ContactPage';
 import NewsListPage from '../pages/user/NewsListPage';
 import NewsDetailPage from '../pages/user/NewsDetailPage';
+import ProfilePage from '../pages/user/ProfilePage';
 // Staff pages
 import ManageStationsPage from '../pages/staff/ManageStationsPage';
 import ManageVehiclesPage from '../pages/staff/ManageVehiclesPage';
@@ -51,6 +52,7 @@ const AppRoutes = () => (
           <Route path="payment/payment-return" element={<PaymentReturnPage />} />
           <Route path="my-tickets" element={<MyTicketsPage />} />
           <Route path="pricing" element={<BuyTicketsPage />} />
+          <Route path="profile" element={<ProfilePage />} />
         </Route>
       </Route>
 
