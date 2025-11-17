@@ -128,10 +128,13 @@ const Navbar: React.FC = () => {
               <Dropdown menu={{ items: menuItems }} placement="bottomRight" arrow trigger={['click']}>
                 {/* Đây là nút kích hoạt dropdown */}
                 <button className="flex items-center text-gray-700 hover:text-eco-green transition-colors outline-none">
-                  <Avatar size="default" icon={<UserOutlined />} />
+                  <Avatar
+                    size="default"
+                    src={user?.avatarUrl || undefined}
+                    icon={!user?.avatarUrl && <UserOutlined />}
+                  />
                   <span className="ml-2 font-medium">
-                    {/* Lấy email từ context (hoặc tên, nếu có) */}
-                    {user?.fullName || 'Tài khoản'}
+                    {user?.fullName || "Tài khoản"}
                   </span>
                 </button>
               </Dropdown>

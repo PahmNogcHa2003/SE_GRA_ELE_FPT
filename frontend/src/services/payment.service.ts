@@ -33,5 +33,6 @@ export const processVnPayReturn = async (
   const response = await http.get<PaymentResult>(
     `/Payments/vnpay-return?${queryString}`
   );
+  console.log(queryString);
   return response.data;
 };

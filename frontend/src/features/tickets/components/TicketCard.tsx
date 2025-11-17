@@ -1,15 +1,13 @@
 // src/features/tickets/components/TicketCard.tsx
 import React from "react";
 import { Button, Tag, Tooltip } from "antd";
-import { FaClock, FaCalendarAlt, FaCheckCircle, FaSpinner, FaBolt, FaTicketAlt, FaChargingStation, FaBicycle } from "react-icons/fa";
+import { FaClock, FaCalendarAlt, FaCheckCircle, FaSpinner, FaBolt, FaTicketAlt } from "react-icons/fa";
 import type { UserTicket } from "../../../types/user.ticket";
 import { effectiveExpiry, formatUtcToVN } from "../../../utils/datetime";
 
-// map activationMode sang chuỗi dễ đọc
 const mapMode = (m: number | string | undefined): "IMMEDIATE" | "ON_FIRST_USE" =>
   m === 1 || m === "ON_FIRST_USE" ? "ON_FIRST_USE" : "IMMEDIATE";
 
-// style theo status
 const getStatusStyles = (status?: UserTicket["status"]) => {
   switch (status) {
     case "Active":

@@ -1,6 +1,6 @@
 // src/services/categoryVehicle.service.ts
 
-import http from './http'; // Giả sử bạn có file http.ts để quản lý instance của axios
+import http from './http'; 
 import type { ApiResponse, PagedResult } from '../types/api';
 import type { CategoryVehicleDTO, GetCategoriesVehicleParams } from '../types/categoryVehicle';
 

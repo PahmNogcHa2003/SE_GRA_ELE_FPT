@@ -191,6 +191,7 @@ const ManageStationsPage: React.FC = () => {
 
   const columns: TableProps<StationDTO>['columns'] = [
     { title: 'ID', dataIndex: 'id', key: 'id', sorter: true },
+    { title: 'Ảnh' , dataIndex: 'image', key: 'image', render: (url: string) => (<img src={url} alt="station" style={{ width: 80, height: 50, objectFit: 'cover', borderRadius: 4 }} />) },
     { title: 'Tên trạm', dataIndex: 'name', key: 'name', sorter: true },
     { title: 'Địa chỉ', dataIndex: 'location', key: 'location', sorter: false },
     { title: 'Sức chứa', dataIndex: 'capacity', key: 'capacity', align: 'center', sorter: true },
