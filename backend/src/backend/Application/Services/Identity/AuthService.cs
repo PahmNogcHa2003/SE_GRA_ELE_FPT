@@ -48,7 +48,14 @@ namespace Application.Services.Identity
         // === REGISTER ===
         public async Task<AuthResponseDTO> RegisterAsync(RegisterDTO model, CancellationToken ct = default)
         {
-            // 1) Kiểm tra đơn giản
+            if (!IsStrongPassword(model.Password))
+            {
+                return new AuthResponseDTO
+                {
+                    IsSuccess = false,
+                    Message = "Mật khẩu phải có ít nhất 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt."
+                };
+            }
             if (model.Password != model.ConfirmPassword)
             {
                 return new AuthResponseDTO
@@ -57,7 +64,6 @@ namespace Application.Services.Identity
                     Message = "Password and Confirm Password do not match."
                 };
             }
-
             var existingUser = await _userManager.FindByEmailAsync(model.Email);
             if (existingUser != null)
             {
@@ -235,5 +241,95 @@ namespace Application.Services.Identity
                 WalletBalance = wallet?.Balance ?? 0m
             };
         }
+        public async Task<AuthResponseDTO> ChangePasswordAsync(
+            ClaimsPrincipal userPrincipal,
+            ChangePasswordDTO model,
+            CancellationToken ct = default)
+        {
+            var user = await _userManager.GetUserAsync(userPrincipal);
+            var isCurrentPasswordValid = await _userManager.CheckPasswordAsync(user, model.CurrentPassword);
+            if (!isCurrentPasswordValid)
+            {
+                return new AuthResponseDTO
+                {
+                    IsSuccess = false,
+                    Message = "Mật khẩu hiện tại không đúng."
+                };
+            }
+            if (model.CurrentPassword == model.NewPassword)
+            {
+                return new AuthResponseDTO
+                {
+                    IsSuccess = false,
+                    Message = "Mật khẩu mới phải khác với mật khẩu cũ."
+                };
+            }
+            if(model.CurrentPassword == null || model.NewPassword == null || model.ConfirmNewPassword == null)
+            {
+                return new AuthResponseDTO
+                {
+                    IsSuccess = false,
+                    Message = "Mật khẩu không được để trống ."
+                };
+            }
+            if (!IsStrongPassword(model.NewPassword))
+            {
+                return new AuthResponseDTO
+                {
+                    IsSuccess = false,
+                    Message = "Mật khẩu phải có ít nhất 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt."
+                };
+            }
+            if (model.NewPassword != model.ConfirmNewPassword)
+            {
+                return new AuthResponseDTO
+                {
+                    IsSuccess = false,
+                    Message = "Mật khẩu mới và xác nhận mật khẩu không trùng khớp."
+                };
+            }
+            if (user == null)
+            {
+                return new AuthResponseDTO
+                {
+                    IsSuccess = false,
+                    Message = "Không xác định được người dùng."
+                };
+            }
+            var result = await _userManager.ChangePasswordAsync(
+                user,
+                model.CurrentPassword,
+                model.NewPassword
+            );
+            if (!result.Succeeded)
+            {
+                var msg = string.Join(", ", result.Errors.Select(e => e.Description));
+                return new AuthResponseDTO
+                {
+                    IsSuccess = false,
+                    Message = msg
+                };
+            }
+            return new AuthResponseDTO
+            {
+                IsSuccess = true,
+                Message = "Đổi mật khẩu thành công."
+            };
+        }
+        private bool IsStrongPassword(string password)
+        {
+            if (string.IsNullOrWhiteSpace(password) || password.Length < 8)
+                return false;
+            if (!password.Any(char.IsUpper))
+                return false;
+            if (!password.Any(char.IsLower))
+                return false;
+            if (!password.Any(char.IsDigit))
+                return false;
+            if (!password.Any(ch => "!@#$%^&*()_+-=[]{}|;:,.<>?".Contains(ch)))
+                return false;
+            return true;
+        }
     }
 }
+

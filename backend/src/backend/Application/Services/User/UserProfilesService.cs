@@ -42,10 +42,21 @@ namespace Application.Services.User
         }
 
         public async Task<UserProfileDTO?> UpdateBasicByUserIdAsync(
-        long userId, UpdateUserProfileBasicDTO dto, CancellationToken ct = default)
+             long userId,
+             UpdateUserProfileBasicDTO dto,
+             CancellationToken ct = default)
         {
-            var entity = await _repo.Query().FirstOrDefaultAsync(x => x.UserId == userId, ct);
+            var entity = await _repo.Query()
+                .Include(x => x.User)       
+                .FirstOrDefaultAsync(x => x.UserId == userId, ct);
+
             if (entity == null) return null;
+
+            if (dto.Dob.HasValue)
+                entity.Dob = dto.Dob.Value;
+
+            if (!string.IsNullOrWhiteSpace(dto.Gender))
+                entity.Gender = dto.Gender;
 
             if (!string.IsNullOrWhiteSpace(dto.FullName))
                 entity.FullName = dto.FullName;
@@ -59,15 +70,23 @@ namespace Application.Services.User
             if (!string.IsNullOrWhiteSpace(dto.EmergencyPhone))
                 entity.EmergencyPhone = dto.EmergencyPhone;
 
-            entity.AddressDetail = dto.AddressDetail ?? entity.AddressDetail;
+            if (!string.IsNullOrWhiteSpace(dto.AddressDetail))
+                entity.AddressDetail = dto.AddressDetail;
+
+            if (!string.IsNullOrWhiteSpace(dto.PhoneNumber) && entity.User != null)
+            {
+                entity.User.PhoneNumber = dto.PhoneNumber;
+            }
 
             entity.UpdatedAt = DateTimeOffset.UtcNow;
 
             _repo.Update(entity);
             await _uow.SaveChangesAsync(ct);
 
-            return _mapper.Map<UserProfileDTO>(entity);
+            var fullDto = await _userProfilesRepository.GetUserProfileWithVerify(userId, ct);
+            return fullDto;
         }
+
         /// <summary>
         /// upload avatar
         public async Task<UserProfileDTO?> UpdateAvatarAsync(long userId, IFormFile file, CancellationToken ct = default)

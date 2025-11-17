@@ -26,48 +26,9 @@ namespace Admin.Controllers
         /// <returns>HTTP 201 on success, HTTP 400 on failure.</returns>
         [HttpPost("register")]
         [AllowAnonymous]
-        [ProducesResponseType(StatusCodes.Status201Created)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult<ApiResponse<AuthResponseDTO>>> Register([FromBody] RegisterDTO model)
-        {
-            // 1. Model State Validation (Ensure the DTO is valid)
-            if (!ModelState.IsValid)
-            {
-                // Return 400 Bad Request with validation errors
-                var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToArray();
-                return BadRequest(ApiResponse<AuthResponseDTO>.ErrorResponse("Validation Failed", errors));
-            }
-
-            // 2. Call the Application Service
-            var result = await _authService.RegisterAsync(model);
-
-            if (!result.IsSuccess)
-            {
-                // 400 Bad Request for business logic failures (e.g., Email already exists)
-                var errorResponse = ApiResponse<AuthResponseDTO>.ErrorResponse("Registration Failed", new[] { result.Message! });
-                return BadRequest(errorResponse);
-            }
-
-            // 3. Success: Return 201 Created (since a new resource/user was created)
-            // Note: We create a new DTO to clean up the response object if needed
-            var data = new AuthResponseDTO { /* Map necessary data, typically no token here */ };
-            var successResponse = ApiResponse<AuthResponseDTO>.SuccessResponse(data, "User registration successful.");
-
-            // Use Created to follow REST principles for resource creation
-            return StatusCode(StatusCodes.Status201Created, successResponse);
-        }
-
-        /// <summary>
-        /// Logs in a user and returns a JWT token.
-        /// </summary>
-        /// <param name="model">The login credentials.</param>
-        /// <returns>HTTP 200 on success, HTTP 401 on authentication failure.</returns>
-        [HttpPost("login")]
-        [AllowAnonymous]
-        [ProducesResponseType(typeof(ApiResponse<AuthResponseDTO>), StatusCodes.Status200OK)]
-        [ProducesResponseType(typeof(ApiResponse<AuthResponseDTO>), StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(typeof(ApiResponse<AuthResponseDTO>), StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult<ApiResponse<AuthResponseDTO>>> Login([FromBody] LoginDTO model)
+        [ProducesResponseType(typeof(AuthResponseDTO), StatusCodes.Status201Created)]
+        [ProducesResponseType(typeof(AuthResponseDTO), StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<AuthResponseDTO>> Register([FromBody] RegisterDTO model, CancellationToken ct)
         {
             if (!ModelState.IsValid)
             {
@@ -76,32 +37,67 @@ namespace Admin.Controllers
                     .Select(e => e.ErrorMessage)
                     .ToArray();
 
-                return BadRequest(ApiResponse<AuthResponseDTO>.ErrorResponse("Validation Failed", errors));
+                return BadRequest(new AuthResponseDTO
+                {
+                    IsSuccess = false,
+                    Message = string.Join(" | ", errors)
+                });
             }
-            var result = await _authService.LoginAsync(model);
+
+            var result = await _authService.RegisterAsync(model, ct);
+
+            if (!result.IsSuccess)
+            {
+                return BadRequest(result);
+            }
+
+            result.Message = result.Message ?? "User registration successful.";
+            return StatusCode(StatusCodes.Status201Created, result);
+        }
+
+
+        /// <summary>
+        /// Logs in a user and returns a JWT token.
+        /// </summary>
+        /// <param name="model">The login credentials.</param>
+        /// <returns>HTTP 200 on success, HTTP 401 on authentication failure.</returns>
+        [HttpPost("login")]
+        [AllowAnonymous]
+        [ProducesResponseType(typeof(AuthResponseDTO), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(AuthResponseDTO), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(AuthResponseDTO), StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<AuthResponseDTO>> Login([FromBody] LoginDTO model, CancellationToken ct)
+        {
+            if (!ModelState.IsValid)
+            {
+                var errors = ModelState.Values
+                    .SelectMany(v => v.Errors)
+                    .Select(e => e.ErrorMessage)
+                    .ToArray();
+
+                return BadRequest(new AuthResponseDTO
+                {
+                    IsSuccess = false,
+                    Message = string.Join(" | ", errors)
+                });
+            }
+
+            var result = await _authService.LoginAsync(model, ct);
 
             if (!result.IsSuccess || string.IsNullOrWhiteSpace(result.Token))
             {
-                var errorResponse = ApiResponse<AuthResponseDTO>.ErrorResponse("Authentication Failed",
-                    new[] { "Invalid email or password." });
-
-                return Unauthorized(errorResponse);
-            }
-            var successResponse = ApiResponse<AuthResponseDTO>.SuccessResponse(
-                new AuthResponseDTO
+                return Unauthorized(new AuthResponseDTO
                 {
-                    IsSuccess = true,
-                    Message = "Login successful.",
-                    Token = result.Token,
-                    Roles = result.Roles 
-                },
-                "Login successful."
-            );
-
-            return Ok(successResponse);
+                    IsSuccess = false,
+                    Message = "Invalid email or password."
+                });
+            }
+            return Ok(result);
         }
 
+
         [HttpGet("me")]
+        [Authorize]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -120,5 +116,28 @@ namespace Admin.Controllers
 
             return Ok(ApiResponse<MeDTO>.SuccessResponse(me, "OK"));
         }
+        [Authorize]
+        [HttpPost("change-password")]
+        [ProducesResponseType(typeof(AuthResponseDTO), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(AuthResponseDTO), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(AuthResponseDTO), StatusCodes.Status401Unauthorized)]
+        public async Task<ActionResult<AuthResponseDTO>> ChangePassword([FromBody] ChangePasswordDTO dto, CancellationToken ct)
+        {
+            if (!User.Identity?.IsAuthenticated ?? true)
+            {
+                return Unauthorized(new AuthResponseDTO
+                {
+                    IsSuccess = false,
+                    Message = "Unauthorized."
+                });
+            }
+
+            var result = await _authService.ChangePasswordAsync(User, dto, ct);
+            if (!result.IsSuccess)
+                return BadRequest(result);
+
+            return Ok(result);
+        }
+
     }
 }
