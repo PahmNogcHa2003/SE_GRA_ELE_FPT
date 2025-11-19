@@ -77,7 +77,9 @@ namespace Domain.UnitTests
             // Act & Assert
             ExpectException<ArgumentException>(
                 () => Factory.CreateBookingTicket(rentalId: 0, userTicketId: 10),
-                "RentalId and UserTicketId must be positive."
+
+                // CHỈNH SỬA: Thêm tên tham số 'rentalId' vào thông báo lỗi
+                "RentalId and UserTicketId must be positive. (Parameter 'rentalId')"
             );
         }
     }
