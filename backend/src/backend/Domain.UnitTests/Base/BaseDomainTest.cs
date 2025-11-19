@@ -16,7 +16,6 @@ namespace Domain.UnitTests.Base
 
         protected EntityFactory Factory => new EntityFactory(Now);
 
-        // có thể thêm method helper chung
         protected void ExpectException<T>(Action action, string message)
             where T : Exception
         {
