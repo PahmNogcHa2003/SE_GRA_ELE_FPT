@@ -224,7 +224,7 @@ namespace Application.Services.User
         public async Task<VehicleDetailDTO> GetVehicleByCode(RequestVehicleDTO requestVehicleDTO)
         {
 
-            const double allowedRadius = 5.0;
+            const double allowedRadius = 20.0;
 
             try
             {

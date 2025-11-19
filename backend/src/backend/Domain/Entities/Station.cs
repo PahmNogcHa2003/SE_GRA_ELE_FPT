@@ -28,6 +28,11 @@ public partial class Station : BaseEntity<long>
     [StringLength(255)]
     public string? Image { get; set; }
 
+    [StringLength(255)]
+    public string? ImagePublicId { get; set; }
+
+    public DateTimeOffset UpdatedAt { get; set; }
+
     [InverseProperty("Station")]
     public virtual ICollection<StationLog> StationLogs { get; set; } = new List<StationLog>();
 

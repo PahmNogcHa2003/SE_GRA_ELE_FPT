@@ -71,5 +71,21 @@ namespace AdminLayer.Controllers.Staff
             await _stationsService.DeleteAsync(id);
             return Ok(ApiResponse<object>.SuccessResponse(null, "Station deleted successfully"));
         }
+
+        [HttpPost("{id:long}/image")]
+        public async Task<ActionResult<ApiResponse<StationDTO>>> UpdateImage(
+           long id,
+           IFormFile file,
+           CancellationToken ct)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest(ApiResponse<StationDTO>.ErrorResponse("File ảnh không hợp lệ"));
+
+            var dto = await _stationsService.UpdateImageAsync(id, file, ct);
+            if (dto == null)
+                return NotFound(ApiResponse<StationDTO>.ErrorResponse("Không tìm thấy trạm"));
+
+            return Ok(ApiResponse<StationDTO>.SuccessResponse(dto, "Cập nhật ảnh trạm thành công"));
+        }
     }
 }

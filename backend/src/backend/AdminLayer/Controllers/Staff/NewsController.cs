@@ -118,5 +118,20 @@ namespace AdminLayer.Controllers.Staff
 
             return NoContent(); // Trả về 204 No Content khi thành công
         }
+        [HttpPost("{id:long}/banner")]
+        public async Task<ActionResult<ApiResponse<NewsDTO>>> UpdateBanner(
+           long id,
+           IFormFile file,
+           CancellationToken ct)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest(ApiResponse<NewsDTO>.ErrorResponse("File banner không hợp lệ"));
+
+            var dto = await _newsService.UpdateBannerAsync(id, file, ct);
+            if (dto == null)
+                return NotFound(ApiResponse<NewsDTO>.ErrorResponse("Không tìm thấy bài viết"));
+
+            return Ok(ApiResponse<NewsDTO>.SuccessResponse(dto, "Cập nhật banner thành công"));
+        }
     }
 }
