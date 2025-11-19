@@ -1,0 +1,17 @@
+services:
+  webapi:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: webapi
+    env_file:
+      - .env
+    ports:
+      - "8080:8080"
+    restart: always
+    networks:
+      - backend-net
+
+networks:
+  backend-net:
+    external: true

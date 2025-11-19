@@ -16,16 +16,16 @@ class HomeMenu extends StatelessWidget {
         'router': '/tickets',
       },
       {
+        'icon': Icons.my_library_books_outlined,
+        'label': 'Vé của tôi',
+        'router': '/my-ticket',
+      },
+      {
         'icon': Icons.map_outlined,
         'label': 'Chuyến đi',
         'router': '/trip-tracking-history',
       },
       {'icon': Icons.help_outline, 'label': 'Hướng dẫn', 'router': '/guide'},
-      {
-        'icon': Icons.message_outlined,
-        'label': 'Tin nhắn',
-        'router': '/messages',
-      },
       {'icon': Icons.newspaper, 'label': 'Tin tức', 'router': '/notifications'},
       {
         'icon': Icons.account_balance_wallet_outlined,

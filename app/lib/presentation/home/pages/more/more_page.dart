@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:hola_bike_app/presentation/more/page/edit_profile_page.dart';
 import 'package:hola_bike_app/theme/app_colors.dart';
 
 class MorePage extends StatelessWidget {
   const MorePage({super.key});
+  final secureStorage = const FlutterSecureStorage();
 
   @override
   Widget build(BuildContext context) {
@@ -177,8 +179,8 @@ class MorePage extends StatelessWidget {
     );
   }
 
-  void _handleLogout(BuildContext context) {
-    // TODO: xử lý đăng xuất, ví dụ: xóa token, clear session, chuyển về màn đăng nhập
+  Future<void> _handleLogout(BuildContext context) async {
+    await secureStorage.delete(key: 'access_token');
     Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
   }
 }

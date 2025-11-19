@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:hola_bike_app/presentation/home/pages/notification/notification_page.dart';
 import 'package:hola_bike_app/presentation/home/pages/station/station_page.dart';
-import 'package:hola_bike_app/presentation/login/login_page.dart';
+import 'package:hola_bike_app/presentation/auth/login/login_page.dart';
 import 'package:hola_bike_app/presentation/more/page/change_password_page.dart';
+import 'package:hola_bike_app/presentation/more/page/kyc/kyc_page.dart';
 import 'package:hola_bike_app/presentation/more/page/profile_page.dart';
 import 'package:hola_bike_app/presentation/splash/splash_page.dart';
+import 'package:hola_bike_app/presentation/tickets/my_ticket_page.dart';
+import 'package:hola_bike_app/presentation/tickets/ticket_page.dart';
 import 'package:hola_bike_app/presentation/trip/trip_tracking_history_page.dart';
 import 'package:hola_bike_app/presentation/trip/trip_tracking_page.dart';
 import 'package:hola_bike_app/presentation/wallet/page/pricing/pricing_page.dart';
@@ -19,15 +22,25 @@ void main() {
 
 void _setupLoading() {
   EasyLoading.instance
-    ..indicatorType = EasyLoadingIndicatorType.fadingCircle
+    ..indicatorType = EasyLoadingIndicatorType.wave
     ..animationStyle = EasyLoadingAnimationStyle.scale
     ..loadingStyle = EasyLoadingStyle.custom
-    ..backgroundColor = Colors.black87
-    ..indicatorColor = Colors.white
-    ..textColor = Colors.white
-    ..maskColor = Colors.blueGrey
+    ..indicatorSize = 60
+    ..radius = 12
+    ..backgroundColor = Colors
+        .transparent // bỏ nền đen của hộp
+    ..indicatorColor = AppColors.primary
+    ..textColor = Colors
+        .transparent // ẩn chữ
+    // dùng Color.fromRGBO để chắc chắn không lỗi
+    ..maskColor =
+        const Color.fromRGBO(0, 0, 0, 0.7) // nền mờ xung quanh
+    ..maskType = EasyLoadingMaskType
+        .custom // rất quan trọng!
     ..userInteractions = false
     ..dismissOnTap = false
+    ..boxShadow = []
+    ..contentPadding = EdgeInsets.zero
     ..displayDuration = const Duration(milliseconds: 2000);
 }
 
@@ -70,10 +83,11 @@ class MyApp extends StatelessWidget {
         '/notifications': (context) => const NotificationPage(),
         '/wallet': (context) => const WalletScreen(),
         '/profile': (context) => const ProfilePage(),
-        '/trip-tracking': (context) => const TripTrackingPage(isRenting: false),
+        '/tickets': (context) => const TicketPage(),
+        '/my-ticket': (context) => const MyTicketPage(),
         '/trip-tracking-history': (context) => const TripTrackingHistoryPage(),
         // // Các chức năng tài khoản
-        // '/verify': (context) => const VerifyAccountPage(),
+        '/verify': (context) => const KycPage(),
         '/change-password': (context) => const ChangePasswordPage(),
         // '/delete-account': (context) => const DeleteAccountPage(),
         // // Các trang thông tin
@@ -84,7 +98,7 @@ class MyApp extends StatelessWidget {
         // '/support': (context) => const SupportPage(),
 
         // Trang đăng nhập (nếu có)
-        '/login': (context) => const LoginScreen(),
+        '/login': (context) => const LoginPage(),
       },
     );
   }
