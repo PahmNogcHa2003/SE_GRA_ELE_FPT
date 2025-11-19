@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:hola_bike_app/presentation/auth/login/widgets/widget_password-field.dart';
+import 'package:hola_bike_app/presentation/auth/register/widget/widget_password.dart';
 import 'package:intl/intl.dart';
 import 'package:hola_bike_app/theme/app_colors.dart';
 import 'package:hola_bike_app/domain/models/info_provice.dart';
@@ -157,10 +159,10 @@ class _RegisterFormState extends State<RegisterForm> {
           ),
           _dropdownGender(),
           _buildDatePickerField(_birthController),
-          _buildField(
-            _passwordController,
-            'Mật khẩu *',
-            obscureText: true,
+          PasswordFieldWithEye(
+            controller: _passwordController,
+            label: "Mật khẩu *",
+            hint: "Nhập mật khẩu",
             validator: (v) {
               if (v == null || v.isEmpty) return 'Vui lòng nhập mật khẩu';
               if (v.length < 6) return 'Mật khẩu phải ít nhất 6 ký tự';
@@ -169,10 +171,10 @@ class _RegisterFormState extends State<RegisterForm> {
               return null;
             },
           ),
-          _buildField(
-            _confirmPasswordController,
-            'Nhập lại mật khẩu',
-            obscureText: true,
+          PasswordFieldWithEye(
+            controller: _confirmPasswordController,
+            label: 'Nhập lại mật khẩu',
+            hint: "Nhập mật khẩu",
             validator: (v) =>
                 v != _passwordController.text ? 'Mật khẩu không khớp' : null,
           ),
