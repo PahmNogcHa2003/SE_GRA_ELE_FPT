@@ -16,7 +16,7 @@ class _QrScannerState extends State<QrScanner> {
     if (code == null || isProcessing) return;
 
     setState(() => isProcessing = true);
-
+    print(code);
     Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => RentBikePage(bikeId: code)),

@@ -4,7 +4,7 @@ import '../../../theme/app_colors.dart';
 
 class HomeHeader extends StatelessWidget {
   final String name;
-  final int point;
+  final double point;
 
   const HomeHeader({super.key, required this.name, required this.point});
 
