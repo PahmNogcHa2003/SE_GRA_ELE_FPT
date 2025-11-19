@@ -12,15 +12,15 @@ namespace Domain.UnitTests
         [Fact]
         public void EndRental_ShouldSetStatusToCompleted()
         {
-            //// Arrange
-            //var rental = Factory.CreateRental();
-            //var end = Now.AddMinutes(10);
+            // Arrange
+            var rental = Factory.CreateRental();
+            var end = Now.AddMinutes(10);
 
-            //// Act
-            //rental.EndRental(end, endStationId: 9);
+            // Act
+            rental.EndRental(end, endStationId: 9);
 
-            //// Assert
-            //rental.ShouldBeCompleted(end, 9);
+            // Assert
+            rental.ShouldBeCompleted(end, 9);
         }
 
         [Fact]

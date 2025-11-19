@@ -66,4 +66,39 @@ public partial class Payment : BaseEntity<long>
     [ForeignKey("OrderId")]
     [InverseProperty("Payments")]
     public virtual Order Order { get; set; } = null!;
+
+    // Phương thức logic nghiệp vụ: Đánh dấu thanh toán thành công
+    public void MarkAsPaid(string gatewayTxnId, DateTimeOffset paidAt, string? rawResponse = null)
+    {
+        if (Status == "Success")
+        {
+            // Tránh cập nhật lại nếu đã thành công
+            return;
+        }
+
+        if (Status == "Failed" || Status == "Cancelled")
+        {
+            throw new InvalidOperationException("Cannot mark a failed or cancelled payment as paid.");
+        }
+
+        Status = "Success";
+        GatewayTxnId = gatewayTxnId;
+        PaidAt = paidAt;
+        RawResponse = rawResponse;
+        FailureReason = null; // Xóa lý do thất bại nếu có
+    }
+
+    // Phương thức logic nghiệp vụ: Đánh dấu thanh toán thất bại
+    public void MarkAsFailed(string reason, string? rawResponse = null)
+    {
+        if (Status == "Success")
+        {
+            throw new InvalidOperationException("Cannot mark a successfully paid payment as failed.");
+        }
+
+        Status = "Failed";
+        FailureReason = reason;
+        RawResponse = rawResponse;
+        PaidAt = null;
+    }
 }

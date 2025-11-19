@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Domain.UnitTests
 {
-    internal class Contact
+    internal class WalletDeb
     {
     }
 }
