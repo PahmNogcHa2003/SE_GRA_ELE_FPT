@@ -22,7 +22,7 @@ class HomeContent extends StatelessWidget {
       child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          HomeHeader(name: userInfo.fullName, point: 2000),
+          HomeHeader(name: userInfo.fullName, point: userInfo.walletBalance),
           const SizedBox(height: 16),
           HomeMenu(onItemSelected: onItemSelected),
           const SizedBox(height: 16),

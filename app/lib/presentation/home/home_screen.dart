@@ -32,7 +32,7 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       final token = await secureStorage.read(key: 'access_token');
       if (token == null) {
-        throw Exception('Không tìm thấy access token');
+        throw Exception('');
       }
 
       print('🔹 Gọi getUserInfo với token: $token');
