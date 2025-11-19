@@ -1,6 +1,7 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace Domain.Entities;
@@ -25,7 +26,7 @@ public class Contact : BaseEntity<long>
     [Required]
     [StringLength(20)]
     [Unicode(false)]
-    public string Status { get; set; } 
+    public string Status { get; set; } = ContactStatus.Open;
     public long? ReplyById { get; set; }
 
     [StringLength(4000)]
