@@ -1,18 +1,23 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:hola_bike_app/application/usecases/usecase_rental-end.dart';
+import 'package:hola_bike_app/core/utils/toast_util.dart';
+import 'package:hola_bike_app/data/sources/remote/api_rental-end.dart';
+import 'package:hola_bike_app/presentation/home/home_screen.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:hola_bike_app/theme/app_colors.dart';
 
 class TripTrackingPage extends StatefulWidget {
-  final String? bikeId;
-  final bool isRenting;
+  final int rentalId;
 
-  const TripTrackingPage({super.key, this.bikeId, required this.isRenting});
+  const TripTrackingPage({super.key, required this.rentalId});
 
   @override
   State<TripTrackingPage> createState() => _TripTrackingPageState();
@@ -21,9 +26,9 @@ class TripTrackingPage extends StatefulWidget {
 class _TripTrackingPageState extends State<TripTrackingPage> {
   final MapController _mapController = MapController();
   StreamSubscription<Position>? _positionSub;
-
+  final secureStorage = const FlutterSecureStorage();
+  final _rentalEndUsecase = RentalEndUsecase();
   final List<LatLng> _routePoints = [];
-  final List<Map<String, dynamic>> _tripHistory = [];
   LatLng? _currentPos;
   double _totalMeters = 0;
   DateTime? _startTime;
@@ -31,8 +36,7 @@ class _TripTrackingPageState extends State<TripTrackingPage> {
   @override
   void initState() {
     super.initState();
-    if (widget.isRenting && widget.bikeId != null) _startTracking();
-    _loadHistory();
+    _startTracking();
   }
 
   @override
@@ -84,11 +88,45 @@ class _TripTrackingPageState extends State<TripTrackingPage> {
         });
   }
 
+  Future<void> _returnBike() async {
+    EasyLoading.show();
+    try {
+      final token = await secureStorage.read(key: 'access_token');
+      if (token == null) {
+        ToastUtil.showError("Không tìm thấy token");
+        return;
+      }
+
+      if (_currentPos == null) {
+        ToastUtil.showError("Không xác định được vị trí hiện tại");
+        return;
+      }
+
+      // Gọi API trả xe
+      final result = await _rentalEndUsecase.execute(
+        token: token,
+        rentalId: widget.rentalId,
+        currentLatitude: _currentPos!.latitude,
+        currentLongitude: _currentPos!.longitude,
+      );
+
+      // Hiển thị thông báo thành công bằng Toast
+      ToastUtil.showSuccess("✅ Trả xe thành công");
+
+      // Kết thúc hành trình, quay về màn trước
+      _stopTracking();
+    } catch (e) {
+      ToastUtil.showError("❌ Lỗi trả xe, vui lòng đến gần trạm");
+    }
+    EasyLoading.dismiss();
+  }
+
   void _stopTracking() {
     _positionSub?.cancel();
-
-    EasyLoading.showSuccess('Hành trình đã kết thúc');
-    Navigator.pop(context);
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => HomeScreen()),
+    );
   }
 
   double _calcDistance(LatLng a, LatLng b) {
@@ -107,17 +145,7 @@ class _TripTrackingPageState extends State<TripTrackingPage> {
     return R * 2 * math.atan2(math.sqrt(h), math.sqrt(1 - h));
   }
 
-  void _loadHistory() {
-    _tripHistory.addAll([
-      {'bikeId': 'HB001', 'distance': 3.2, 'duration': '15 phút'},
-      {'bikeId': 'HB002', 'distance': 5.8, 'duration': '28 phút'},
-    ]);
-  }
-
   Widget _buildTripInfo() {
-    if (widget.bikeId == null || widget.bikeId!.isEmpty)
-      return const SizedBox();
-
     final km = (_totalMeters / 1000).toStringAsFixed(2);
     final durationMinutes = _startTime != null
         ? DateTime.now().difference(_startTime!).inMinutes
@@ -141,7 +169,7 @@ class _TripTrackingPageState extends State<TripTrackingPage> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            'Xe: ${widget.bikeId}',
+            'Xe: ${widget.rentalId}',
             style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
@@ -170,48 +198,9 @@ class _TripTrackingPageState extends State<TripTrackingPage> {
               backgroundColor: AppColors.primary,
               minimumSize: const Size.fromHeight(45),
             ),
-            onPressed: _stopTracking,
-            icon: const Icon(Icons.stop_circle_outlined),
-            label: const Text('Kết thúc hành trình'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHistoryList() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.15),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Text(
-            'Lịch sử hành trình',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 8),
-          ..._tripHistory.map(
-            (trip) => ListTile(
-              title: Text('Xe: ${trip['bikeId']}'),
-              subtitle: Text(
-                'Quãng đường: ${trip['distance']} km - Thời gian: ${trip['duration']}',
-              ),
-            ),
+            onPressed: _returnBike,
+            icon: const Icon(Icons.assignment_return),
+            label: const Text('Trả xe'),
           ),
         ],
       ),
@@ -270,12 +259,7 @@ class _TripTrackingPageState extends State<TripTrackingPage> {
                 ),
             ],
           ),
-          Positioned(
-            left: 16,
-            right: 16,
-            bottom: 24,
-            child: widget.isRenting ? _buildTripInfo() : _buildHistoryList(),
-          ),
+          Positioned(left: 16, right: 16, bottom: 24, child: _buildTripInfo()),
         ],
       ),
     );
