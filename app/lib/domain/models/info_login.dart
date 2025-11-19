@@ -11,9 +11,9 @@ class LoginResponse {
 
   factory LoginResponse.fromJson(Map<String, dynamic> json) {
     return LoginResponse(
-      success: json['success'],
+      success: json['isSuccess'],
       message: json['message'],
-      token: json['data']['token'],
+      token: json['token'],
     );
   }
 }
