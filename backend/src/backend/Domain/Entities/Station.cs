@@ -38,4 +38,28 @@ public partial class Station : BaseEntity<long>
 
     [InverseProperty("Station")]
     public virtual ICollection<Vehicle> Vehicles { get; set; } = new List<Vehicle>();
+
+    // Phương thức logic nghiệp vụ: Kích hoạt lại trạm
+    public void Activate()
+    {
+        if (IsActive) return; // Nếu đã active thì không làm gì
+        IsActive = true;
+    }
+
+    // Phương thức logic nghiệp vụ: Ngừng kích hoạt trạm
+    public void Deactivate()
+    {
+        if (!IsActive) return; // Nếu đã inactive thì không làm gì
+        IsActive = false;
+    }
+
+    // Phương thức logic nghiệp vụ: Cập nhật sức chứa
+    public void UpdateCapacity(int newCapacity)
+    {
+        if (newCapacity <= 0)
+        {
+            throw new ArgumentException("Capacity must be greater than zero.", nameof(newCapacity));
+        }
+        Capacity = newCapacity;
+    }
 }

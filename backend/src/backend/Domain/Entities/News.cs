@@ -60,5 +60,50 @@ public partial class News : BaseEntity<long>
 
     [InverseProperty("News")]
     public virtual ICollection<TagNew> TagNews { get; set; } = new List<TagNew>();
+
+    public const string StatusDraft = "Draft";
+    public const string StatusScheduled = "Scheduled";
+    public const string StatusPublished = "Published";
+
+    // 1. Đặt lịch công bố
+    public void Schedule(DateTimeOffset scheduleTime, long userId)
+    {
+        if (scheduleTime <= CreatedAt)
+        {
+            throw new ArgumentException("Schedule time must be after creation time.", nameof(scheduleTime));
+        }
+
+        Status = StatusScheduled;
+        ScheduledAt = scheduleTime;
+        PublishedAt = null;
+        PublishedBy = userId; // Ghi nhận người đặt lịch
+    }
+
+    // 2. Công bố bài viết
+    public void Publish(DateTimeOffset publishTime, long userId)
+    {
+        if (publishTime < CreatedAt)
+        {
+            throw new ArgumentException("Publish time cannot be before creation time.", nameof(publishTime));
+        }
+
+        // Logic: Bất kỳ bài viết nào cũng có thể được công bố.
+        Status = StatusPublished;
+        PublishedAt = publishTime;
+        PublishedBy = userId;
+        ScheduledAt = null; // Nếu đã công bố, lịch trình sẽ bị hủy bỏ/ghi đè
+    }
+
+    // 3. Đưa bài viết trở lại trạng thái nháp
+    public void Draft()
+    {
+        if (Status == StatusPublished)
+        {
+            throw new InvalidOperationException("Cannot draft a published news article.");
+        }
+        Status = StatusDraft;
+        PublishedAt = null;
+        ScheduledAt = null;
+    }
 }
 
