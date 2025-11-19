@@ -1,10 +1,12 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Application.DTOs.JsonConvert;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace Application.DTOs.UserProfile
@@ -14,11 +16,14 @@ namespace Application.DTOs.UserProfile
         [Key]
         public long UserId { get; set; }
         public string? IsVerify { get; set; }
+        public string? Email { get; set; }
+        public string? PhoneNumber { get; set; }
 
         [StringLength(150)]
         public string? FullName { get; set; }
 
         [Column(TypeName = "date")]
+        [JsonConverter(typeof(DateTimeToDateStringConverter))]
         public DateTime? Dob { get; set; }
 
         [StringLength(10)]
@@ -27,10 +32,11 @@ namespace Application.DTOs.UserProfile
 
         [StringLength(255)]
         public string? AvatarUrl { get; set; }
+        public string? AvatarPublicId { get; set; }
 
         [StringLength(150)]
         public string? EmergencyName { get; set; }
-
+            
         [Required]
         [StringLength(15)]
         public string EmergencyPhone { get; set; }

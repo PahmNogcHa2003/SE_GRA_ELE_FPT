@@ -778,6 +778,10 @@ namespace Infrastructure.Migrations
                     b.Property<string>("AddressDetail")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("AvatarPublicId")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
                     b.Property<string>("AvatarUrl")
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");

@@ -25,6 +25,9 @@ public partial class UserProfile : BaseEntity<long>
     [StringLength(255)]
     public string? AvatarUrl { get; set; }
 
+    [StringLength(200)]
+    public string? AvatarPublicId { get; set; }
+
     public int? ProvinceCode { get; set; }
     [StringLength(50)]
     public string? ProvinceName { get; set; }

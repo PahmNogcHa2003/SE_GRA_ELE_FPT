@@ -20,4 +20,14 @@ public class TagNew : BaseEntity<long>
 
     [ForeignKey(nameof(TagId))]
     public virtual Tag Tag { get; set; } = null!;
+
+    public TagNew(long newId, long tagId)
+    {
+        if (newId <= 0 || tagId <= 0)
+        {
+            throw new ArgumentException("NewId and TagId must be positive.");
+        }
+        NewId = newId;
+        TagId = tagId;
+    }
 }

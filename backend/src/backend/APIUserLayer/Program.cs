@@ -192,6 +192,9 @@ builder.Services.AddHttpContextAccessor();
 
 // Đăng ký cấu hình cho VnPay
 builder.Services.Configure<VnPaySettings>(builder.Configuration.GetSection("VnPaySettings"));
+//Đăng ký cấu hình cho Cloudinary
+builder.Services.Configure<CloudinarySettings>(
+    builder.Configuration.GetSection("CloudinarySettings"));
 var app = builder.Build();
 
 // --- Tự động apply migrations khi khởi động ---
@@ -240,7 +243,6 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseMiddleware<ValidationMiddleware>();
 app.UseMiddleware<ResponseMiddleware>();

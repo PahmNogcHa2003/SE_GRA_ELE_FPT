@@ -10,7 +10,7 @@ namespace AdminLayer.Controllers.Staff
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Policy = "AdminOnly")]
+    [Authorize(Roles = "Admin")]
     public class CategoriesVehiclesController : ControllerBase
     {
         private readonly ICategoriesVehicleService _categoriesVehicleService;

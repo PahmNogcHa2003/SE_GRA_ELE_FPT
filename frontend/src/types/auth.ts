@@ -24,7 +24,7 @@ export interface User {
   userId: number; 
   email: string;
   fullName: string;
-  avatarUrl: string;
+  avatarUrl?: string | null; 
   createdDate: string;
   dob: string;
   gender: string;

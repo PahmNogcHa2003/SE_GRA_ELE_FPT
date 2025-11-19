@@ -11,8 +11,8 @@ namespace Application.Interfaces.User.Repository
 {
     public interface IUserProfilesRepository : IRepository<UserProfile, long>
     {
-        Task<string> GetIdentityNumberProfile(long userId);
-
-        Task<UserProfileDTO> GetUserProfileWithVerify(long userId);
+        Task<string?> GetIdentityNumberProfile(long userId, CancellationToken ct = default);
+        Task<bool> IsIdentityNumberDuplicateAsync(string identityNumber, CancellationToken ct = default);
+        Task<UserProfileDTO?> GetUserProfileWithVerify(long userId, CancellationToken ct = default);
     }
 }

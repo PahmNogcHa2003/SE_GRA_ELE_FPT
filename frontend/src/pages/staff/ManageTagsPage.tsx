@@ -101,10 +101,10 @@ const ManageTagsPage: React.FC = () => {
         </div>
         <Table
           columns={columns}
-          dataSource={tagsData?.data.items}
+          dataSource={tagsData?.data?.items}
           loading={isLoading}
           rowKey="id"
-          pagination={{ current: tagsData?.data.pageNumber, pageSize: tagsData?.data.pageSize, total: tagsData?.data.totalCount, showSizeChanger: true }}
+          pagination={{ current: tagsData?.data?.pageNumber, pageSize: tagsData?.data?.pageSize, total: tagsData?.data?.totalCount, showSizeChanger: true }}
           onChange={handleTableChange}
         />
       </Space>

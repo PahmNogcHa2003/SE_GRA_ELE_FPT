@@ -26,3 +26,9 @@ export const updateNews = (id: number, data: Omit<NewsDTO, 'createdAt' | 'tags'>
 export const deleteNews = (id: number) => {
   return http.delete<ApiResponse<null>>(`${BASE_URL}/${id}`);
 };
+
+export const getRelatedNews = (newsId?: number, limit = 5) => {
+  return http.get<ApiResponse<NewsDTO[]>>(`${BASE_URL}/related`, {
+    params: {newsId, limit },
+  });
+};

@@ -9,7 +9,7 @@ using Application.Interfaces.User.Service;
 using Domain.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using System.Linq;
+using System.Data;
 using System.Security.Claims;
 
 namespace Application.Services.Identity
@@ -45,21 +45,48 @@ namespace Application.Services.Identity
             _userWalletService = userWalletService;
         }
 
-        // --- REGISTER ---
+        // === REGISTER ===
         public async Task<AuthResponseDTO> RegisterAsync(RegisterDTO model, CancellationToken ct = default)
         {
-            // 1) Validate đơn giản (nên validate ở DTO/FluentValidation)
+            if (!IsStrongPassword(model.Password))
+            {
+                return new AuthResponseDTO
+                {
+                    IsSuccess = false,
+                    Message = "Mật khẩu phải có ít nhất 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt."
+                };
+            }
             if (model.Password != model.ConfirmPassword)
             {
-                return new AuthResponseDTO { IsSuccess = false, Message = "Password and Confirm Password do not match." };
+                return new AuthResponseDTO
+                {
+                    IsSuccess = false,
+                    Message = "Password and Confirm Password do not match."
+                };
             }
-
             var existingUser = await _userManager.FindByEmailAsync(model.Email);
             if (existingUser != null)
             {
-                return new AuthResponseDTO { IsSuccess = false, Message = "Email already exists." };
+                return new AuthResponseDTO
+                {
+                    IsSuccess = false,
+                    Message = "Email already exists."
+                };
             }
-
+            if (!string.IsNullOrEmpty(model.PhoneNumber))
+            {
+                var existingPhoneUser = await _userManager.Users
+                    .FirstOrDefaultAsync(u => u.PhoneNumber == model.PhoneNumber, ct);
+                if (existingPhoneUser != null)
+                {
+                    return new AuthResponseDTO { IsSuccess = false, Message = "Phone number already exists." };
+                }
+            }
+            var identityExist = await _profileService.IsIdentityNumberDuplicateAsync(model.IdentityNumber, ct);
+            if (identityExist)
+            {
+                return new AuthResponseDTO { IsSuccess = false, Message = "Identity number already exists." };
+            }
             var now = DateTimeOffset.UtcNow;
             var user = new AspNetUser
             {
@@ -69,11 +96,10 @@ namespace Application.Services.Identity
                 CreatedDate = now
             };
 
-            // 2) Transaction (đúng cách)
             await using var tx = await _unitOfWork.BeginTransactionAsync(ct);
             try
             {
-                // 3) Tạo user
+                // 2) Tạo user
                 var createResult = await _userManager.CreateAsync(user, model.Password);
                 if (!createResult.Succeeded)
                 {
@@ -82,7 +108,7 @@ namespace Application.Services.Identity
                     return new AuthResponseDTO { IsSuccess = false, Message = msg };
                 }
 
-                // 4) Gán role (không có ct trong API Identity)
+                // 3) Gán role
                 var roleResult = await _userManager.AddToRoleAsync(user, "User");
                 if (!roleResult.Succeeded)
                 {
@@ -91,7 +117,7 @@ namespace Application.Services.Identity
                     return new AuthResponseDTO { IsSuccess = false, Message = msg };
                 }
 
-                // 5) Tạo hồ sơ người dùng (Application DbContext)
+                // 4) Tạo hồ sơ người dùng
                 var userProfileDto = new UserProfileDTO
                 {
                     UserId = user.Id,
@@ -112,6 +138,7 @@ namespace Application.Services.Identity
 
                 await _profileService.CreateAsync(userProfileDto, ct);
 
+                // 5) Tạo ví người dùng
                 var wallet = new WalletDTO
                 {
                     UserId = user.Id,
@@ -122,11 +149,16 @@ namespace Application.Services.Identity
                     UpdatedAt = now
                 };
                 await _walletService.CreateAsync(wallet, ct);
-                // 6) Lưu & commit
+
+                // 6) Lưu và commit
                 await _unitOfWork.SaveChangesAsync(ct);
                 await _unitOfWork.CommitTransactionAsync(tx, ct);
 
-                return new AuthResponseDTO { IsSuccess = true, Message = "Registration successful." };
+                return new AuthResponseDTO
+                {
+                    IsSuccess = true,
+                    Message = "Registration successful."
+                };
             }
             catch (Exception)
             {
@@ -139,7 +171,7 @@ namespace Application.Services.Identity
             }
         }
 
-        // --- LOGIN ---
+        // === LOGIN ===
         public async Task<AuthResponseDTO> LoginAsync(LoginDTO model, CancellationToken ct = default)
         {
             var user = await _userManager.FindByEmailAsync(model.Email);
@@ -151,12 +183,12 @@ namespace Application.Services.Identity
                 return new AuthResponseDTO { IsSuccess = false, Message = "Invalid credentials." };
 
             // Lưu thông tin thiết bị (nếu có)
-            if (model.DeviceId != null)
+            if (!string.IsNullOrEmpty(model.DeviceId))
             {
                 var userDeviceDto = new CreateUserDeviceDTO
                 {
                     UserId = user.Id,
-                    DeviceId = model.DeviceId, 
+                    DeviceId = model.DeviceId,
                     PushToken = model.PushToken,
                     Platform = model.Platform
                 };
@@ -164,60 +196,140 @@ namespace Application.Services.Identity
                 await _userDevicesService.HandleDeviceLoginAsync(userDeviceDto, ct);
             }
 
-
             // Tạo JWT
             var jwt = await _tokenService.GenerateJwtTokenAsync(user);
             var roles = await _userManager.GetRolesAsync(user);
-            var profile = await _profileService.GetByUserIdAsync(user.Id);
+
             return new AuthResponseDTO
             {
                 IsSuccess = true,
                 Message = "Login successful.",
                 Token = jwt,
-                Roles = [.. roles]
-
+                Roles = roles.ToList()
             };
         }
+
+        // === GET CURRENT USER INFO ===
         private long? GetUserIdAsLong(ClaimsPrincipal userPrincipal)
         {
             var idStr = _userManager.GetUserId(userPrincipal);
-            if (long.TryParse(idStr, out var id))
-                return id;
-            return null;
+            return long.TryParse(idStr, out var id) ? id : null;
         }
 
         public async Task<MeDTO?> GetMeAsync(ClaimsPrincipal userPrincipal, CancellationToken ct = default)
         {
-            // Lấy user hiện tại từ Claims
             var userId = GetUserIdAsLong(userPrincipal);
             if (userId == null) return null;
 
             var user = await _userManager.Users.FirstOrDefaultAsync(u => u.Id == userId, ct);
             if (user == null) return null;
 
-            // Lấy roles
             var roles = await _userManager.GetRolesAsync(user);
-
-            // Lấy hồ sơ (nếu có)
             var profile = await _profileService.GetByUserIdAsync(user.Id, ct);
-            // Giả định bạn đã có method này trong IUserProfilesService
-            // Nếu chưa có, bạn có thể thêm một method tương tự hoặc dùng Query service hiện có.
             var wallet = await _userWalletService.GetByUserIdAsync(user.Id, ct);
-            var me = new MeDTO
+
+            return new MeDTO
             {
                 UserId = user.Id,
                 Email = user.Email!,
                 FullName = profile?.FullName,
                 AvatarUrl = profile?.AvatarUrl,
                 CreatedDate = user.CreatedDate,
-                Dob = profile?.Dob,
                 Gender = profile?.Gender,
                 AddressDetail = profile?.AddressDetail,
-                Roles = roles?.ToArray() ?? Array.Empty<string>(),
+                Roles = roles.ToArray(),
                 WalletBalance = wallet?.Balance ?? 0m
             };
-
-            return me;
+        }
+        public async Task<AuthResponseDTO> ChangePasswordAsync(
+            ClaimsPrincipal userPrincipal,
+            ChangePasswordDTO model,
+            CancellationToken ct = default)
+        {
+            var user = await _userManager.GetUserAsync(userPrincipal);
+            var isCurrentPasswordValid = await _userManager.CheckPasswordAsync(user, model.CurrentPassword);
+            if (!isCurrentPasswordValid)
+            {
+                return new AuthResponseDTO
+                {
+                    IsSuccess = false,
+                    Message = "Mật khẩu hiện tại không đúng."
+                };
+            }
+            if (model.CurrentPassword == model.NewPassword)
+            {
+                return new AuthResponseDTO
+                {
+                    IsSuccess = false,
+                    Message = "Mật khẩu mới phải khác với mật khẩu cũ."
+                };
+            }
+            if(model.CurrentPassword == null || model.NewPassword == null || model.ConfirmNewPassword == null)
+            {
+                return new AuthResponseDTO
+                {
+                    IsSuccess = false,
+                    Message = "Mật khẩu không được để trống ."
+                };
+            }
+            if (!IsStrongPassword(model.NewPassword))
+            {
+                return new AuthResponseDTO
+                {
+                    IsSuccess = false,
+                    Message = "Mật khẩu phải có ít nhất 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt."
+                };
+            }
+            if (model.NewPassword != model.ConfirmNewPassword)
+            {
+                return new AuthResponseDTO
+                {
+                    IsSuccess = false,
+                    Message = "Mật khẩu mới và xác nhận mật khẩu không trùng khớp."
+                };
+            }
+            if (user == null)
+            {
+                return new AuthResponseDTO
+                {
+                    IsSuccess = false,
+                    Message = "Không xác định được người dùng."
+                };
+            }
+            var result = await _userManager.ChangePasswordAsync(
+                user,
+                model.CurrentPassword,
+                model.NewPassword
+            );
+            if (!result.Succeeded)
+            {
+                var msg = string.Join(", ", result.Errors.Select(e => e.Description));
+                return new AuthResponseDTO
+                {
+                    IsSuccess = false,
+                    Message = msg
+                };
+            }
+            return new AuthResponseDTO
+            {
+                IsSuccess = true,
+                Message = "Đổi mật khẩu thành công."
+            };
+        }
+        private bool IsStrongPassword(string password)
+        {
+            if (string.IsNullOrWhiteSpace(password) || password.Length < 8)
+                return false;
+            if (!password.Any(char.IsUpper))
+                return false;
+            if (!password.Any(char.IsLower))
+                return false;
+            if (!password.Any(char.IsDigit))
+                return false;
+            if (!password.Any(ch => "!@#$%^&*()_+-=[]{}|;:,.<>?".Contains(ch)))
+                return false;
+            return true;
         }
     }
 }
+

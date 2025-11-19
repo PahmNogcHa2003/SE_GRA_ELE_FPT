@@ -27,16 +27,20 @@ namespace APIUserLayer.Controllers.User
         public async Task<IActionResult> CreateRental([FromBody] CreateRentalDTO createRentalDto)
         {
             if (!ModelState.IsValid)
+            {
+                var errors = ModelState.Values
+                    .SelectMany(v => v.Errors)
+                    .Select(e => e.ErrorMessage)
+                    .ToArray();
+
                 return BadRequest(ApiResponse<object>.ErrorResponse(
-                    "Invalid rental request",
-                    new[] { "Invalid model data" }));
+                    "Yêu cầu thuê xe không hợp lệ.", 
+                    errors.Length > 0 ? errors : new[] { "Dữ liệu không hợp lệ." } 
+                ));
+            }
 
-            var result = await _rentalsService.CreateRentalAsync(createRentalDto);
-
-            if (result)
-                return Ok(ApiResponse<object>.SuccessResponse(null, "Rental created successfully"));
-
-            return BadRequest(ApiResponse<object>.ErrorResponse("Failed to create rental"));
+            var rentalId = await _rentalsService.CreateRentalAsync(createRentalDto);
+            return Ok(ApiResponse<long>.SuccessResponse(rentalId, "Tạo lượt thuê thành công."));
         }
 
         /// <summary>
