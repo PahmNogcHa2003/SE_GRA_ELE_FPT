@@ -161,6 +161,30 @@ namespace Application.Services.Identity
                 await _unitOfWork.SaveChangesAsync(ct);
                 await _unitOfWork.CommitTransactionAsync(tx, ct);
 
+                // 7) Send email register success 
+
+                var emailDto = new EmailResponseRegister();
+                emailDto.HtmlContent = emailDto.HtmlContent.Replace("{{UserName}}", user.UserName);
+
+                var mailData = new MailData
+                {
+                    EmailToId = user.Email,
+                    EmailToName = user.UserName,
+                    EmailSubject = "Chào mừng đến với hệ thống!",
+                    EmailBody = emailDto.HtmlContent
+                };
+
+                var emailResult =  await _emailService.SendAsync(mailData);
+
+                if (emailResult == false)
+                {
+                    return new AuthResponseDTO
+                    {
+                        IsSuccess = false,
+                        Message = "Lỗi gửi email đăng ký thành công."
+                    };
+                }
+
                 return new AuthResponseDTO
                 {
                     IsSuccess = true,
@@ -443,7 +467,7 @@ namespace Application.Services.Identity
                 var emailResult = await _emailService.SendAsync(mailData);
 
                 // 7. Ensure result is consistent
-                if (emailResult == null)
+                if (emailResult == false)
                 {
                     return new AuthResponseDTO
                     {

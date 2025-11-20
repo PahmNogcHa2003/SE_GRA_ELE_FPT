@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Application.Interfaces.User.Repository;
 using Domain.Entities;
+using Domain.Enums;
 using Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -18,7 +19,7 @@ namespace Infrastructure.Repositories.User
         public async Task<List<WalletDebt>> GetUnpaidDebtsByUserIdAsync (long userId, CancellationToken cancellationToken)
         {
             return await _dbContext.WalletDebts
-                 .Where(d => d.UserId == userId && d.Status == "Unpaid")
+                 .Where(d => d.UserId == userId && d.Status == WalletDebStatus.Unpaid)
                  .OrderBy(d => d.CreatedAt)
                  .ToListAsync(cancellationToken);
         }
