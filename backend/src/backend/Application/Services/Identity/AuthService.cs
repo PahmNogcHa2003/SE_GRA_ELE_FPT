@@ -1,16 +1,20 @@
 ﻿using Application.DTOs;
 using Application.DTOs.Auth;
+using Application.DTOs.Email;
 using Application.DTOs.UserDevice;
 using Application.DTOs.UserProfile;
 using Application.DTOs.Wallet;
 using Application.Interfaces;
+using Application.Interfaces.Email;
 using Application.Interfaces.Identity;
+using Application.Interfaces.Staff.Repository;
 using Application.Interfaces.User.Service;
 using Domain.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.Data;
 using System.Security.Claims;
+using System.Threading;
 
 namespace Application.Services.Identity
 {
@@ -24,6 +28,7 @@ namespace Application.Services.Identity
         private readonly IUnitOfWork _unitOfWork;
         private readonly IWalletService _walletService;
         private readonly IUserWalletService _userWalletService;
+        private  readonly IEmailRepository _emailService;
 
         public AuthService(
             UserManager<AspNetUser> userManager,
@@ -33,7 +38,8 @@ namespace Application.Services.Identity
             IUserDevicesService userDevicesService,
             IWalletService walletService,
             IUnitOfWork unitOfWork,
-            IUserWalletService userWalletService)
+            IUserWalletService userWalletService,
+            IEmailRepository emailService)
         {
             _userManager = userManager;
             _signInManager = signInManager;
@@ -43,6 +49,7 @@ namespace Application.Services.Identity
             _unitOfWork = unitOfWork;
             _walletService = walletService;
             _userWalletService = userWalletService;
+            _emailService = emailService;
         }
 
         // === REGISTER ===
@@ -330,6 +337,139 @@ namespace Application.Services.Identity
                 return false;
             return true;
         }
+
+        public async Task<AuthResponseDTO> ForgotPasswordAsync(ForgotPasswordDTO model, CancellationToken ct = default)
+        {
+            try
+            {
+                // Find user
+                var user = await _userManager.FindByEmailAsync(model.Email);
+                if (user == null)
+                {
+                    return new AuthResponseDTO
+                    {
+                        IsSuccess = false,
+                        Message = "Email không tồn tại trong hệ thống."
+                    };
+                }
+
+                // Validate strong password (theo yêu cầu UI: ≥10 kí tự, hoa, đặc biệt)
+                if (!IsStrongPassword(model.NewPassword))
+                {
+                    return new AuthResponseDTO
+                    {
+                        IsSuccess = false,
+                        Message = "Mật khẩu phải có ít nhất 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt."
+                    };
+                }
+
+                // Confirm password
+                if (model.NewPassword != model.ConfirmPassword)
+                {
+                    return new AuthResponseDTO
+                    {
+                        IsSuccess = false,
+                        Message = "Mật khẩu xác nhận không trùng khớp."
+                    };
+                }
+
+                // Decode token
+                var decodedToken = Uri.UnescapeDataString(model.Token);
+
+                // Reset password
+                var result = await _userManager.ResetPasswordAsync(user, decodedToken, model.NewPassword);
+
+                if (!result.Succeeded)
+                {
+                    var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+
+                    return new AuthResponseDTO
+                    {
+                        IsSuccess = false,
+                        Message = $"Reset password failed: {errors}"
+                    };
+                }
+
+                return new AuthResponseDTO
+                {
+                    Message = "Đặt lại mật khẩu thành công.",
+                    IsSuccess = true
+                };
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error in ForgotPasswordAsync", ex);
+            }
+        }
+
+        public async Task<AuthResponseDTO> SendEmailResetPassword(EmailForgotPassword model, CancellationToken ct = default)
+        {
+            try
+            {
+                var user = await _userManager.FindByEmailAsync(model.EmailForForgotPassword);
+                if (user == null)
+                {
+                    return new AuthResponseDTO
+                    {
+                        IsSuccess = false,
+                        Message = "Email not found."
+                    };
+                }
+
+                // 1. Generate reset token
+                var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+
+                // 2. Encode token and email
+                var encodedToken = Uri.EscapeDataString(token);
+                var encodedEmail = Uri.EscapeDataString(user.Email);
+
+                // 3. Construct reset URL
+                var resetUrl = $"https://localhost:5001/resetpassword?email={encodedEmail}&token={encodedToken}";
+
+                // 4. Load template and inject reset link
+                var emailDto = new EmailResponseForgotPassword();
+                emailDto.HtmlContent = emailDto.HtmlContent.Replace("{{ResetLink}}", resetUrl);
+
+                // 5. Prepare email
+                var mailData = new MailData
+                {
+                    EmailToId = user.Email,
+                    EmailToName = user.Email,
+                    EmailSubject = "Reset your password",
+                    EmailBody = emailDto.HtmlContent
+                };
+
+                // 6. Send email
+                var emailResult = await _emailService.SendAsync(mailData);
+
+                // 7. Ensure result is consistent
+                if (emailResult == null)
+                {
+                    return new AuthResponseDTO
+                    {
+                        IsSuccess = false,
+                        Message = "Failed to send reset password email."
+                    };
+                }
+
+                return new AuthResponseDTO
+                {
+                    Message = "Gửi link thành công.",
+                    IsSuccess = true
+                };
+            }
+            catch (Exception ex)
+            {
+                // Never throw raw exceptions; return failure instead
+                return new AuthResponseDTO
+                {
+                    IsSuccess = false,
+                    Message = $"Error sending reset password email: {ex.Message}"
+                };
+            }
+        }
+
+
     }
 }
 
