@@ -12,6 +12,7 @@ using Application.Interfaces.User.Service;
 using Application.Services.Base;
 using AutoMapper;
 using Domain.Entities;
+using Domain.Enums;
 
 namespace Application.Services.User
 {
@@ -64,7 +65,7 @@ namespace Application.Services.User
 
                 if (debt.Remaining == 0)
                 {
-                    debt.Status = "Paid";
+                    debt.Status = WalletDebStatus.Paid;
                     debt.PaidAt = DateTimeOffset.UtcNow;
                 }
                 _walletDebtRepository.Update(debt);

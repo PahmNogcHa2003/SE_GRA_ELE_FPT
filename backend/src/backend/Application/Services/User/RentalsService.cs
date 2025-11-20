@@ -27,6 +27,7 @@ namespace Application.Services.User
         private readonly IUnitOfWork _uow;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly ILogger<RentalsService> _logger;
+        private readonly IWalletDebtRepository _walletDebtRepository;
 
         public RentalsService(
             IStationsRepository stationRepo,
@@ -36,7 +37,8 @@ namespace Application.Services.User
             IBookingTicketRepository bookingTicketRepo,
             IUnitOfWork uow,
             IHttpContextAccessor httpContextAccessor,
-            ILogger<RentalsService> logger)
+            ILogger<RentalsService> logger,
+            IWalletDebtRepository walletDebtRepository)
         {
             _stationRepo = stationRepo;
             _vehicleRepo = vehicleRepo;
@@ -46,6 +48,7 @@ namespace Application.Services.User
             _uow = uow;
             _httpContextAccessor = httpContextAccessor;
             _logger = logger;
+            _walletDebtRepository = walletDebtRepository;
         }
 
         public async Task<long> CreateRentalAsync(CreateRentalDTO createRentalDTO)
@@ -198,6 +201,25 @@ namespace Application.Services.User
                     }
 
                     _userTicketRepository.Update(userTicket);
+                }
+
+                // Kiểm tra tiền nợ (nếu có)
+                if (duration > userTicket.RemainingMinutes)
+                {
+                    // Tính tiền nợ và xử lý (nếu có)
+                    var overageMinutes = duration - (userTicket.RemainingMinutes ?? 0);
+                    var overageFeePerMinute = 3000; // Giả sử 3000 VND/phút
+                    var totalOverageFee = overageMinutes * overageFeePerMinute;
+                    // Tạo wallet debt
+                    var walletDeb = new WalletDebt
+                    {
+                        UserId = rental.UserId,
+                        Amount = totalOverageFee,
+                        Remaining = overageMinutes,
+                        Status = WalletDebStatus.Unpaid,
+                        CreatedAt = DateTimeOffset.UtcNow,
+                    };
+                    await _walletDebtRepository.AddAsync(walletDeb); 
                 }
 
                 // 7️⃣ Cập nhật booking ticket (nếu có)
