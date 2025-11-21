@@ -29,4 +29,15 @@
     <Using Include="Xunit" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Features\Contact\" />
+    <Folder Include="Features\CategoriesVehicle\" />
+    <Folder Include="Features\UserTicket\" />
+    <Folder Include="Features\Wallet\" />
+    <Folder Include="Features\Tag\" />
+    <Folder Include="Features\Vehicle\" />
+    <Folder Include="Features\UserProfile\" />
+    <Folder Include="Features\News\" />
+  </ItemGroup>
+
 </Project>

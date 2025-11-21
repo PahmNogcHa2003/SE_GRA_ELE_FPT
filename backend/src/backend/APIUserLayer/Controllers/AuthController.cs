@@ -4,7 +4,8 @@ using Microsoft.AspNetCore.Mvc;
 using System.Linq; // For selecting error messages from ModelState
 using System.Threading.Tasks;
 using Application.Common;
-using Microsoft.AspNetCore.Authorization; // Assuming your ApiResponse is here
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity.Data; // Assuming your ApiResponse is here
 
 namespace Admin.Controllers
 {
@@ -133,6 +134,30 @@ namespace Admin.Controllers
             }
 
             var result = await _authService.ChangePasswordAsync(User, dto, ct);
+            if (!result.IsSuccess)
+                return BadRequest(result);
+
+            return Ok(result);
+        }
+
+        [HttpPost("enter-email-forgot-password")]
+        [ProducesResponseType(typeof(AuthResponseDTO), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(AuthResponseDTO), StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<AuthResponseDTO>> EnterEmailForgotPassword([FromBody] EmailForgotPassword dto, CancellationToken ct)
+        {
+            var result = await _authService.SendEmailResetPassword(dto, ct);
+            if (!result.IsSuccess)
+                return BadRequest(result);
+
+            return Ok(result);
+        }
+
+        [HttpPost("reset-password")]
+        [ProducesResponseType(typeof(AuthResponseDTO), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(AuthResponseDTO), StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<AuthResponseDTO>> ResetPassword([FromBody] ForgotPasswordDTO dto, CancellationToken ct)
+        {
+            var result = await _authService.ForgotPasswordAsync(dto, ct);
             if (!result.IsSuccess)
                 return BadRequest(result);
 
