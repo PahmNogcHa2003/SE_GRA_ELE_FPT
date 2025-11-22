@@ -1,5 +1,7 @@
 ﻿using Application.DTOs.Station;
 using Application.Interfaces.Base;
+using Domain.Entities;
+using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
 using System.Linq;

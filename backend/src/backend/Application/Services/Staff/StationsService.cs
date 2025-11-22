@@ -1,10 +1,11 @@
 ﻿using Application.DTOs.Station;
 using Application.Interfaces;
 using Application.Interfaces.Base;
-using Application.Interfaces.Photo;
 using Application.Interfaces.Cache;
+using Application.Interfaces.Photo;
 using Application.Interfaces.Staff.Service;
 using Application.Services.Base;
+using Application.Services.Photo;
 using AutoMapper;
 using Domain.Entities;
 using Domain.Enums;
@@ -19,11 +20,10 @@ namespace Application.Services.Staff
     public class StationsService : GenericService<Station, StationDTO, long>, IStationsService
     {
         private readonly IPhotoService _photoService;
-        public StationsService(IPhotoService photoService,IRepository<Station, long> repo, IMapper mapper, IUnitOfWork uow) : base(repo, mapper, uow)
         private readonly ICacheService _cacheService;
         private const string CACHE_KEY = "stations:all";
 
-        public StationsService(
+        public StationsService(IPhotoService photoService,
             IRepository<Station, long> repo,
             IMapper mapper,
             IUnitOfWork uow,
@@ -122,13 +122,7 @@ namespace Application.Services.Staff
 
         public Task<List<Station>> GetAllWithCacheAsyncRaw() => _cacheService.GetAsync<List<Station>>(CACHE_KEY)
     ?? _repo.Query().Where(s => s.IsActive).ToListAsync();
-
-            switch (lowerSortOrder)
-            {
-                default:
-                    return base.ApplySort(query, sortOrder);
-            }
-        }
+        
         protected override IQueryable<StationDTO> ProjectToDto(IQueryable<Station> query)
         {
             var readyStatuses = new[] { "Available" };
@@ -146,9 +140,10 @@ namespace Application.Services.Staff
                 VehicleAvailable = s.Vehicles.Count(v => readyStatuses.Contains(v.Status))
             });
         }
+
         public async Task<StationDTO?> UpdateImageAsync(long stationId, IFormFile imageFile, CancellationToken ct = default)
         {
-            if(imageFile == null || imageFile.Length == 0)
+            if (imageFile == null || imageFile.Length == 0)
                 throw new ArgumentException("Image file is null or empty", nameof(imageFile));
             var station = await _repo.Query()
                 .FirstOrDefaultAsync(s => s.Id == stationId, ct);
@@ -166,7 +161,7 @@ namespace Application.Services.Staff
                 }
             }
             var upload = await _photoService.AddPhotoAsync(imageFile, PhotoPreset.Station);
-            if(upload == null || string.IsNullOrWhiteSpace(upload.Url))
+            if (upload == null || string.IsNullOrWhiteSpace(upload.Url))
                 throw new Exception("Upload ảnh trạm thất bại.");
             station.Image = upload.Url;
             station.ImagePublicId = upload.PublicId;
@@ -175,7 +170,9 @@ namespace Application.Services.Staff
             _repo.Update(station);
             await _uow.SaveChangesAsync(ct);
             return _mapper.Map<StationDTO>(station);
-        public async Task RefreshCacheAsync()
+        }
+
+public async Task RefreshCacheAsync()
         {
             var data = await _repo.Query().Where(s => s.IsActive).ToListAsync();
             await _cacheService.SetAsync(CACHE_KEY, data, TimeSpan.FromMinutes(5));
