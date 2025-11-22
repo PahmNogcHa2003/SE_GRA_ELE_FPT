@@ -31,5 +31,6 @@ namespace Application.DTOs.Station
         public string? Image { get; set; }
         public int VehicleAvailable { get; set; }
         public double? DistanceKm { get; set; }
+        public DateTimeOffset UpdatedAt { get; set; }
     }
 }

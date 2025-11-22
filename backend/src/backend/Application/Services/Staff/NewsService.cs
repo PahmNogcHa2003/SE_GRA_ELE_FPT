@@ -3,12 +3,15 @@ using Application.DTOs;
 using Application.DTOs.New;
 using Application.Interfaces;
 using Application.Interfaces.Base;
+using Application.Interfaces.Photo;
 using Application.Interfaces.Staff.Repository;
 using Application.Interfaces.Staff.Service;
 using Application.Services.Base;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using Domain.Entities;
+using Domain.Enums;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -21,9 +24,11 @@ namespace Application.Services.Staff
     public class NewsService : GenericService<News, NewsDTO, long>, INewsService
     {
         private readonly INewsRepository _newsRepo;
+        private readonly IPhotoService _photoService;
         private readonly IRepository<Tag, long> _tagRepo;
 
         public NewsService(
+            IPhotoService photoService,
             INewsRepository newsRepo,
             IRepository<Tag, long> tagRepo,
             IMapper mapper,
@@ -31,6 +36,7 @@ namespace Application.Services.Staff
         {
             _newsRepo = newsRepo;
             _tagRepo = tagRepo;
+            _photoService = photoService;
         }
 
         // === CÁC PHƯƠNG THỨC CRUD ĐÃ ĐƯỢC TỐI ƯU HÓA ===
@@ -133,6 +139,36 @@ namespace Application.Services.Staff
 
             // Với các trường filter khác, gọi về cho base xử lý
             return base.ApplyFilter(query, filterField, filterValue);
+        }
+        public async Task<NewsDTO?> UpdateBannerAsync(long newsId, IFormFile file , CancellationToken ct = default)
+        {
+            if(file == null || file.Length == 0)
+                throw new ArgumentException("File banner không hợp lệ", nameof(file));
+            var news =  await _repo.Query()
+                .FirstOrDefaultAsync(n => n.Id == newsId, ct);
+            if (news == null) throw new KeyNotFoundException($"News with id {newsId} not found.");
+            if (!string.IsNullOrWhiteSpace(news.BannerPublicId))
+            {
+                try
+                {
+                    await _photoService.DeletePhotoAsync(news.BannerPublicId);
+                }
+                catch
+                {
+                    Console.WriteLine("Xoá ảnh cũ thất bại, có thể ảnh không tồn tại trên Cloudinary.");
+                }
+            }
+            var uploadResult = await _photoService.AddPhotoAsync(file, PhotoPreset.NewsBanner);
+            if(uploadResult == null || string.IsNullOrWhiteSpace(uploadResult.Url))
+                throw new Exception("Upload banner thất bại.");
+            news.Banner = uploadResult.Url;
+            news.BannerPublicId = uploadResult.PublicId;
+            news.UpdatedAt = DateTimeOffset.UtcNow;
+
+            _repo.Update(news);
+            await _uow.SaveChangesAsync(ct);
+
+            return _mapper.Map<NewsDTO>(news);
         }
     }
 }

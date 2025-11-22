@@ -1,14 +1,15 @@
 ﻿using Application.DTOs.Station;
 using Application.Interfaces;
 using Application.Interfaces.Base;
+using Application.Interfaces.Photo;
 using Application.Interfaces.Cache;
 using Application.Interfaces.Staff.Service;
 using Application.Services.Base;
 using AutoMapper;
 using Domain.Entities;
+using Domain.Enums;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -17,6 +18,8 @@ namespace Application.Services.Staff
 {
     public class StationsService : GenericService<Station, StationDTO, long>, IStationsService
     {
+        private readonly IPhotoService _photoService;
+        public StationsService(IPhotoService photoService,IRepository<Station, long> repo, IMapper mapper, IUnitOfWork uow) : base(repo, mapper, uow)
         private readonly ICacheService _cacheService;
         private const string CACHE_KEY = "stations:all";
 
@@ -26,6 +29,7 @@ namespace Application.Services.Staff
             IUnitOfWork uow,
             ICacheService cacheService) : base(repo, mapper, uow)
         {
+            _photoService = photoService;
             _cacheService = cacheService;
         }
 
@@ -119,6 +123,58 @@ namespace Application.Services.Staff
         public Task<List<Station>> GetAllWithCacheAsyncRaw() => _cacheService.GetAsync<List<Station>>(CACHE_KEY)
     ?? _repo.Query().Where(s => s.IsActive).ToListAsync();
 
+            switch (lowerSortOrder)
+            {
+                default:
+                    return base.ApplySort(query, sortOrder);
+            }
+        }
+        protected override IQueryable<StationDTO> ProjectToDto(IQueryable<Station> query)
+        {
+            var readyStatuses = new[] { "Available" };
+
+            return query.Select(s => new StationDTO
+            {
+                Id = s.Id,
+                Name = s.Name,
+                Location = s.Location,
+                Capacity = s.Capacity,
+                Lat = s.Lat,
+                Lng = s.Lng,
+                IsActive = s.IsActive,
+                Image = s.Image,
+                VehicleAvailable = s.Vehicles.Count(v => readyStatuses.Contains(v.Status))
+            });
+        }
+        public async Task<StationDTO?> UpdateImageAsync(long stationId, IFormFile imageFile, CancellationToken ct = default)
+        {
+            if(imageFile == null || imageFile.Length == 0)
+                throw new ArgumentException("Image file is null or empty", nameof(imageFile));
+            var station = await _repo.Query()
+                .FirstOrDefaultAsync(s => s.Id == stationId, ct);
+            if (station == null)
+                return null;
+            if (!string.IsNullOrWhiteSpace(station.ImagePublicId))
+            {
+                try
+                {
+                    await _photoService.DeletePhotoAsync(station.ImagePublicId);
+                }
+                catch
+                {
+                    Console.WriteLine("Xoá ảnh trạm cũ thất bại, có thể ảnh không tồn tại trên Cloudinary");
+                }
+            }
+            var upload = await _photoService.AddPhotoAsync(imageFile, PhotoPreset.Station);
+            if(upload == null || string.IsNullOrWhiteSpace(upload.Url))
+                throw new Exception("Upload ảnh trạm thất bại.");
+            station.Image = upload.Url;
+            station.ImagePublicId = upload.PublicId;
+            station.UpdatedAt = DateTimeOffset.UtcNow;
+
+            _repo.Update(station);
+            await _uow.SaveChangesAsync(ct);
+            return _mapper.Map<StationDTO>(station);
         public async Task RefreshCacheAsync()
         {
             var data = await _repo.Query().Where(s => s.IsActive).ToListAsync();
