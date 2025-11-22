@@ -103,6 +103,9 @@ builder.Services.AddCors(o => o.AddPolicy("frontend", p =>
      .AllowAnyHeader().AllowAnyMethod().AllowCredentials()
 ));
 
+// Add Redis
+builder.Services.AddInfrastructure(builder.Configuration);
+
 // Add Swagger with Auth support
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
