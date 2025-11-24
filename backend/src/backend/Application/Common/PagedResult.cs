@@ -9,19 +9,16 @@ namespace Application.Common
 {
     public class PagedResult<T>
     {
-        // THAY ĐỔI 1: Chuyển từ IQueryable<T> thành List<T> để đảm bảo query đã được thực thi
         public List<T> Items { get; }
-
         public int Page { get; }
         public int PageSize { get; }
         public int TotalCount { get; }
 
-        // THÊM MỚI: Các thuộc tính tiện ích giúp hiển thị trên UI dễ dàng hơn
         public int TotalPages => (int)Math.Ceiling(TotalCount / (double)PageSize);
         public bool HasNextPage => Page < TotalPages;
         public bool HasPreviousPage => Page > 1;
 
-        // Constructor nhận IEnumerable và chuyển thành List
+        // Constructor
         public PagedResult(IEnumerable<T> items, int totalCount, int page, int pageSize)
         {
             Items = new List<T>(items);
@@ -30,7 +27,7 @@ namespace Application.Common
             PageSize = pageSize;
         }
 
-        // SỬA LẠI: Toàn bộ phương thức tĩnh FromQueryableAsync
+        // Async version dùng IQueryable (EF)
         public static async Task<PagedResult<T>> FromQueryableAsync(
             IQueryable<T> query,
             int page,
@@ -59,6 +56,20 @@ namespace Application.Common
             }
         }
 
+        // Đồng bộ version cho List<T> in-memory
+        public static PagedResult<T> FromList(IEnumerable<T> list, int page, int pageSize)
+        {
+            if (page < 1) page = 1;
+            if (pageSize < 1) pageSize = 10;
 
+            var itemsList = list.ToList();
+            var totalCount = itemsList.Count;
+            var pageItems = itemsList
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+
+            return new PagedResult<T>(pageItems, totalCount, page, pageSize);
+        }
     }
 }
