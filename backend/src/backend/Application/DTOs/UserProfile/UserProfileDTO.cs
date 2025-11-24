@@ -1,4 +1,6 @@
 ﻿using Application.DTOs.JsonConvert;
+using Application.DTOs.RentalHistory;
+using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -77,5 +79,7 @@ namespace Application.DTOs.UserProfile
         [Required]
         [Precision(0)]
         public DateTimeOffset UpdatedAt { get; set; }
+
+        public List<RentalHistoryDTO> rentalHistories = new List<RentalHistoryDTO>();
     }
 }

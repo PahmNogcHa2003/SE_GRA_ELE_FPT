@@ -1,6 +1,7 @@
 ﻿using APIUserLayer.Controllers.Base;
 using Application.Common;
 using Application.DTOs.Rental;
+using Application.DTOs.RentalHistory;
 using Application.Interfaces.User.Service;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -92,6 +93,15 @@ namespace APIUserLayer.Controllers.User
             // Mặc định, nếu service không ném exception mà trả về null (tùy vào cách bạn thiết kế service)
             // thì coi như yêu cầu không hợp lệ hoặc không tìm thấy.
             return NotFound(ApiResponse<object>.ErrorResponse("Không tìm thấy xe hoặc vị trí không hợp lệ."));
+        }
+        ///<summary>
+        ///Lấy thông tin lịch sử đi xe của người dùng
+        ///<summary>
+        [HttpGet("history")]
+        public async Task<ActionResult<IEnumerable<RentalHistoryDTO>>> GetMyHistory(CancellationToken ct)
+        {
+            var list = await _rentalsService.GetMyRentalHistoryAsync(ct);
+            return Ok(ApiResponse<IEnumerable<RentalHistoryDTO>>.SuccessResponse(list, "Danh sách lịch sử đi xe của bạn !"));
         }
     }
 }

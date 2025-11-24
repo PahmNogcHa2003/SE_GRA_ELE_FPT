@@ -6,10 +6,10 @@ using System.Threading.Tasks;
 
 namespace Domain.Enums
 {
-    public class WalletDebStatus
+    public class WalletDebtStatus
     {
-        //"Unpaid", "Paid"
         public const string Unpaid = "Unpaid";
+        public const string PartiallyPaid = "PartiallyPaid";
         public const string Paid = "Paid";
     }
 }

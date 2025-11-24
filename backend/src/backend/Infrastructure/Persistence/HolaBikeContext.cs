@@ -24,6 +24,7 @@ public partial class HolaBikeContext : IdentityDbContext<AspNetUser, IdentityRol
     public DbSet<CategoriesVehicle> CategoriesVehicles { get; set; }
     public DbSet<VehicleUsageLog> VehicleUsageLogs { get; set; }
     public DbSet<Rental> Rentals { get; set; }
+    public DbSet<RentalHistory> RentalHistories { get; set; }
 
     // --- VÉ & THANH TOÁN ---
     public DbSet<TicketPlan> TicketPlans { get; set; }

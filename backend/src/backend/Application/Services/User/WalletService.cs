@@ -46,7 +46,6 @@ namespace Application.Services.User
             {
                 wallet = new Wallet { UserId = userId, Status = "Active", Balance = 0, TotalDebt = 0, UpdatedAt = DateTimeOffset.UtcNow };
                 await _walletRepository.AddAsync(wallet, cancellationToken);
-                // KHÔNG SaveChanges ở đây – để caller gói transaction & commit
             }
 
             decimal remainingAmount = amount;
@@ -65,19 +64,18 @@ namespace Application.Services.User
 
                 if (debt.Remaining == 0)
                 {
-                    debt.Status = WalletDebStatus.Paid;
+                    debt.Status = WalletDebtStatus.Paid;
                     debt.PaidAt = DateTimeOffset.UtcNow;
                 }
                 _walletDebtRepository.Update(debt);
 
-                // Ghi nhận transaction cho phần trả nợ (không làm thay đổi Balance)
                 lastTxn = new WalletTransaction
                 {
                     WalletId = wallet.Id,
-                    Direction = "In", // chuẩn hoá "IN"/"OUT"
+                    Direction = "In", 
                     Source = $"DebtRepayment_Order_{debt.OrderId}",
                     Amount = amountToPay,
-                    BalanceAfter = wallet.Balance, // không thay đổi số dư ví
+                    BalanceAfter = wallet.Balance, 
                     CreatedAt = DateTimeOffset.UtcNow
                 };
                 await _walletTransactionRepository.AddAsync(lastTxn, cancellationToken);
@@ -91,7 +89,7 @@ namespace Application.Services.User
                 {
                     WalletId = wallet.Id,
                     Direction = "In",
-                    Source = source, // "VNPay (Order 123)" nếu có order
+                    Source = source, 
                     Amount = remainingAmount,
                     BalanceAfter = wallet.Balance,
                     CreatedAt = DateTimeOffset.UtcNow
@@ -103,9 +101,6 @@ namespace Application.Services.User
             wallet.UpdatedAt = DateTimeOffset.UtcNow;
             _walletRepository.Update(wallet);
 
-            // KHÔNG SaveChanges ở đây – caller (PaymentService) sẽ Save & Commit
-            // Đảm bảo luôn trả về 1 transaction có ý nghĩa để FE hiện hóa đơn
-            // Nếu toàn bộ tiền dùng để trả nợ, lastTxn là repayment cuối cùng (BalanceAfter = Balance không đổi)
             return lastTxn ?? new WalletTransaction
             {
                 WalletId = wallet.Id,

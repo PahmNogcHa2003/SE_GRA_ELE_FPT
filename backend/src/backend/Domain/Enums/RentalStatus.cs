@@ -8,10 +8,8 @@ namespace Domain.Enums
 {
     public static class RentalStatus
     {
-        public const string Pending = "Pending";
-        public const string Success = "Success";
-        public const string End = "End";
+        public const string Ongoing = "Ongoing";
+        public const string End = "End";    
         public const string Cancelled = "Cancelled";
-        public const string Active = "Active";
     }
 }
