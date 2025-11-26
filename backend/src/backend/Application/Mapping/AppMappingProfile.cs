@@ -4,6 +4,7 @@ using Application.DTOs.Kyc;
 using Application.DTOs.New;
 using Application.DTOs.Station;
 using Application.DTOs.Tag;
+using Application.DTOs.TagNew;
 using Application.DTOs.Tickets;
 using Application.DTOs.User;
 using Application.DTOs.Wallet;
@@ -30,6 +31,8 @@ namespace Application.Mapping
             CreateMap<Domain.Entities.Vehicle, DTOs.Vehicle.VehicleDTO>().ReverseMap();
             CreateMap<Domain.Entities.Tag, TagDTO>().ReverseMap();
             CreateMap<Wallet, WalletDTO>().ReverseMap();
+            CreateMap<News, NewsDTO>().ReverseMap();
+            CreateMap<TagNew, TagNewDTO>().ReverseMap();
             CreateMap<WalletTransaction, WalletTransactionDTO>().ReverseMap();
             CreateMap<CreateTicketPlanDTO, TicketPlan>();
             CreateMap<UpdateTicketPlanDTO, TicketPlan>()
@@ -60,24 +63,7 @@ namespace Application.Mapping
             CreateMap<Domain.Entities.Contact, DTOs.Contact.ManageContactDTO>().ReverseMap();
             CreateMap<Domain.Entities.KycForm, DTOs.Kyc.CreateKycRequestDTO>().ReverseMap();
 
-            ConfigureNewsMapping();
 
-        }
-
-        private void ConfigureNewsMapping()
-        {
-            // Chiều từ Entity -> DTO (Khi lấy dữ liệu ra)
-            CreateMap<News, NewsDTO>()
-                .ForMember(dest => dest.TagIds,
-                    opt => opt.MapFrom(src => src.TagNews.Select(tn => tn.TagId)))
-                .ForMember(dest => dest.TagNames,
-                    opt => opt.MapFrom(src => src.TagNews.Select(tn => tn.Tag.Name)));
-
-            // === DÒNG QUAN TRỌNG NHẤT ĐỂ SỬA LỖI ===
-            // Chiều từ DTO -> Entity (Khi tạo mới/cập nhật)
-            // BẮT BUỘC Bỏ qua (Ignore) việc map thuộc tính Tags.
-            CreateMap<NewsDTO, Domain.Entities.News>()
-                .ForMember(dest => dest.TagNews, opt => opt.Ignore());
         }
     }
 }

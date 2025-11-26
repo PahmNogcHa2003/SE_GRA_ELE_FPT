@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Application.Interfaces.Staff.Repository
 {
-    public interface ITagRepository : IRepository<Domain.Entities.Tag, long>
+    public interface ITagNewRepository : IRepository<TagNew, long>
     {
     }
 }
