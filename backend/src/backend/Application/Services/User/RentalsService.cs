@@ -37,6 +37,7 @@ namespace Application.Services.User
         private readonly IUnitOfWork _uow;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly ILogger<RentalsService> _logger;
+        private readonly IUserLifetimeStatsService _userLifetimeStatsService;
         private static readonly TimeZoneInfo VnTz =
             TimeZoneInfo.FindSystemTimeZoneById(
                 RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
@@ -67,6 +68,7 @@ namespace Application.Services.User
             IRepository<TicketPlanPrice, long> planPriceRepo,
             IUnitOfWork uow,
             IHttpContextAccessor httpContextAccessor,
+            IUserLifetimeStatsService userLifetimeStatsService,
             ILogger<RentalsService> logger)
         {
             _stationRepo = stationRepo;
@@ -79,6 +81,7 @@ namespace Application.Services.User
             _walletDebtRepo = walletDebtRepo;
             _orderRepo = orderRepo;
             _planPriceRepo = planPriceRepo;
+            _userLifetimeStatsService = userLifetimeStatsService;
             _uow = uow;
             _httpContextAccessor = httpContextAccessor;
             _logger = logger;
@@ -468,6 +471,31 @@ namespace Application.Services.User
                 };
 
                 await _rentalHistoryRepo.AddAsync(history, ct);
+
+                // Cập nhật thống kê người dùng sau chuyến đi 
+                decimal distanceKmForStats = 0m;
+                decimal co2ForStats = 0m;
+                decimal caloriesForStats = 0m;
+
+                if(distanceMeters.HasValue)
+                {
+                    distanceKmForStats = (decimal)(distanceMeters.Value / 1000.0);
+                }
+                if (co2SavedKg.HasValue)
+                {
+                    co2ForStats = (decimal)co2SavedKg.Value;
+                }
+                if (caloriesBurned.HasValue)
+                {
+                    caloriesForStats = (decimal)caloriesBurned.Value;
+                }
+                await _userLifetimeStatsService.UpdateAfterRideAsync(
+                    rental.UserId,
+                    distanceKmForStats,
+                    duration,
+                    co2ForStats,
+                    caloriesForStats,
+                    ct);
 
                 // Lưu tất cả
                 await _uow.SaveChangesAsync(ct);

@@ -10,7 +10,7 @@ namespace AdminLayer.Controllers.Staff
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+    [Authorize(Roles = "Admin")]
     public class StationsController : ControllerBase
     {
         private readonly IStationsService _stationsService;

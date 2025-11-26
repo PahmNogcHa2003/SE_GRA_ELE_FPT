@@ -12,16 +12,16 @@ using Microsoft.OpenApi.Models;
 using System.Reflection;
 using System.Text;
 
-
 var builder = WebApplication.CreateBuilder(args);
 
-// MediatR
-builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(Assembly.Load("Application")));
+// 1. MediatR
+builder.Services.AddMediatR(cfg =>
+    cfg.RegisterServicesFromAssembly(Assembly.Load("Application")));
 
-// Infrastructure (DB, Repo, Services...) - ĐẢM BẢO KHÔNG CÓ AddSwaggerGen Ở TRONG NÀY
+// 2. Infrastructure (DbContext, Repo, Redis, ...)
 builder.Services.AddInfrastructure(builder.Configuration);
 
-// Identity
+// 3. Identity
 builder.Services.AddIdentity<AspNetUser, IdentityRole<long>>(options =>
 {
     options.Password.RequireDigit = true;
@@ -31,32 +31,29 @@ builder.Services.AddIdentity<AspNetUser, IdentityRole<long>>(options =>
     options.Password.RequiredLength = 6;
 })
 .AddEntityFrameworkStores<HolaBikeContext>()
-.AddDefaultTokenProviders()
-.AddRoleManager<RoleManager<IdentityRole<long>>>()
-.AddDefaultTokenProviders()
-.AddRoleManager<RoleManager<IdentityRole<long>>>(); 
+.AddDefaultTokenProviders();
 
-// Controllers + Validation response
+// 4. Controllers + custom validation
 builder.Services.AddControllers()
     .ConfigureApiBehaviorOptions(options =>
-{
-    options.InvalidModelStateResponseFactory = context =>
     {
-        var errors = context.ModelState
-        .Where(e => e.Value.Errors.Count > 0)
-        .SelectMany(x => x.Value.Errors)
-        .Select(x => x.ErrorMessage);
+        options.InvalidModelStateResponseFactory = context =>
+        {
+            var errors = context.ModelState
+                .Where(e => e.Value.Errors.Count > 0)
+                .SelectMany(x => x.Value.Errors)
+                .Select(x => x.ErrorMessage);
 
-        var errorResponse = ApiResponse<object>.ErrorResponse(
-        message: "Validation Failed",
-        errors: errors
-    );
+            var errorResponse = ApiResponse<object>.ErrorResponse(
+                message: "Validation Failed",
+                errors: errors
+            );
 
-        return new BadRequestObjectResult(errorResponse);
-    };
-});
+            return new BadRequestObjectResult(errorResponse);
+        };
+    });
 
-// CORS: CHỌN 1 policy dùng thật sự
+// 5. CORS
 builder.Services.AddCors(o => o.AddPolicy("frontend", p =>
     p.WithOrigins("http://localhost:5173")
      .AllowAnyHeader()
@@ -64,12 +61,7 @@ builder.Services.AddCors(o => o.AddPolicy("frontend", p =>
      .AllowCredentials()
 ));
 
-// Chỉ GỌI 1 LẦN
-builder.Services.AddEndpointsApiExplorer();
-
-// AuthN + JWT
-
-// Add Authentication & JWT
+// 6. Authentication + JWT  (có log events)
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -86,9 +78,29 @@ builder.Services.AddAuthentication(options =>
         IssuerSigningKey = new SymmetricSecurityKey(
             Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
     };
+
+    // LOG lỗi auth để debug
+    options.Events = new JwtBearerEvents
+    {
+        OnAuthenticationFailed = ctx =>
+        {
+            Console.WriteLine("AUTH FAILED: " + ctx.Exception.Message);
+            return Task.CompletedTask;
+        },
+        OnForbidden = ctx =>
+        {
+            Console.WriteLine("AUTH FORBIDDEN (403): user not allowed.");
+            return Task.CompletedTask;
+        },
+        OnChallenge = ctx =>
+        {
+            Console.WriteLine("AUTH CHALLENGE (401).");
+            return Task.CompletedTask;
+        }
+    };
 });
 
-// AuthZ policies: CHỈ KHAI BÁO 1 LẦN
+// 7. Authorization policies
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
@@ -96,21 +108,18 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("UserOnly", policy => policy.RequireRole("User"));
 });
 
+builder.Services.AddHttpContextAccessor();
 
-// Add CORS
-builder.Services.AddCors(o => o.AddPolicy("frontend", p =>
-    p.WithOrigins("http://localhost:5173")
-     .AllowAnyHeader().AllowAnyMethod().AllowCredentials()
-));
-
-// Add Redis
-builder.Services.AddInfrastructure(builder.Configuration);
-
-// Add Swagger with Auth support
+// 8. Swagger
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new OpenApiInfo { Title = "AdminLayer API", Version = "v1" });
+    c.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "AdminLayer API",
+        Version = "v1"
+    });
+
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name = "Authorization",
@@ -118,8 +127,9 @@ builder.Services.AddSwaggerGen(c =>
         Scheme = "bearer",
         BearerFormat = "JWT",
         In = ParameterLocation.Header,
-        Description = "JWT Authorization header using the Bearer scheme."
+        Description = "JWT Bearer token"
     });
+
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
         {
@@ -127,131 +137,74 @@ builder.Services.AddSwaggerGen(c =>
             {
                 Reference = new OpenApiReference
                 {
-                    Type = ReferenceType.SecurityScheme,
-                    Id = "Bearer"
+                    Id = "Bearer",
+                    Type = ReferenceType.SecurityScheme
                 }
             },
-            new string[] {}
+            Array.Empty<string>()
         }
     });
 });
 
-builder.Services.AddHttpContextAccessor();
-
-
-// Add Authorization Policies
-builder.Services.AddAuthorization(options =>
-{
-    options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
-    options.AddPolicy("StaffOrAdmin", policy => policy.RequireRole("Admin", "Staff"));
-    options.AddPolicy("UserOnly", policy => policy.RequireRole("User"));
-});
-
 var app = builder.Build();
 
-// --- Tự động apply migrations khi khởi động ---
+// 9. Auto migrate
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<HolaBikeContext>();
-    try
-    {
-        db.Database.Migrate(); // <- chạy tự động update-database
-        Console.WriteLine(" Database migrated successfully.");
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine(" Database migration failed: " + ex.Message);
-    }
+    db.Database.Migrate();
 }
 
-// --- Seed Roles to Database ---
-// This block ensures the roles "Admin", "Staff", and "User" exist in the database.
+// 10. Seed roles + admin
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
-    try
+
+    var roleManager = services.GetRequiredService<RoleManager<IdentityRole<long>>>();
+    var userManager = services.GetRequiredService<UserManager<AspNetUser>>();
+
+    string[] roles = { "Admin", "Staff", "User" };
+
+    foreach (var r in roles)
+        if (!await roleManager.RoleExistsAsync(r))
+            await roleManager.CreateAsync(new IdentityRole<long>(r));
+
+    var adminEmail = "admin@ecojourney.com";
+    var admin = await userManager.FindByEmailAsync(adminEmail);
+
+    if (admin == null)
     {
-        var roleManager = services.GetRequiredService<RoleManager<IdentityRole<long>>>();
-        string[] roleNames = { "Admin", "Staff", "User" };
-        foreach (var roleName in roleNames)
+        admin = new AspNetUser
         {
-            // Use await directly because of top-level statements
-            var roleExist = await roleManager.RoleExistsAsync(roleName);
-            if (!roleExist)
-            {
-                await roleManager.CreateAsync(new IdentityRole<long>(roleName));
-            }
-        }
-    }
-    catch (Exception ex)
-    {
-        var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "An error occurred while seeding the database roles.");
+            UserName = "admin",
+            Email = adminEmail,
+            EmailConfirmed = true,
+            PhoneNumber = "0123456789",
+            SecurityStamp = Guid.NewGuid().ToString(),
+            CreatedDate = DateTimeOffset.UtcNow
+        };
+
+        var result = await userManager.CreateAsync(admin, "Admin@123");
+        if (result.Succeeded)
+            await userManager.AddToRolesAsync(admin, new[] { "Admin", "Staff" });
     }
 }
 
-
-// --- Middleware Pipeline Configuration ---
-
-
-// ✅ --- SEED DATABASE ON STARTUP ---
-using (var scope = app.Services.CreateScope())
-{
-    var services = scope.ServiceProvider;
-    var logger = services.GetRequiredService<ILogger<Program>>();
-    try
-    {
-        var roleManager = services.GetRequiredService<RoleManager<IdentityRole<long>>>();
-        var userManager = services.GetRequiredService<UserManager<AspNetUser>>();
-
-        string[] roles = { "Admin", "Staff", "User" };
-        foreach (var r in roles)
-            if (!await roleManager.RoleExistsAsync(r))
-                await roleManager.CreateAsync(new IdentityRole<long>(r));
-
-        var adminEmail = "admin@ecojourney.com";   // CHỌN 1 email, tránh trùng
-        var adminUser = await userManager.FindByEmailAsync(adminEmail);
-        if (adminUser == null)
-        {
-            adminUser = new AspNetUser
-            {
-                UserName = "admin",
-                Email = adminEmail,
-                EmailConfirmed = true,
-                PhoneNumber = "0123456789",
-                SecurityStamp = Guid.NewGuid().ToString(),
-                CreatedDate = DateTimeOffset.UtcNow
-            };
-            var create = await userManager.CreateAsync(adminUser, "Admin@123");
-            if (!create.Succeeded)
-                throw new Exception("Create admin failed: " + string.Join(", ", create.Errors.Select(e => e.Description)));
-
-            var addRoles = await userManager.AddToRolesAsync(adminUser, new[] { "Admin", "Staff" });
-            if (!addRoles.Succeeded)
-                throw new Exception("Add roles failed: " + string.Join(", ", addRoles.Errors.Select(e => e.Description)));
-        }
-    }
-    catch (Exception ex)
-    {
-        logger.LogError(ex, "Seeding identity failed.");
-    }
-}
-
+// 11. Middleware pipeline
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI(); // 1 lần
+    app.UseSwaggerUI();
 }
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseMiddleware<ValidationMiddleware>();
-app.UseMiddleware<ResponseMiddleware>();
+// TẠM THỜI comment nếu cần để thấy status thật
+// app.UseMiddleware<ResponseMiddleware>();
 
 app.UseHttpsRedirection();
 
 app.UseRouting();
-
-// CHỈ GỌI 1 LẦN CORS VỚI POLICY BẠN MUỐN
 app.UseCors("frontend");
 
 app.UseAuthentication();

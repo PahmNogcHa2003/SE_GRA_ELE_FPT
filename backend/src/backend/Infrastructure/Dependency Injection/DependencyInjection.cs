@@ -125,6 +125,7 @@ namespace Infrastructure.Dependency_Injection
             services.AddScoped<ITransactionService, TransactionService>();
             services.AddScoped<IPhotoService, PhotoService>();
             services.AddScoped<IRentalHistoryService, RentalHistoryService>();
+            services.AddScoped<IUserLifetimeStatsService, UserLifetimeStatsService>();
 
             // --- Mapper ---
             services.AddAutoMapper(typeof(AppMappingProfile).Assembly);
