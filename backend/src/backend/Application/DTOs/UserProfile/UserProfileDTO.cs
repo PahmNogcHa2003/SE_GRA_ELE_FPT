@@ -53,6 +53,16 @@ namespace Application.DTOs.UserProfile
 
         public string? AddressDetail { get; set; }
 
+        public decimal TotalDistanceKm { get; set; }
+
+        public int TotalTrips { get; set; }
+
+        public int TotalDurationMinutes { get; set; }
+
+        public decimal TotalCo2SavedKg { get; set; }
+
+        public decimal TotalCaloriesBurned { get; set; }
+
         [Required]
         [StringLength(15)]
         public string NumberCard { get; set; } // ĐÃ SỬA: string

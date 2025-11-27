@@ -8,7 +8,21 @@ using Domain.Entities;
 
 namespace Application.Interfaces.User.Repository
 {
+    public class LeaderboardRawItem
+    {
+        public long UserId { get; set; }
+        public string? FullName { get; set; }
+        public string? AvatarUrl { get; set; }
+        public int TotalDurationMinutes { get; set; }
+        public decimal TotalDistanceKm { get; set; }
+        public int TotalTrips { get; set; }
+    }
     public interface IRentalHistoryRepository : IRepository<RentalHistory, long>
     {
+        Task<List<LeaderboardRawItem>> GetLeaderboardRawAsync(
+           DateTimeOffset? fromUtc,
+           DateTimeOffset? toUtc,
+           int topN,
+           CancellationToken ct = default);
     }
 }
