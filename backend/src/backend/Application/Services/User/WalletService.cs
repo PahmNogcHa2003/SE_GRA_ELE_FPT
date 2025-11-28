@@ -2,17 +2,20 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Application.DTOs;
 using Application.DTOs.Wallet;
 using Application.Interfaces;
 using Application.Interfaces.Base;
+using Application.Interfaces.Staff.Repository;
 using Application.Interfaces.User.Repository;
 using Application.Interfaces.User.Service;
 using Application.Services.Base;
 using AutoMapper;
 using Domain.Entities;
 using Domain.Enums;
+using Domain.Rules;
 
 namespace Application.Services.User
 {
@@ -21,7 +24,7 @@ namespace Application.Services.User
         private readonly IUnitOfWork _unitOfWork;
         private readonly IWalletDebtRepository _walletDebtRepository;
         private readonly IWalletRepository _walletRepository;
-        private readonly IWalletTransactionRepository _walletTransactionRepository;
+        private readonly Application.Interfaces.User.Repository.IWalletTransactionRepository _walletTransactionRepository;
 
         public WalletService(
             IRepository<Wallet, long> repo,
@@ -29,7 +32,7 @@ namespace Application.Services.User
             IUnitOfWork unitOfWork,
             IWalletDebtRepository walletDebtRepository,
             IWalletRepository walletRepository,
-            IWalletTransactionRepository walletTransactionRepository
+            Application.Interfaces.User.Repository.IWalletTransactionRepository walletTransactionRepository
         ) : base(repo, mapper, unitOfWork)    
         {
             _unitOfWork = unitOfWork;
@@ -44,7 +47,15 @@ namespace Application.Services.User
             var wallet = await _walletRepository.GetByUserIdAsync(userId, cancellationToken);
             if (wallet == null)
             {
-                wallet = new Wallet { UserId = userId, Status = "Active", Balance = 0, TotalDebt = 0, UpdatedAt = DateTimeOffset.UtcNow };
+                wallet = new Wallet 
+                {
+                    UserId = userId, 
+                    Status = "Active", 
+                    Balance = 0, 
+                    TotalDebt = 0, 
+                    PromoBalance = 0, 
+                    UpdatedAt = DateTimeOffset.UtcNow 
+                };
                 await _walletRepository.AddAsync(wallet, cancellationToken);
             }
 
@@ -111,7 +122,83 @@ namespace Application.Services.User
                 CreatedAt = DateTimeOffset.UtcNow
             };
         }
+        public async Task<WalletTransaction> CreditPromoAsync(
+            long userId,
+            decimal amount,
+            string source,
+            CancellationToken ct)
+        {
+            if (amount <= 0)
+                throw new ArgumentOutOfRangeException(nameof(amount), "Amount must be greater than 0.");
 
+            var now = DateTimeOffset.UtcNow;
+            var wallet = await _walletRepository.GetByUserIdAsync(userId, ct);
+            if (wallet == null)
+            {
+                wallet = new Wallet
+                {
+                    UserId = userId,
+                    Balance = 0,
+                    PromoBalance = 0,
+                    TotalDebt = 0,
+                    Status = "Active",
+                    UpdatedAt = now
+                };
+                await _walletRepository.AddAsync(wallet, ct);
+            }
+
+            wallet.PromoBalance += amount;
+            wallet.UpdatedAt = now;
+
+            var txn = new WalletTransaction
+            {
+                WalletId = wallet.Id,
+                Direction = "In",
+                Source = source,                
+                Amount = amount,
+                BalanceAfter = wallet.Balance,
+                PromoAfter = wallet.PromoBalance,
+                CreatedAt = now
+            };
+
+            await _walletTransactionRepository.AddAsync(txn, ct);
+            _walletRepository.Update(wallet);
+            await _unitOfWork.SaveChangesAsync(ct);
+
+            return txn;
+        }
+
+
+        public async Task<WalletTransaction> ConvertPromoToBalanceAsync(long userId, decimal amount, CancellationToken ct)
+        {
+            if (amount <= 0) throw new ArgumentOutOfRangeException(nameof(amount), "Amount must be greater than 0.");
+            var wallet = await _walletRepository.GetByUserIdAsync(userId, ct);
+
+            if (wallet == null || wallet.Status != "Active")
+                throw new InvalidOperationException("Wallet not found or not active.");
+
+            if (wallet.PromoBalance < amount)
+                throw new InvalidOperationException("Promo balance is not enough to convert.");
+
+            wallet.PromoBalance -= amount;
+            wallet.Balance += amount;
+            wallet.UpdatedAt = DateTimeOffset.UtcNow;
+
+            var txn = new WalletTransaction
+            {
+                WalletId = wallet.Id,
+                Direction = "In",
+                Source = "PromoConvert",
+                Amount = amount,
+                BalanceAfter = wallet.Balance,
+                PromoAfter = wallet.PromoBalance,
+                CreatedAt = DateTimeOffset.UtcNow
+            };
+            await _walletTransactionRepository.AddAsync(txn, ct);
+            _walletRepository.Update(wallet);
+            await _unitOfWork.SaveChangesAsync(ct);
+            return txn;
+        }
         public Task<WalletTransaction> DebitAsync(long userId, decimal amount, string reason, long? orderId, CancellationToken cancellationToken)
         {
             throw new NotImplementedException();

@@ -34,5 +34,6 @@ namespace APIUserLayer.Controllers.User
             }
             return Ok(ApiResponse<WalletDTO>.SuccessResponse(walletDto));
         }
+
     }
 }

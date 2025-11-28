@@ -43,6 +43,9 @@ public partial class HolaBikeContext : IdentityDbContext<AspNetUser, IdentityRol
     public DbSet<TagNew> TagNews { get; set; }
     public DbSet<Contact> Contacts { get; set; }
     public DbSet<UserLifetimeStats> UserLifetimeStats { get; set; }
+
+    // --- Khuyến mãi ---
+    public DbSet<PromotionCampaign> PromotionCampaigns { get; set; }
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);

@@ -78,6 +78,8 @@ namespace Infrastructure.Dependency_Injection
             services.AddScoped<IIdentificationPhotoRepository, IdentificationPhotoRepository>();
             services.AddScoped<IPhotoRepository, PhotoRepository>();
             services.AddScoped<IRentalHistoryRepository, RentalHistoryRepository>();
+            services.AddScoped<IPromotionCampaignRepository , PromotionCampaignRepository>();
+
 
             // Test
             services.AddScoped<IStationsRepository, StationsRepository>();
@@ -126,6 +128,7 @@ namespace Infrastructure.Dependency_Injection
             services.AddScoped<IPhotoService, PhotoService>();
             services.AddScoped<IRentalHistoryService, RentalHistoryService>();
             services.AddScoped<IUserLifetimeStatsService, UserLifetimeStatsService>();
+            services.AddScoped<IPromotionCampaignService, PromotionCampaignService>();
 
             // --- Mapper ---
             services.AddAutoMapper(typeof(AppMappingProfile).Assembly);

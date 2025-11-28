@@ -2,6 +2,7 @@
 using Application.DTOs.CategoriesVehicle;
 using Application.DTOs.Kyc;
 using Application.DTOs.New;
+using Application.DTOs.Promotion;
 using Application.DTOs.Station;
 using Application.DTOs.Tag;
 using Application.DTOs.Tickets;
@@ -59,6 +60,8 @@ namespace Application.Mapping
             CreateMap<Domain.Entities.Contact, DTOs.Contact.ReplyContactDTO>().ReverseMap();
             CreateMap<Domain.Entities.Contact, DTOs.Contact.ManageContactDTO>().ReverseMap();
             CreateMap<Domain.Entities.KycForm, DTOs.Kyc.CreateKycRequestDTO>().ReverseMap();
+            CreateMap<PromotionCampaign, PromotionDTO>().ReverseMap();
+            CreateMap<PromotionCreateDTO, PromotionCampaign>();
 
             ConfigureNewsMapping();
 

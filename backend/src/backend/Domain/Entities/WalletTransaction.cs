@@ -31,6 +31,10 @@ public partial class WalletTransaction : BaseEntity<long>
     public decimal BalanceAfter { get; set; }
 
     [Required]
+    [Column(TypeName = "decimal(18, 2)")]
+    public decimal PromoAfter { get; set; }
+
+    [Required]
     [Precision(0)]
     public DateTimeOffset CreatedAt { get; set; }
 

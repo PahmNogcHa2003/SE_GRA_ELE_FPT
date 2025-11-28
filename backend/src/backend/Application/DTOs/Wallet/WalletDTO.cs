@@ -12,6 +12,7 @@ namespace Application.DTOs.Wallet
         public long UserId { get; set; }
         public decimal Balance { get; set; }
         public decimal TotalDebt { get; set; }
+        public decimal PromoBalance { get; set; }
         public string Status { get; set; } = string.Empty;
         public DateTimeOffset CreatedAt { get; set; }
         public DateTimeOffset UpdatedAt { get; set; }
