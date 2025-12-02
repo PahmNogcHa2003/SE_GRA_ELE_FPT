@@ -12,7 +12,6 @@ namespace Application.DTOs.RentalHistory
     public class RentalHistoryDTO
     {
         public long RentalId { get; set; }
-
         // Thời gian
         public DateTimeOffset StartTimeUtc { get; set; }
         public DateTimeOffset? EndTimeUtc { get; set; }
@@ -33,7 +32,7 @@ namespace Application.DTOs.RentalHistory
 
         // Thời lượng & quãng đường
         public int? DurationMinutes { get; set; }
-        public decimal? DistanceKm { get; set; }
+        public double? DistanceKm { get; set; }
         public decimal? Co2SavedKg { get; set; }
         public decimal? CaloriesBurned { get; set; }
 

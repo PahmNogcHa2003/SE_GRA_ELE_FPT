@@ -38,22 +38,17 @@ namespace Application.Services.User
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly ILogger<RentalsService> _logger;
         private readonly IUserLifetimeStatsService _userLifetimeStatsService;
-        private static readonly TimeZoneInfo VnTz =
-            TimeZoneInfo.FindSystemTimeZoneById(
-                RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
-                    ? "SE Asia Standard Time"
-                    : "Asia/Ho_Chi_Minh");
+        private readonly IQuestService _questService;
+        private static DateTime NowUtc() => DateTime.UtcNow;
 
-        private static DateTimeOffset NowUtc() => DateTimeOffset.UtcNow;
-
-        private static DateTimeOffset NowVn()
+        private static DateTime NowVn()
         {
-            var utc = DateTimeOffset.UtcNow;
-            return TimeZoneInfo.ConvertTime(utc, VnTz);
+            return NowUtc().AddHours(7);
         }
-
-        private static DateTimeOffset ToVn(DateTimeOffset utcTime) =>
-            TimeZoneInfo.ConvertTime(utcTime, VnTz);
+        private static DateTimeOffset ToVn(DateTimeOffset utcTime)
+        {
+            return utcTime.AddHours(7);
+        }
 
         public RentalsService(
             IStationsRepository stationRepo,
@@ -68,6 +63,7 @@ namespace Application.Services.User
             IRepository<TicketPlanPrice, long> planPriceRepo,
             IUnitOfWork uow,
             IHttpContextAccessor httpContextAccessor,
+            IQuestService questService,
             IUserLifetimeStatsService userLifetimeStatsService,
             ILogger<RentalsService> logger)
         {
@@ -82,6 +78,7 @@ namespace Application.Services.User
             _orderRepo = orderRepo;
             _planPriceRepo = planPriceRepo;
             _userLifetimeStatsService = userLifetimeStatsService;
+            _questService = questService;
             _uow = uow;
             _httpContextAccessor = httpContextAccessor;
             _logger = logger;
@@ -265,7 +262,7 @@ namespace Application.Services.User
                     .OrderBy(x => x.Distance)
                     .First();
 
-                const double allowedRadius = 4.0;
+                const double allowedRadius = 10.0;
                 if (nearestStation.Distance > allowedRadius)
                 {
                     throw new BadRequestException(
@@ -435,24 +432,31 @@ namespace Application.Services.User
 
                 // ====== RentalHistory End + stats ======
                 double? distanceMeters = null;
+                double? distanceKmDouble = null;
                 double? co2SavedKg = null;
                 double? caloriesBurned = null;
 
-                var startStation = stations.FirstOrDefault(s => s.Id == rental.StartStationId)
-                                   ?? await _stationRepo.GetByIdAsync(rental.StartStationId);
-
-                if (startStation?.Lat != null && startStation.Lng != null &&
-                    nearestStation.Station.Lat != null && nearestStation.Station.Lng != null)
+                if (dto.DistanceMeters.HasValue && dto.DistanceMeters.Value > 0)
                 {
-                    distanceMeters = GeolocationHelper.CalculateDistanceInMeters(
-                        (double)startStation.Lat.Value,
-                        (double)startStation.Lng.Value,
-                        (double)nearestStation.Station.Lat.Value,
-                        (double)nearestStation.Station.Lng.Value);
+                    distanceMeters = dto.DistanceMeters.Value;
+                    distanceKmDouble = distanceMeters.Value / 1000.0;
+                    co2SavedKg = distanceKmDouble.Value * 0.21;     
+                    caloriesBurned = distanceKmDouble.Value * 35.0; 
+                }
+                string descriptionBase =
+                    $"Kết thúc (giờ VN: {ToVn(nowUtc):HH:mm dd/MM}) tại trạm {nearestStation.Station.Name}";
 
-                    var distanceKm = distanceMeters.Value / 1000.0;
-                    co2SavedKg = distanceKm * 0.21;
-                    caloriesBurned = distanceKm * 35.0;
+                string description;
+
+                if (distanceMeters.HasValue)
+                {
+                    description =
+                        $"{descriptionBase}, ~{distanceMeters.Value:F0}m (quãng đường do app ghi nhận), {duration} phút, " +
+                        $"Tiêu hao ~{(caloriesBurned ?? 0):F0} kcal, tiết kiệm ~{(co2SavedKg ?? 0):F3} kg CO₂.";
+                }
+                else
+                {
+                    description = $"{descriptionBase}, thời gian {duration} phút.";
                 }
 
                 var history = new RentalHistory
@@ -461,25 +465,22 @@ namespace Application.Services.User
                     Timestamp = nowUtc,
                     ActionType = "End",
                     DurationMinutes = duration,
-                    DistanceMeters = distanceMeters,
+                    DistanceMeters = distanceMeters,               
                     Co2SavedKg = co2SavedKg,
                     CaloriesBurned = caloriesBurned,
-                    Description = distanceMeters.HasValue
-                        ? $"Kết thúc (giờ VN: {ToVn(nowUtc):HH:mm dd/MM}) tại trạm {nearestStation.Station.Name}, ~{distanceMeters.Value:F0}m ,{duration} phút, " + 
-                        $"Tiêu hao : {caloriesBurned} ,CO2 : {co2SavedKg}."
-                        : $"Kết thúc (giờ VN: {ToVn(nowUtc):HH:mm dd/MM}) tại trạm {nearestStation.Station.Name}, thời gian {duration} phút."
+                    Description = description
                 };
 
                 await _rentalHistoryRepo.AddAsync(history, ct);
 
-                // Cập nhật thống kê người dùng sau chuyến đi 
+                // Cập nhật thống kê người dùng sau chuyến đi
                 decimal distanceKmForStats = 0m;
                 decimal co2ForStats = 0m;
                 decimal caloriesForStats = 0m;
 
-                if(distanceMeters.HasValue)
+                if (distanceKmDouble.HasValue)
                 {
-                    distanceKmForStats = (decimal)(distanceMeters.Value / 1000.0);
+                    distanceKmForStats = (decimal)distanceKmDouble.Value;
                 }
                 if (co2SavedKg.HasValue)
                 {
@@ -489,6 +490,7 @@ namespace Application.Services.User
                 {
                     caloriesForStats = (decimal)caloriesBurned.Value;
                 }
+
                 await _userLifetimeStatsService.UpdateAfterRideAsync(
                     rental.UserId,
                     distanceKmForStats,
@@ -496,6 +498,14 @@ namespace Application.Services.User
                     co2ForStats,
                     caloriesForStats,
                     ct);
+
+                await _questService.ProcessRideAsync(
+                    rental.UserId,
+                    distanceKmForStats,
+                    duration,
+                    nowUtc,
+                    ct);
+
 
                 // Lưu tất cả
                 await _uow.SaveChangesAsync(ct);
@@ -586,14 +596,6 @@ namespace Application.Services.User
         {
             var userId = GetCurrentUserIdOrThrow();
 
-            // Lấy tất cả trạm 1 lần (tránh N+1)
-            var stations = await _stationRepo.Query()
-                .AsNoTracking()
-                .ToListAsync(ct);
-
-            var stationDict = stations.ToDictionary(s => s.Id, s => s);
-
-            // Lấy tất cả rental đã kết thúc của user
             var rentals = await _rentalRepo.Query()
                 .Where(r => r.UserId == userId && r.Status == RentalStatus.End)
                 .Include(r => r.Vehicle).ThenInclude(v => v.Category)
@@ -601,6 +603,7 @@ namespace Application.Services.User
                     .ThenInclude(bt => bt.UserTicket)
                         .ThenInclude(ut => ut.PlanPrice)
                             .ThenInclude(pp => pp.Plan)
+                .Include(r => r.Histories) 
                 .AsNoTracking()
                 .OrderByDescending(r => r.StartTime)
                 .ToListAsync(ct);
@@ -612,34 +615,13 @@ namespace Application.Services.User
                 var booking = r.BookingTickets
                     .OrderByDescending(bt => bt.AppliedAt)
                     .FirstOrDefault();
+                var endHistory = r.Histories?
+                    .FirstOrDefault(h => h.ActionType == "End");
 
-                Station? startStation = null;
-                Station? endStation = null;
-
-                stationDict.TryGetValue(r.StartStationId, out startStation);
-                if (r.EndStationId.HasValue)
-                    stationDict.TryGetValue(r.EndStationId.Value, out endStation);
-
-                // Tính lại distance nếu muốn (an toàn nếu history bị thiếu)
-                decimal? distanceMeters = null;
-                decimal? distanceKm = null;
-                decimal? co2SavedKg = null;
-                decimal? caloriesBurned = null;
-
-                if (startStation?.Lat != null && startStation.Lng != null &&
-                    endStation?.Lat != null && endStation.Lng != null)
-                {
-                    var meters = GeolocationHelper.CalculateDistanceInMeters(
-                        (double)startStation.Lat.Value,
-                        (double)startStation.Lng.Value,
-                        (double)endStation.Lat.Value,
-                        (double)endStation.Lng.Value);
-
-                    distanceMeters = (decimal)meters;
-                    distanceKm = distanceMeters.Value / 1000m;
-                    co2SavedKg = distanceKm * 0.21m;
-                    caloriesBurned = distanceKm * 35m;
-                }
+                // Lấy thông tin trạm từ rental (vì đã được lưu trực tiếp)
+                var startStation = await _stationRepo.GetByIdAsync(r.StartStationId);
+                var endStation = r.EndStationId.HasValue ?
+                    await _stationRepo.GetByIdAsync(r.EndStationId.Value) : null;
 
                 int? durationMinutes = null;
                 if (r.EndTime.HasValue)
@@ -659,7 +641,7 @@ namespace Application.Services.User
                     EndStationName = endStation?.Name,
 
                     VehicleCode = r.Vehicle?.BikeCode,
-                    VehicleType = r.Vehicle?.Category?.Name,       
+                    VehicleType = r.Vehicle?.Category?.Name,
 
                     UserTicketId = booking?.UserTicketId,
                     TicketPlanName = booking?.UserTicket?.PlanPrice?.Plan?.Name,
@@ -667,9 +649,9 @@ namespace Application.Services.User
                     TicketVehicleType = booking?.UserTicket?.PlanPrice?.VehicleType,
 
                     DurationMinutes = durationMinutes,
-                    DistanceKm = distanceKm,
-                    Co2SavedKg = co2SavedKg,
-                    CaloriesBurned = caloriesBurned,
+                    DistanceKm = endHistory?.DistanceMeters / 1000.0,
+                    Co2SavedKg = (decimal?)endHistory?.Co2SavedKg,
+                    CaloriesBurned = (decimal?)endHistory?.CaloriesBurned,
 
                     OverusedMinutes = booking?.OverusedMinutes,
                     OverusedFee = booking?.OverusedFee,

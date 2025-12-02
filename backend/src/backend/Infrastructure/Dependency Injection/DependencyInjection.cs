@@ -129,6 +129,8 @@ namespace Infrastructure.Dependency_Injection
             services.AddScoped<IRentalHistoryService, RentalHistoryService>();
             services.AddScoped<IUserLifetimeStatsService, UserLifetimeStatsService>();
             services.AddScoped<IPromotionCampaignService, PromotionCampaignService>();
+            services.AddScoped<IQuestService, QuestService>();
+            services.AddScoped<IUserQuestProgressRepository, UserQuestProgressRepository>();
 
             // --- Mapper ---
             services.AddAutoMapper(typeof(AppMappingProfile).Assembly);

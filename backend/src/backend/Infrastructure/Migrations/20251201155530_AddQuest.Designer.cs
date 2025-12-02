@@ -4,6 +4,7 @@ using Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(HolaBikeContext))]
-    partial class HolaBikeContextModelSnapshot : ModelSnapshot
+    [Migration("20251201155530_AddQuest")]
+    partial class AddQuest
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -587,9 +590,6 @@ namespace Infrastructure.Migrations
                     b.Property<decimal?>("TargetDistanceKm")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<int?>("TargetDurationMinutes")
-                        .HasColumnType("int");
-
                     b.Property<int?>("TargetTrips")
                         .HasColumnType("int");
 
@@ -597,10 +597,6 @@ namespace Infrastructure.Migrations
                         .IsRequired()
                         .HasMaxLength(150)
                         .HasColumnType("nvarchar(150)");
-
-                    b.Property<DateTimeOffset?>("UpdatedAt")
-                        .HasPrecision(0)
-                        .HasColumnType("datetimeoffset(0)");
 
                     b.HasKey("Id");
 
@@ -1092,9 +1088,6 @@ namespace Infrastructure.Migrations
 
                     b.Property<decimal>("CurrentDistanceKm")
                         .HasColumnType("decimal(18,2)");
-
-                    b.Property<int>("CurrentDurationMinutes")
-                        .HasColumnType("int");
 
                     b.Property<int>("CurrentTrips")
                         .HasColumnType("int");

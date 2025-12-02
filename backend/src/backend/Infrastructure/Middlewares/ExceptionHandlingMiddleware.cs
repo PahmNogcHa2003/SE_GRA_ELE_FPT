@@ -1,5 +1,6 @@
 ﻿// Infrastructure/Middlewares/ExceptionHandlingMiddleware.cs
 using Application.Common;
+using Application.Exceptions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using System;
@@ -41,30 +42,30 @@ namespace Infrastructure.Middlewares
 
             switch (exception)
             {
-                // Lỗi không tìm thấy tài nguyên (404)
+                case BadRequestException:
+                    context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
+                    response.Message = exception.Message;
+                    response.Errors = new[] { exception.Message };
+                    break;
+
                 case KeyNotFoundException:
                     context.Response.StatusCode = (int)HttpStatusCode.NotFound;
                     response.Message = "The requested resource was not found.";
                     response.Errors = new[] { exception.Message };
                     break;
 
-                // Bạn có thể thêm các loại Exception nghiệp vụ khác ở đây
-                // case MyCustomValidationException ex:
-                //     context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
-                //     response.Message = "Validation failed.";
-                //     response.Errors = ex.Errors;
-                //     break;
-
-                // Mặc định là lỗi server (500)
                 default:
                     context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
                     response.Message = "An internal server error has occurred.";
-                    response.Errors = new[] { exception.Message }; // Chỉ trả về message ở môi trường Dev
+                    response.Errors = new[] { exception.Message };
                     break;
             }
 
-            var json = JsonSerializer.Serialize(response, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+            var json = JsonSerializer.Serialize(response,
+                new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+
             await context.Response.WriteAsync(json);
         }
+
     }
 }

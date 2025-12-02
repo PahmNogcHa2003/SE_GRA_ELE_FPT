@@ -245,7 +245,6 @@ if (app.Environment.IsDevelopment())
 }
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseMiddleware<ValidationMiddleware>();
-app.UseMiddleware<ResponseMiddleware>();
 
 app.UseHttpsRedirection();
 

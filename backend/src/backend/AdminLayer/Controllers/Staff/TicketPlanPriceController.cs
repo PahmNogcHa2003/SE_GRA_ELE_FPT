@@ -16,7 +16,7 @@ namespace AdminLayer.Controllers.Staff
         {
             _svc = svc;
         }
-
+        
         // GET: api/TicketPlanPrice
         [HttpGet]
         public async Task<ActionResult<ApiResponse<PagedResult<TicketPlanPriceDTO>>>> GetPrices(

@@ -199,8 +199,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseMiddleware<ValidationMiddleware>();
-// TẠM THỜI comment nếu cần để thấy status thật
-// app.UseMiddleware<ResponseMiddleware>();
+
 
 app.UseHttpsRedirection();
 
