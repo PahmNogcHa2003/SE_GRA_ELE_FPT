@@ -1,1 +1,68 @@
 @import "tailwindcss";
+@import 'leaflet/dist/leaflet.css';
+@import 'leaflet-control-geocoder/dist/Control.Geocoder.css';
+/* Tùy chỉnh dấu chấm cho react-slick */
+.custom-dots {
+  bottom: 20px !important; /* Đẩy dấu chấm lên trên một chút */
+  z-index: 10;
+}
+
+.custom-dots li {
+  margin: 0 6px !important; /* Khoảng cách giữa các chấm */
+}
+
+.custom-dots li button {
+  width: 12px !important;
+  height: 12px !important;
+  border-radius: 50% !important;
+  background-color: white !important;
+  opacity: 0.5;
+  transition: all 0.3s ease !important;
+  padding: 0 !important;
+}
+
+.custom-dots li.slick-active button {
+  width: 16px !important; /* Chấm được chọn to hơn */
+  height: 16px !important;
+  opacity: 1;
+  background-color: #4CAF50 !important; /* Màu xanh eco-green */
+  border: 2px solid white;
+}
+
+/* Ẩn nội dung số bên trong nút (react-slick mặc định có) */
+.custom-dots li button:before {
+  content: "" !important;
+}
+/* notification */
+.ant-notification-notice {
+  width: 420px; /* Rộng hơn mặc định (384px) */
+  padding: 20px 24px;
+}
+
+/* Tiêu đề */
+.ant-notification-notice-message {
+  font-size: 1rem; /* To hơn */
+  margin-bottom: 8px !important;
+}
+
+/* Mô tả */
+.ant-notification-notice-description {
+  font-size: 1rem; /* To hơn */
+}
+
+@theme {
+  --color-eco-green-light: #8bc34a;
+  --color-eco-green: #4CAF50;
+  --color-eco-green-dark: #388E3C;
+}
+a, a:visited {
+  color: inherit !important;
+  text-decoration: none !important;
+}
+
+a:hover {
+  color: inherit !important; 
+}
+:where(a):hover {
+  color: inherit !important;
+}

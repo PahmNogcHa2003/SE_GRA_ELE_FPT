@@ -2,27 +2,65 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace Domain.Entities;
 
-[Microsoft.EntityFrameworkCore.Index(nameof(BookingId), Name = "IX_Rental_BookingId")]
-public partial class Rental : BaseEntity<long>
+[Table("Rental")]
+public class Rental : BaseEntity<long>
 {
+    [Required]
+    public long UserId { get; set; }
 
-    public long BookingId { get; set; }
+    [Required]
+    public long VehicleId { get; set; }
 
+    [Required]
+    public long StartStationId { get; set; }
+
+    public long? EndStationId { get; set; }
+
+    [Required]
+    [Precision(0)]
     public DateTimeOffset StartTime { get; set; }
 
+    [Precision(0)]
     public DateTimeOffset? EndTime { get; set; }
 
-    [Column(TypeName = "decimal(10, 2)")]
-    public decimal? Distance { get; set; }
-
+    [Required]
     [StringLength(20)]
-    public string Status { get; set; } = null!;
+    [Unicode(false)]
+    public string Status { get; set; }
+    [Required]
+    [Precision(0)]
+    public DateTimeOffset CreatedAt { get; set; }
 
-    [ForeignKey("BookingId")]
-    [InverseProperty("Rentals")]
-    public virtual Booking Booking { get; set; } = null!;
+    [ForeignKey(nameof(UserId))]
+    [InverseProperty(nameof(AspNetUser.Rentals))]
+    public AspNetUser User { get; set; } = null!;
+
+    [ForeignKey(nameof(VehicleId))]
+    [InverseProperty(nameof(Vehicle.Rentals))]
+    public Vehicle Vehicle { get; set; } = null!;
+
+    [InverseProperty(nameof(BookingTicket.Rental))]
+    public ICollection<BookingTicket> BookingTickets { get; set; } = new List<BookingTicket>();
+
+    [InverseProperty(nameof(RentalHistory.Rental))]
+    public ICollection<RentalHistory> Histories { get; set; } = new List<RentalHistory>();
+
+    public void EndRental(DateTimeOffset endTime, long endStationId)
+    {
+        if (endTime < StartTime)
+            throw new InvalidOperationException("End time cannot be before start time.");
+
+        if (Status == RentalStatus.End)
+            throw new InvalidOperationException("Rental already end.");
+
+        EndTime = endTime;
+        EndStationId = endStationId;
+        Status = RentalStatus.End;
+    }
 }
+

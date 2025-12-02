@@ -1,29 +1,32 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 
 namespace Domain.Entities;
 
-[Microsoft.EntityFrameworkCore.Index(nameof(BookingId), Name = "IX_VehicleUsageLogs_BookingId")]
-[Microsoft.EntityFrameworkCore.Index(nameof(VehicleId), Name = "IX_VehicleUsageLogs_VehicleId")]
+[Table("VehicleUsageLogs")]
 public partial class VehicleUsageLog : BaseEntity<long>
 {
+    [Required]
     public long VehicleId { get; set; }
 
-    public long BookingId { get; set; }
+    public long? UserId { get; set; }
 
-    [StringLength(20)]
-    public string Status { get; set; } = null!;
+    [StringLength(50)]
+    public string? ChangeType { get; set; }
 
-    public DateTimeOffset Timestamp { get; set; }
+    [StringLength(255)]
+    public string? Note { get; set; }
 
-    [ForeignKey(nameof(BookingId))]
-    [InverseProperty(nameof(Booking.VehicleUsageLogs))]
-    public virtual Booking Booking { get; set; } = null!;
+    [Required]
+    [Precision(0)]
+    public DateTimeOffset CreatedAt { get; set; }
 
     [ForeignKey(nameof(VehicleId))]
     [InverseProperty(nameof(Vehicle.VehicleUsageLogs))]
     public virtual Vehicle Vehicle { get; set; } = null!;
+
+    [ForeignKey(nameof(UserId))]
+    public virtual AspNetUser? User { get; set; }
 }

@@ -1,39 +1,40 @@
 ﻿using Microsoft.AspNetCore.Identity;
-
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Domain.Entities
 {
     public class AspNetUser : IdentityUser<long>
     {
-        public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
-        public DateTime? UpdatedDate { get; set; }
+        [Required]
+        [Precision(0)]
+        public DateTimeOffset CreatedDate { get; set; }
 
         [InverseProperty("User")]
-        public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
+        public virtual ICollection<Rental> Rentals { get; set; } = new List<Rental>();
+        [InverseProperty("Reply")]
+        public virtual ICollection<Contact> AssignedContacts { get; set; } = new List<Contact>();
 
         [InverseProperty("User")]
-        public virtual ICollection<Contact> Contacts { get; set; } = new List<Contact>();
+        public virtual ICollection<KycForm> KycForms { get; set; } = new List<KycForm>();
 
         [InverseProperty("User")]
-        public virtual ICollection<KycSubmission> KycSubmissions { get; set; } = new List<KycSubmission>();
+        public virtual ICollection<News> AuthoredNews { get; set; } = new List<News>();
 
-        [InverseProperty("Author")]
-        public virtual ICollection<News> News { get; set; } = new List<News>();
+        [InverseProperty("Publisher")]
+        public virtual ICollection<News> PublishedNews { get; set; } = new List<News>();
 
         [InverseProperty("User")]
         public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
 
         [InverseProperty("User")]
-        public virtual ICollection<UserAddress> UserAddresses { get; set; } = new List<UserAddress>();
-
-        [InverseProperty("User")]
         public virtual ICollection<UserDevice> UserDevices { get; set; } = new List<UserDevice>();
 
         [InverseProperty("User")]
-        public virtual ICollection<UserProfile> UserProfiles { get; set; } = new List<UserProfile>();
+        public virtual UserProfile? UserProfile { get; set; }
 
         [InverseProperty("User")]
         public virtual ICollection<UserSession> UserSessions { get; set; } = new List<UserSession>();
@@ -42,6 +43,15 @@ namespace Domain.Entities
         public virtual ICollection<UserTicket> UserTickets { get; set; } = new List<UserTicket>();
 
         [InverseProperty("User")]
-        public virtual ICollection<Wallet> Wallets { get; set; } = new List<Wallet>();
+        public virtual Wallet? Wallet { get; set; }
+
+        [InverseProperty("User")]
+        public virtual AdminProfile? AdminProfile { get; set; }
+
+        [InverseProperty("User")]
+        public virtual ICollection<WalletDebt> WalletDebts { get; set; } = new List<WalletDebt>();
+
+        [InverseProperty("User")]
+        public virtual ICollection<VehicleUsageLog> VehicleUsageLogs { get; set; } = new List<VehicleUsageLog>();
     }
 }

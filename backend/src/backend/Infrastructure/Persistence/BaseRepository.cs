@@ -45,7 +45,17 @@ namespace Infrastructure.Persistence
 
         public void Update(TEntity entity)
         {
+            // Đánh dấu entity là đã thay đổi.
+            // DbContext sẽ theo dõi nó và lưu khi UnitOfWork được commit.
             _dbSet.Update(entity);
+        }
+
+        // THÊM PHƯƠNG THỨC NÀY VÀO
+        public void Attach(TEntity entity)
+        {
+            // Dòng này báo cho DbContext biết rằng entity đã tồn tại trong DB,
+            // đừng theo dõi nó như một entity mới.
+            _dbSet.Attach(entity);
         }
 
         public void Remove(TEntity entity)
@@ -53,6 +63,7 @@ namespace Infrastructure.Persistence
             _dbSet.Remove(entity);
         }
 
+        // SỬA LẠI PHƯƠNG THỨC NÀY
         public async Task<PagedResult<TEntity>> PageAsync(int page, int pageSize, CancellationToken ct = default)
         {
             if (page < 1) page = 1;
@@ -62,9 +73,12 @@ namespace Infrastructure.Persistence
 
             var totalCount = await query.CountAsync(ct);
 
-            var items = query
+            // THÊM: Bắt buộc phải sắp xếp trước khi dùng Skip/Take
+            var items = await query
+                .OrderBy(e => e.Id)
                 .Skip((page - 1) * pageSize)
-                .Take(pageSize);
+                .Take(pageSize)
+                .ToListAsync(ct); // SỬA: Thực thi query để lấy dữ liệu
 
             return new PagedResult<TEntity>(items, totalCount, page, pageSize);
         }

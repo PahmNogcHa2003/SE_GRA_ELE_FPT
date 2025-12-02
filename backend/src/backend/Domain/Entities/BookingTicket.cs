@@ -7,40 +7,66 @@ using Microsoft.EntityFrameworkCore;
 namespace Domain.Entities;
 
 [Table("BookingTicket")]
-[Microsoft.EntityFrameworkCore.Index(nameof(BookingId), Name = "IX_BookingTicket_BookingId")]
-[Microsoft.EntityFrameworkCore.Index(nameof(PlanPriceId), Name = "IX_BookingTicket_PlanPriceId")]
-[Microsoft.EntityFrameworkCore.Index(nameof(UserTicketId), Name = "IX_BookingTicket_UserTicketId")]
 public class BookingTicket : BaseEntity<long>
 {
     [Required]
-    public long BookingId { get; set; }
+    public long RentalId { get; set; }
 
     [Required]
     public long UserTicketId { get; set; }
 
     [Required]
-    public long PlanPriceId { get; set; }
+    [Column(TypeName = "decimal(18, 2)")]
+    public decimal PlanPrice { get; set; }
 
     [StringLength(50)]
-    [Unicode(false)]
     public string? VehicleType { get; set; }
 
     public int? UsedMinutes { get; set; }
 
+    [Column(TypeName = "int")]
+    public int? OverusedMinutes { get; set; } 
+
+    [Column(TypeName = "decimal(18,2)")]
+    public decimal? OverusedFee { get; set; } 
+
     [Precision(0)]
     public DateTimeOffset? AppliedAt { get; set; }
 
-    // 🔗 Navigation properties
-
-    [ForeignKey(nameof(BookingId))]
-    [InverseProperty(nameof(Booking.BookingTickets))]
-    public Booking Booking { get; set; } = null!;
-
-    [ForeignKey(nameof(PlanPriceId))]
-    [InverseProperty(nameof(TicketPlanPrice.BookingTickets))]
-    public TicketPlanPrice PlanPrice { get; set; } = null!;
+    [ForeignKey(nameof(RentalId))]
+    [InverseProperty(nameof(Rental.BookingTickets))]
+    public Rental Rental { get; set; } = null!;
 
     [ForeignKey(nameof(UserTicketId))]
     [InverseProperty(nameof(UserTicket.BookingTickets))]
     public UserTicket UserTicket { get; set; } = null!;
+
+    // Constructor để tạo bản ghi khi áp dụng vé (ĐÚNG)
+    public BookingTicket(long rentalId, long userTicketId, decimal planPrice, string vehicleType, DateTimeOffset appliedAt)
+    {
+        if (rentalId <= 0 || userTicketId <= 0)
+        {
+            throw new ArgumentException("RentalId and UserTicketId must be positive.");
+        }
+
+        RentalId = rentalId;
+        UserTicketId = userTicketId;
+        PlanPrice = planPrice;
+        VehicleType = vehicleType;
+        AppliedAt = appliedAt;
+        UsedMinutes = 0; // Khởi tạo bằng 0 phút
+    }
+
+    // Thêm constructor không tham số để tương thích với EF Core hoặc Factory (Tùy chọn)
+    public BookingTicket() { }
+
+    // Phương thức logic nghiệp vụ: Cập nhật thời gian đã sử dụng (ĐÚNG)
+    public void UpdateUsedMinutes(int minutes)
+    {
+        if (minutes < 0)
+        {
+            throw new ArgumentException("UsedMinutes cannot be negative.", nameof(minutes));
+        }
+        UsedMinutes = minutes;
+    }
 }
