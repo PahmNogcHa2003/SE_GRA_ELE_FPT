@@ -24,7 +24,7 @@ const NewsForm: React.FC<NewsFormProps> = ({ initialValues, onSubmit, onCancel, 
   const { data: tagsData, isLoading: isLoadingTags } = useQuery({
     queryKey: ['allTags'],
     queryFn: () => tagService.getTags({ pageSize: 1000 }),
-    select: (res) => res.data.data.items,
+    select: (res) => res.data.data?.items,
   });
 
   useEffect(() => {

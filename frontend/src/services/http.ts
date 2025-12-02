@@ -40,16 +40,17 @@ http.interceptors.request.use(
 
 // ===== BỘ CHẶN PHẢN HỒI (Response Interceptor) =====
 http.interceptors.response.use(
-  (response) => {
-    return response;
-  },
+  (response) => response,
   (error) => {
-    // Xử lý lỗi 401 (Token hết hạn / không hợp lệ)
     if (error.response && error.response.status === 401) {
-      localStorage.removeItem("authToken");
-      window.dispatchEvent(new Event("auth-error-401"));
-      window.location.replace("/");
+      const token = localStorage.getItem('authToken');
+      
+      if (token) {
+        console.warn('Token hết hạn hoặc không hợp lệ. Đang đăng xuất...');
+        window.dispatchEvent(new Event('auth-error-401'));
+      }
     }
+    
     return Promise.reject(error);
   }
 );

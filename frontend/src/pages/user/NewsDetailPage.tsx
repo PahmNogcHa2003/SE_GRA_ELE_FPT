@@ -68,12 +68,15 @@ const NewsDetailPage: React.FC = () => {
           ) : (
             <>
               {news?.banner && (
-                <img
-                  src={news.banner}
-                  alt={news.title}
-                  className="rounded-2xl w-full max-h-[380px] object-cover mb-4"
-                />
+                <div className="w-full aspect-video rounded-2xl overflow-hidden mb-4">
+                  <img
+                    src={news.banner}
+                    alt={news.title}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
               )}
+
               <div className="flex flex-wrap gap-2">
                 {news?.tagNames?.map((t) => (
                   <Tag key={t} color="gold">

@@ -1,3 +1,5 @@
+import type { RentalHistoryDTO } from "./rental.history";
+
 export interface UserProfileDTO {
 userId: number;
 isVerify?: string | null;
@@ -20,13 +22,16 @@ placeOfResidence?: string | null;
 issuedDate?: string | null;
 expiryDate?: string | null;
 issuedBy?: string | null;
+
+totalDistanceKm: number;
+totalTrips: number;
+totalDurationMinutes: number;
+totalCo2SavedKg: number;
+totalCaloriesBurned: number;
+
+rentalHistories: RentalHistoryDTO[];
 createdAt: string;
 updatedAt: string;
-}
-
-export interface PhotoUploadResult {
-publicId: string;
-url: string;
 }
 
 export type UpdateUserProfileBasicDTO = {
@@ -35,4 +40,7 @@ avatarUrl?: string | null;
 emergencyName : string;
 emergencyPhone: string;
 addressDetail?: string | null;
+dob?: string | null;
+gender?: string | null;
+phoneNumber?: string | null;
 };

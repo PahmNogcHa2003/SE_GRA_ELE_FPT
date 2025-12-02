@@ -40,24 +40,24 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
    * Hàm lấy thông tin user
    * (KHÔNG CẦN 'currentToken' param nữa)
    */
-  const fetchUserByToken = useCallback(async () => {
+const fetchUserByToken = useCallback(async () => {
     try {
-      // Interceptor sẽ tự động thêm token
-      const response: ApiResponse<User> = await getMeApi(); 
-      
+      const response: ApiResponse<User> = await getMeApi();
       if (response.success && response.data) {
-        setUser(response.data); 
+        setUser(response.data);
       } else {
+        // Token không hợp lệ về mặt logic server
         throw new Error(response.message);
       }
     } catch (error) {
-      // Interceptor đã xử lý lỗi 401 và gọi logout rồi
-      // Chúng ta chỉ cần log lỗi nếu muốn
-      console.error("AuthContext: Không thể fetch user", error);
+      console.log("Không lấy được thông tin user (có thể chưa đăng nhập hoặc token lỗi).");
+      setUser(null);
+      setToken(null); 
+      localStorage.removeItem('authToken'); 
     } finally {
-      setIsLoadingUser(false);
+      setIsLoadingUser(false); 
     }
-  }, []); // Không có dependency
+  }, []);
 
   /**
    * Lắng nghe sự kiện 401 từ Interceptor
@@ -93,8 +93,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
    * Hàm login
    */
   const login = async (data: AuthResponseData) => {
-    setToken(data.token);
-    localStorage.setItem('authToken', data.token); // Interceptor sẽ đọc từ đây
+    setToken(data.token || null);
+    localStorage.setItem('authToken', data.token || ''); 
     
     setIsLoadingUser(true); 
     await fetchUserByToken(); 
