@@ -1,5 +1,6 @@
 ﻿using Application.Interfaces;
 using Application.Interfaces.Base;
+using Application.Interfaces.Cache;
 using Application.Interfaces.Email;
 using Application.Interfaces.Identity;
 using Application.Interfaces.Location;
@@ -16,6 +17,7 @@ using Application.Services.Photo;
 using Application.Services.Staff;
 using Application.Services.User;
 using Domain.Entities;
+using Infrastructure.Cache;
 using Infrastructure.Persistence;
 using Infrastructure.Repositories.Email;
 using Infrastructure.Repositories.Location;
@@ -27,6 +29,7 @@ using Infrastructure.VNPay;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using StackExchange.Redis;
 using System;
 
 namespace Infrastructure.Dependency_Injection
@@ -39,14 +42,14 @@ namespace Infrastructure.Dependency_Injection
             services.AddDbContext<HolaBikeContext>(options =>
                 options.UseSqlServer(config.GetConnectionString("DefaultConnection")));
 
-            // --- Settings / Configurations ---
+            // --- Settings ---
             services.Configure<CloudinarySettings>(config.GetSection("CloudinarySettings"));
 
-            // --- Unit of Work & Repositories ---
+            // --- Unit of Work & Base Repo ---
             services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddScoped(typeof(IRepository<,>), typeof(BaseRepository<,>));
 
-            // Repositories cụ thể
+            // --- Repositories ---
             services.AddScoped<IRepository<Station, long>, StationsRepository>();
             services.AddScoped<IRepository<CategoriesVehicle, long>, CategoriesVehicleRepository>();
             services.AddScoped<IRepository<Vehicle, long>, VehicleRepository>();
@@ -70,32 +73,32 @@ namespace Infrastructure.Dependency_Injection
             services.AddScoped<IContactRepository, ContactRepository>();
             services.AddScoped<IManageContactRepository, ManageContactRepository>();
             services.AddScoped<IReplyContactRepository, ReplyContactRepository>();
-            services.AddScoped<IOrderRepository, OrderRepository>();
             services.AddScoped<IKycRepository, KycRepository>();
             services.AddScoped<IUserProfilesRepository, UserProfileRepository>();
             services.AddScoped<IIdentificationPhotoRepository, IdentificationPhotoRepository>();
             services.AddScoped<IPhotoRepository, PhotoRepository>();
+            services.AddScoped<IRentalHistoryRepository, RentalHistoryRepository>();
+            services.AddScoped<IPromotionCampaignRepository , PromotionCampaignRepository>();
 
-            //Test
+
+            // Test
             services.AddScoped<IStationsRepository, StationsRepository>();
             services.AddScoped<IVehicleRepository, VehicleRepository>();
             services.AddScoped<IRentalsRepository, RentalsRepository>();
             services.AddScoped<IBookingTicketRepository, BookingTicketRepository>();
 
-
-
-            // --- Location API ---
+            // --- Location / HttpClient ---
             services.AddHttpClient("ProvincesAPI", client =>
             {
                 client.BaseAddress = new Uri("https://provinces.open-api.vn/api/v2/");
             });
+
             services.AddMemoryCache();
             services.AddScoped<ILocationRepository, LocationRepository>();
             services.Configure<Setting.MailSettings>(config.GetSection("MailSettings"));
 
-            // --- Services (application layer) ---
+            // --- Services ---
             services.AddScoped(typeof(IService<,,>), typeof(GenericService<,,>));
-            //services.AddScoped<IUserService, UserService>();
             services.AddScoped<Application.Interfaces.Staff.Service.IStationsService, Application.Services.Staff.StationsService>();
             services.AddScoped<Application.Interfaces.User.Service.IStationsService, Application.Services.User.StationsService>();
             services.AddScoped<ICategoriesVehicleService, CategoriesVehicleService>();
@@ -123,15 +126,27 @@ namespace Infrastructure.Dependency_Injection
             services.AddScoped<IReplyContactService, ReplyContactService>();
             services.AddScoped<ITransactionService, TransactionService>();
             services.AddScoped<IPhotoService, PhotoService>();
+            services.AddScoped<IRentalHistoryService, RentalHistoryService>();
+            services.AddScoped<IUserLifetimeStatsService, UserLifetimeStatsService>();
+            services.AddScoped<IPromotionCampaignService, PromotionCampaignService>();
+            services.AddScoped<IQuestService, QuestService>();
+            services.AddScoped<IUserQuestProgressRepository, UserQuestProgressRepository>();
 
-            // --- AutoMapper ---
+            // --- Mapper ---
             services.AddAutoMapper(typeof(AppMappingProfile).Assembly);
 
-            //  --- Add AuthService (Identity + JWT) ---
+            // --- Identity ---
             services.AddScoped<IAuthService, AuthService>();
+
+            // --- Add Redis (CHUẨN NHẤT) ---
+            services.AddSingleton<IConnectionMultiplexer>(sp =>
+                ConnectionMultiplexer.Connect(config.GetConnectionString("Redis")!)
+            );
+
+            services.AddScoped<ICacheService, RedisCacheService>();
+
 
             return services;
         }
     }
 }
-

@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:hola_bike_app/core/constants/locations.dart';
-import 'package:hola_bike_app/presentation/home/pages/station/widgets/station_card.dart';
+import 'package:hola_bike_app/application/usecases/usecase_get-station.dart';
+import 'package:hola_bike_app/domain/models/info_station.dart';
 import 'package:hola_bike_app/theme/app_colors.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'station_card.dart';
 
 class StationMap extends StatefulWidget {
   const StationMap({super.key});
@@ -15,81 +18,139 @@ class StationMap extends StatefulWidget {
 
 class _StationMapState extends State<StationMap> {
   final MapController _mapController = MapController();
-  final Set<VehicleType> selectedTypes = {
-    VehicleType.bike,
-    VehicleType.electric,
-    VehicleType.car,
-  };
+  final GetStationInfoUsecase _usecase = GetStationInfoUsecase();
+  final FlutterSecureStorage secureStorage = const FlutterSecureStorage();
 
-  OverlayEntry? _stationOverlay;
+  List<StationInfo> _stations = [];
+  LatLng? _currentLocation;
+  String? _error;
 
-  void _showStationOverlay(BuildContext context, Station station) {
-    _stationOverlay?.remove();
+  List<StationInfo> _searchResults = [];
+  final TextEditingController _searchController = TextEditingController();
 
-    _stationOverlay = OverlayEntry(
-      builder: (_) => Positioned(
-        bottom: 70,
-        left: 16,
-        right: 16,
-        child: Material(
-          color: Colors.transparent,
-          child: StationCard(
-            station: station,
-            onClose: () {
-              _stationOverlay?.remove();
-              _stationOverlay = null;
-            },
-          ),
-        ),
-      ),
-    );
+  @override
+  void initState() {
+    super.initState();
 
-    Overlay.of(context).insert(_stationOverlay!);
+    _initializeData();
+  }
+
+  Future<void> _initializeData() async {
+    EasyLoading.show();
+    await _getCurrentLocation();
+    await _fetchStations();
+  }
+
+  Future<void> _getCurrentLocation() async {
+    try {
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.deniedForever) return;
+
+      final pos = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+      setState(() {
+        _currentLocation = LatLng(pos.latitude, pos.longitude);
+      });
+    } catch (e) {
+      debugPrint('Lỗi lấy vị trí: $e');
+    }
+  }
+
+  Future<void> _fetchStations() async {
+    try {
+      final token = await secureStorage.read(key: 'access_token');
+      if (token == null) throw Exception('Không tìm thấy token');
+      final stations = await _usecase.execute(token);
+      setState(() {
+        _stations = stations;
+        _searchResults = stations;
+      });
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+      });
+    } finally {
+      EasyLoading.dismiss();
+    }
+  }
+
+  void _onSearchChanged(String query) {
+    final results = _stations.where((s) {
+      return s.name.toLowerCase().contains(query.toLowerCase());
+    }).toList();
+    setState(() => _searchResults = results);
+  }
+
+  void _moveToStation(StationInfo station) {
+    _mapController.move(LatLng(station.lat, station.lng), 17);
+    FocusScope.of(context).unfocus();
+    setState(() {
+      _searchController.text = station.name;
+      _searchResults = [];
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final center = AppLocations.stations.first.latLng;
-    final filteredStations = AppLocations.stations
-        .where((s) => selectedTypes.contains(s.type))
-        .toList();
+    if (_error != null) return Center(child: Text('Lỗi: $_error'));
 
     return Stack(
       children: [
         FlutterMap(
           mapController: _mapController,
           options: MapOptions(
-            center: center,
+            center: _currentLocation ?? LatLng(21.012516, 105.525241),
             zoom: 14,
-            interactiveFlags: InteractiveFlag.all,
           ),
           children: [
             TileLayer(
               urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
               userAgentPackageName: 'com.example.hola_bike_app',
             ),
-            MarkerLayer(
-              markers: filteredStations.map((s) {
-                return Marker(
-                  point: s.latLng,
-                  width: 40,
-                  height: 40,
-                  child: GestureDetector(
-                    onTap: () {
-                      showDialog(
-                        context: context,
-                        builder: (_) => StationCard(station: s),
-                      );
-                    },
 
-                    child: const Icon(
-                      Icons.location_pin,
-                      color: Colors.red,
-                      size: 40,
+            MarkerLayer(
+              markers: [
+                // marker trạm xe
+                ..._stations.map(
+                  (s) => Marker(
+                    point: LatLng(s.lat, s.lng),
+                    width: 40,
+                    height: 40,
+                    child: GestureDetector(
+                      onTap: () {
+                        showDialog(
+                          context: context,
+                          builder: (_) => StationCard(
+                            station: s,
+                            onClose: () => Navigator.of(context).pop(),
+                          ),
+                        );
+                      },
+                      child: const Icon(
+                        Icons.location_pin,
+                        color: Colors.red,
+                        size: 38,
+                      ),
                     ),
                   ),
-                );
-              }).toList(),
+                ),
+                // marker vị trí hiện tại
+                if (_currentLocation != null)
+                  Marker(
+                    point: _currentLocation!,
+                    width: 40,
+                    height: 40,
+                    child: const Icon(
+                      Icons.my_location,
+                      color: Colors.blue,
+                      size: 30,
+                    ),
+                  ),
+              ],
             ),
           ],
         ),
@@ -99,113 +160,79 @@ class _StationMapState extends State<StationMap> {
           top: MediaQuery.of(context).padding.top + 12,
           left: 16,
           right: 16,
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4)],
-            ),
-            child: TextField(
-              decoration: InputDecoration(
-                hintText: 'Tìm kiếm trạm xe...',
-                prefixIcon: const Icon(Icons.search, color: AppColors.primary),
-                border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(vertical: 12),
+          child: Column(
+            children: [
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4)],
+                ),
+                child: TextField(
+                  controller: _searchController,
+                  decoration: InputDecoration(
+                    hintText: 'Tìm kiếm trạm xe...',
+                    prefixIcon: const Icon(
+                      Icons.search,
+                      color: AppColors.primary,
+                    ),
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(
+                      vertical: 12,
+                      horizontal: 8,
+                    ),
+                  ),
+                  onChanged: _onSearchChanged,
+                ),
               ),
-              onChanged: (query) {
-                // TODO: xử lý tìm kiếm theo tên trạm hoặc vị trí
-              },
-            ),
+
+              // danh sách gợi ý
+              if (_searchController.text.isNotEmpty &&
+                  _searchResults.isNotEmpty)
+                Container(
+                  margin: const EdgeInsets.only(top: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                    boxShadow: [
+                      BoxShadow(color: Colors.black12, blurRadius: 4),
+                    ],
+                  ),
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: _searchResults.length,
+                    itemBuilder: (context, index) {
+                      final station = _searchResults[index];
+                      return ListTile(
+                        title: Text(station.name),
+                        subtitle: Text(station.location),
+                        onTap: () => _moveToStation(station),
+                      );
+                    },
+                  ),
+                ),
+            ],
           ),
         ),
 
-        // ✅ Bộ lọc loại xe
-        Positioned(
-          bottom: 16,
-          left: 16,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.95),
-              borderRadius: BorderRadius.circular(10),
-              boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4)],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildCheckbox('Xe đạp', VehicleType.bike),
-                const SizedBox(height: 6),
-                _buildCheckbox('Xe điện', VehicleType.electric),
-                const SizedBox(height: 6),
-              ],
-            ),
-          ),
-        ),
-
-        // ✅ Nút hỗ trợ
+        // 🧭 Nút vị trí hiện tại & refresh
         Positioned(
           bottom: 16,
           right: 16,
           child: Column(
             children: [
-              _buildCircleButton(
-                Icons.my_location,
-                'Vị trí hiện tại',
-                () async {
-                  LocationPermission permission =
-                      await Geolocator.checkPermission();
-                  if (permission == LocationPermission.denied) {
-                    permission = await Geolocator.requestPermission();
-                    if (permission == LocationPermission.denied) return;
-                  }
-
-                  final position = await Geolocator.getCurrentPosition();
-                  final currentLatLng = LatLng(
-                    position.latitude,
-                    position.longitude,
-                  );
-
-                  _mapController.move(currentLatLng, 16);
-                },
-              ),
+              _buildCircleButton(Icons.my_location, 'Vị trí hiện tại', () {
+                if (_currentLocation != null) {
+                  _mapController.move(_currentLocation!, 16);
+                }
+              }),
               const SizedBox(height: 12),
               _buildCircleButton(Icons.refresh, 'Làm mới', () {
-                setState(() {});
+                _initializeData();
               }),
             ],
           ),
         ),
-      ],
-    );
-  }
-
-  Widget _buildCheckbox(String label, VehicleType type) {
-    final isChecked = selectedTypes.contains(type);
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        SizedBox(
-          width: 18,
-          height: 18,
-          child: Checkbox(
-            value: isChecked,
-            onChanged: (_) {
-              setState(() {
-                if (isChecked) {
-                  selectedTypes.remove(type);
-                } else {
-                  selectedTypes.add(type);
-                }
-              });
-            },
-            activeColor: AppColors.primary,
-            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            visualDensity: VisualDensity.compact,
-          ),
-        ),
-        const SizedBox(width: 6),
-        Text(label, style: const TextStyle(fontSize: 12)),
       ],
     );
   }

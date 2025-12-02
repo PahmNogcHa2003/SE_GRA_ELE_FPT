@@ -47,6 +47,9 @@ public class Rental : BaseEntity<long>
     [InverseProperty(nameof(BookingTicket.Rental))]
     public ICollection<BookingTicket> BookingTickets { get; set; } = new List<BookingTicket>();
 
+    [InverseProperty(nameof(RentalHistory.Rental))]
+    public ICollection<RentalHistory> Histories { get; set; } = new List<RentalHistory>();
+
     public void EndRental(DateTimeOffset endTime, long endStationId)
     {
         if (endTime < StartTime)

@@ -13,5 +13,8 @@ namespace Application.Interfaces.Identity
         Task<AuthResponseDTO> RegisterAsync(RegisterDTO model, CancellationToken ct = default);
         Task<AuthResponseDTO> LoginAsync(LoginDTO model, CancellationToken ct = default);
         Task<MeDTO?> GetMeAsync(ClaimsPrincipal userPrincipal, CancellationToken ct = default);
+        Task<AuthResponseDTO> ChangePasswordAsync(ClaimsPrincipal userPrincipal, ChangePasswordDTO model, CancellationToken ct = default);
+        Task<AuthResponseDTO> ForgotPasswordAsync(ForgotPasswordDTO model, CancellationToken ct = default);
+        Task<AuthResponseDTO> SendEmailResetPassword(EmailForgotPassword model, CancellationToken ct = default);
     }
 }

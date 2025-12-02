@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Application.Interfaces.Photo;
 using Application.Photo;
+using Domain.Enums;
 
 namespace Application.Services.Photo
 {
@@ -15,9 +16,9 @@ namespace Application.Services.Photo
         {
             _photoRepository = photoRepository;
         }
-        public async Task<PhotoUploadResult> AddPhotoAsync(Microsoft.AspNetCore.Http.IFormFile file)
+        public async Task<PhotoUploadResult> AddPhotoAsync(Microsoft.AspNetCore.Http.IFormFile file, PhotoPreset preset = PhotoPreset.Default)
         {
-            return await _photoRepository.AddPhotoAsync(file);
+            return await _photoRepository.AddPhotoAsync(file, preset);
         }
         public async Task<string> DeletePhotoAsync(string publicId)
         {

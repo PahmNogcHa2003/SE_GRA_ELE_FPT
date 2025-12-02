@@ -11,5 +11,7 @@ namespace Application.Interfaces.User.Repository
     public interface IWalletDebtRepository : IRepository<WalletDebt,long>
     {
         Task<List<WalletDebt>> GetUnpaidDebtsByUserIdAsync(long userId, CancellationToken cancellationToken);
+        Task<bool> HasUnpaidDebtsAsync(long userId, CancellationToken ct);
+
     }
 }

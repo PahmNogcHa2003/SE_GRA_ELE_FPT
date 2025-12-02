@@ -2,6 +2,7 @@
 using Application.Photo;
 using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
+using Domain.Enums;
 using Infrastructure.Setting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
@@ -26,36 +27,54 @@ namespace Infrastructure.Repositories.Photo
             _cloudinary = new Cloudinary(account);
         }
 
-        public async Task<PhotoUploadResult> AddPhotoAsync(IFormFile file)
+        public async Task<PhotoUploadResult?> AddPhotoAsync(IFormFile file, PhotoPreset preset = PhotoPreset.Default)
         {
-            if (file.Length > 0)
+            if (file.Length <= 0) return null;
+
+            await using var stream = file.OpenReadStream();
+
+            var transformation = preset switch
             {
-                // Mở stream để đọc file
-                await using var stream = file.OpenReadStream();
-                var uploadParams = new ImageUploadParams
-                {
-                    File = new FileDescription(file.FileName, stream),
-                    // (Tùy chọn) Biến đổi ảnh, ví dụ: cắt và resize
-                    Transformation = new Transformation().Height(500).Width(500).Crop("fill")
-                };
+                PhotoPreset.Avatar => new Transformation()
+                    .Width(400).Height(400).Crop("fill").Gravity("face"),
 
-                // Gọi API của Cloudinary để upload
-                var uploadResult = await _cloudinary.UploadAsync(uploadParams);
+                PhotoPreset.Station => new Transformation()
+                    .AspectRatio("4:3").Width(1200).Crop("fill"),
 
-                if (uploadResult.Error != null)
-                {
-                    throw new System.Exception(uploadResult.Error.Message);
-                }
+                PhotoPreset.NewsBanner => new Transformation()
+                    .AspectRatio("16:9").Width(1600).Crop("fill"),
 
-                return new PhotoUploadResult
-                {
-                    PublicId = uploadResult.PublicId,
-                    Url = uploadResult.SecureUrl.ToString()
-                };
-            }
+                _ => new Transformation()
+                    .Quality("auto").FetchFormat("auto")
+            };
 
-            return null;
+            var folder = preset switch
+            {
+                PhotoPreset.Avatar => "holabike/avatars",
+                PhotoPreset.Station => "holabike/stations",
+                PhotoPreset.NewsBanner => "holabike/news",
+                _ => "holabike/others"
+            };
+
+            var uploadParams = new ImageUploadParams
+            {
+                File = new FileDescription(file.FileName, stream),
+                Transformation = transformation,
+                Folder = folder
+            };
+
+            var uploadResult = await _cloudinary.UploadAsync(uploadParams);
+
+            if (uploadResult.Error != null)
+                throw new Exception(uploadResult.Error.Message);
+
+            return new PhotoUploadResult
+            {
+                PublicId = uploadResult.PublicId,
+                Url = uploadResult.SecureUrl.ToString()
+            };
         }
+
 
         public async Task<string> DeletePhotoAsync(string publicId)
         {

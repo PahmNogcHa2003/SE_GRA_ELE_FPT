@@ -8,6 +8,7 @@ using Domain.Enums;
 using Application.Interfaces.User.Repository;
 using Application.Interfaces.Staff.Repository;
 using Application.Services.Identity;
+using Domain.Rules;
 
 namespace Application.Services.User
 {
@@ -18,12 +19,13 @@ namespace Application.Services.User
         private readonly IPaymentGatewayService _paymentGatewayService;
         private readonly IPaymentRepository _paymentRepository;
         private readonly IOrderRepository _orderRepository;
-
+        private readonly IPromotionCampaignRepository _promotionCampaignRepository;
         public PaymentService(
             IUnitOfWork unitOfWork,
         IWalletService walletService,
         IPaymentGatewayService paymentGatewayService,
         IPaymentRepository paymentRepository,
+        IPromotionCampaignRepository promotionCampaignRepository,
         IOrderRepository orderRepository)
         {
             _unitOfWork = unitOfWork;
@@ -31,6 +33,7 @@ namespace Application.Services.User
             _paymentGatewayService = paymentGatewayService;
             _paymentRepository = paymentRepository;
             _orderRepository = orderRepository;
+            _promotionCampaignRepository = promotionCampaignRepository;
         }
 
         public async Task<PaymentUrlResponseDTO> CreateVnPayPaymentUrlAsync(CreatePaymentRequestDTO request, HttpContext httpContext, CancellationToken cancellationToken)
@@ -121,9 +124,36 @@ namespace Application.Services.User
                     payment.Order.Status = OrderStatus.Success;
                     payment.Order.PaidAt = DateTimeOffset.UtcNow;
 
+                    var now = DateTimeOffset.UtcNow;
                     // Ghi nhận nạp ví
-                    var walletTxn = await _walletService.CreditAsync(payment.Order.UserId, payment.Amount, "VNPay", payment.OrderId, cancellationToken);
+                    var walletTxn = await _walletService.CreditAsync(
+                        payment.Order.UserId, 
+                        payment.Amount, "VNPay", 
+                        payment.OrderId, 
+                        cancellationToken);
+                    // Tính toán khuyến mãi
+                    decimal promoBonus = 0m;
+                    var activePromo = await _promotionCampaignRepository
+                        .GetActivePromotionAsync(payment.Amount, now, cancellationToken);
 
+                    if (activePromo != null)
+                    {
+                        promoBonus = payment.Amount * (activePromo.BonusPercent / 100m);
+                    }
+                    else
+                    {
+                        promoBonus = PromoRules.CalculateBonus(payment.Amount);
+                    }
+
+                    WalletTransaction? promoTxn = null;
+                    if (promoBonus > 0)
+                    {
+                        promoTxn = await _walletService.CreditPromoAsync(
+                            payment.Order.UserId,
+                            promoBonus,
+                            "WalletTopupPromo",
+                            cancellationToken);
+                    }
                     _paymentRepository.Update(payment);
                     _orderRepository.Update(payment.Order);
                     await _unitOfWork.SaveChangesAsync(cancellationToken);
@@ -146,12 +176,24 @@ namespace Application.Services.User
                         },
                         Transaction = new
                         {
-                            walletTxn.Id,
-                            walletTxn.Amount,
-                            walletTxn.Direction,
-                            walletTxn.Source,
-                            walletTxn.BalanceAfter,
-                            walletTxn.CreatedAt
+                            Wallet = new
+                            {
+                                walletTxn.Id,
+                                walletTxn.Amount,
+                                walletTxn.Direction,
+                                walletTxn.Source,
+                                walletTxn.BalanceAfter,
+                                walletTxn.CreatedAt
+                            },
+                            Promo = promoTxn == null ? null : new
+                            {
+                                promoTxn.Id,
+                                promoTxn.Amount,
+                                promoTxn.Direction,
+                                promoTxn.Source,
+                                promoTxn.PromoAfter,
+                                promoTxn.CreatedAt
+                            }
                         }
                     };
                 }

@@ -49,8 +49,6 @@ namespace Application.Services.User
                     return base.ApplyFilter(query, field, value);
             }
         }
-
-        // 🟢 QUAN TRỌNG: Project thủ công để EF dịch sang SQL (đếm Available)
         protected override IQueryable<StationDTO> ProjectToDto(IQueryable<Station> query)
         {
             var readyStatuses = new[] { "Available"};

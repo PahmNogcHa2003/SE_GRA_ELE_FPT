@@ -1,4 +1,5 @@
 ﻿using Application.Photo;
+using Domain.Enums;
 using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
@@ -10,7 +11,7 @@ namespace Application.Interfaces.Photo
 {
     public interface IPhotoRepository
     {
-        Task<PhotoUploadResult> AddPhotoAsync(IFormFile file);
+        Task<PhotoUploadResult> AddPhotoAsync(IFormFile file, PhotoPreset preset = PhotoPreset.Default);
         Task<string> DeletePhotoAsync(string publicId);
     }
 }
