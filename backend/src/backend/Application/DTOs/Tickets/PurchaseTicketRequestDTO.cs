@@ -10,6 +10,7 @@ namespace Application.DTOs.Tickets
     public class PurchaseTicketRequestDTO
     {
         [Required]
-        public long PlanPriceId { get; set; } 
+        public long PlanPriceId { get; set; }
+        public string? VoucherCode { get; set; }
     }
 }
