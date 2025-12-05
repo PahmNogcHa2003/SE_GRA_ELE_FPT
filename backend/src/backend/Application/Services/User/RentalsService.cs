@@ -121,7 +121,6 @@ namespace Application.Services.User
             var startStationId = await _vehicleRepo.GetStationVehicle(dto.VehicleId);
             if (startStationId == 0)
                 throw new NotFoundException("Xe không tồn tại hoặc không ở trạm nào.");
-
             // Kiểm tra xe
             var vehicle = await _vehicleRepo.GetVehicleWithCategoryAsync(dto.VehicleId);
             if (vehicle == null)
@@ -202,13 +201,14 @@ namespace Application.Services.User
             await _bookingTicketRepo.AddAsync(bookingTicket);
 
             // ===== History Start (lưu UTC, mô tả có thể ghi thêm giờ VN) =====
+            var stationName = await _stationRepo.GetStationNameByIdAsync(startStationId);
             var startHistory = new RentalHistory
             {
                 RentalId = rental.Id,
                 Timestamp = nowUtc,
                 ActionType = "Start",
                 Description =
-                    $"Bắt đầu (giờ VN: {ToVn(nowUtc):HH:mm dd/MM}) tại trạm {startStationId} với xe {vehicle.BikeCode} ({vehicle.Category.Name})."
+                    $"Bắt đầu (giờ VN: {ToVn(nowUtc):HH:mm dd/MM}) tại trạm {stationName} với xe {vehicle.BikeCode} ({vehicle.Category.Name})."
             };
             await _rentalHistoryRepo.AddAsync(startHistory);
 
@@ -604,6 +604,8 @@ namespace Application.Services.User
                         .ThenInclude(ut => ut.PlanPrice)
                             .ThenInclude(pp => pp.Plan)
                 .Include(r => r.Histories) 
+                .Include(r => r.StartStation)
+                .Include(r => r.EndStation)
                 .AsNoTracking()
                 .OrderByDescending(r => r.StartTime)
                 .ToListAsync(ct);
@@ -617,12 +619,6 @@ namespace Application.Services.User
                     .FirstOrDefault();
                 var endHistory = r.Histories?
                     .FirstOrDefault(h => h.ActionType == "End");
-
-                // Lấy thông tin trạm từ rental (vì đã được lưu trực tiếp)
-                var startStation = await _stationRepo.GetByIdAsync(r.StartStationId);
-                var endStation = r.EndStationId.HasValue ?
-                    await _stationRepo.GetByIdAsync(r.EndStationId.Value) : null;
-
                 int? durationMinutes = null;
                 if (r.EndTime.HasValue)
                 {
@@ -637,8 +633,8 @@ namespace Application.Services.User
                     StartTimeVn = ToVn(r.StartTime),
                     EndTimeVn = r.EndTime.HasValue ? ToVn(r.EndTime.Value) : (DateTimeOffset?)null,
 
-                    StartStationName = startStation?.Name,
-                    EndStationName = endStation?.Name,
+                    StartStationName = r.StartStation?.Name,
+                    EndStationName = r.EndStation?.Name,
 
                     VehicleCode = r.Vehicle?.BikeCode,
                     VehicleType = r.Vehicle?.Category?.Name,
