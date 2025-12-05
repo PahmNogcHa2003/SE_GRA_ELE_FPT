@@ -76,7 +76,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     final mainPages = [
-      HomeContent(onItemSelected: _handleMenuSelection, userInfo: userInfo!),
+      HomeContent(onItemSelected: _handleMenuSelection),
       const StationPage(),
       const NotificationPage(),
       const MorePage(),
