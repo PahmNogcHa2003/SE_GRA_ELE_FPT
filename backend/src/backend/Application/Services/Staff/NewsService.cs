@@ -1,6 +1,5 @@
-﻿using Application.Common;
-using Application.DTOs;
-using Application.DTOs.New;
+﻿using Application.DTOs.New;
+using Application.DTOs.TagNew;
 using Application.Interfaces;
 using Application.Interfaces.Base;
 using Application.Interfaces.Photo;
@@ -8,16 +7,12 @@ using Application.Interfaces.Staff.Repository;
 using Application.Interfaces.Staff.Service;
 using Application.Services.Base;
 using AutoMapper;
-using AutoMapper.QueryableExtensions;
 using Domain.Entities;
 using Domain.Enums;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+using System.Security.Claims;
 
 namespace Application.Services.Staff
 {
@@ -26,149 +21,220 @@ namespace Application.Services.Staff
         private readonly INewsRepository _newsRepo;
         private readonly IPhotoService _photoService;
         private readonly IRepository<Tag, long> _tagRepo;
+        private readonly IRepository<TagNew, long> _tagNewRepo;
+        private readonly ILogger<NewsService> _logger;
+        private readonly IUnitOfWork _uow;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
         public NewsService(
-            IPhotoService photoService,
             INewsRepository newsRepo,
+            IPhotoService photoService,
             IRepository<Tag, long> tagRepo,
+            IRepository<TagNew, long> tagNewRepo,
             IMapper mapper,
-            IUnitOfWork uow) : base(newsRepo, mapper, uow)
+            IUnitOfWork uow,
+            IHttpContextAccessor httpContextAccessor,
+            ILogger<NewsService> logger
+        ) : base(newsRepo, mapper, uow)
         {
+            _photoService = photoService;
             _newsRepo = newsRepo;
             _tagRepo = tagRepo;
-            _photoService = photoService;
+            _tagNewRepo = tagNewRepo;
+            _uow = uow;
+            _httpContextAccessor = httpContextAccessor;
+            _logger = logger;
         }
 
-        // === CÁC PHƯƠNG THỨC CRUD ĐÃ ĐƯỢC TỐI ƯU HÓA ===
-
-        /// <summary>
-        /// Lấy chi tiết một bài News, bao gồm cả Author và Tags để hiển thị.
-        /// </summary>
-        public override async Task<NewsDTO> GetAsync(long id, CancellationToken ct = default)
+        private long GetUserId()
         {
-            var entity = await _newsRepo.GetNewsDetailsAsync(id);
-            if (entity == null) throw new KeyNotFoundException($"News with id {id} not found.");
-            return _mapper.Map<NewsDTO>(entity);
+            var strId = _httpContextAccessor.HttpContext?
+                .User?.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            return long.TryParse(strId, out var id) ? id : 0;
         }
 
-        /// <summary>
-        /// Tạo một bài News mới. Các Tags được liên kết bằng phương pháp Attach để tối ưu hiệu suất.
-        /// </summary>
+        protected override IQueryable<News> GetQueryWithIncludes()
+        {
+            return _newsRepo.Query()
+                .AsNoTracking()
+                .Include(n => n.TagNews)
+                    .ThenInclude(tn => tn.Tag)
+                .Include(n => n.User);
+        }
+
+        // ===========================================
+        //                  CREATE
+        // ===========================================
         public override async Task<NewsDTO> CreateAsync(NewsDTO dto, CancellationToken ct = default)
         {
-            var entity = _mapper.Map<News>(dto);
-            entity.CreatedAt = DateTimeOffset.UtcNow;
-
-            if (dto.TagIds != null && dto.TagIds.Any())
+            try
             {
-                // Tạo các "stub entity" chỉ chứa Id
-                var tagsToAttach = dto.TagIds.Select(tagId => new Tag { Id = tagId }).ToList();
+                var entity = _mapper.Map<News>(dto);
+                entity.CreatedAt = DateTimeOffset.UtcNow;
+                entity.UpdatedAt = DateTimeOffset.UtcNow;
+                entity.UserId = GetUserId();
+                entity.ScheduledAt = dto.ScheduledAt ?? DateTimeOffset.UtcNow;
+                entity.PublishedAt = dto.ScheduledAt ?? DateTimeOffset.UtcNow;
 
-                // Attach chúng vào DbContext. EF sẽ hiểu rằng chúng đã tồn tại và chỉ tạo mối quan hệ.
-                foreach (var tag in tagsToAttach)
+                // Insert News
+                await _newsRepo.AddAsync(entity, ct);
+                await _uow.SaveChangesAsync(ct); // cần có entity.Id
+
+                // Insert Tags
+                if (dto.TagIds?.Any() == true)
                 {
-                    _tagRepo.Attach(tag);
-                }           
-            }
-
-            await _repo.AddAsync(entity, ct);
-            await _uow.SaveChangesAsync(ct);
-            return _mapper.Map<NewsDTO>(entity);
-        }
-
-        /// <summary>
-        /// Cập nhật một bài News. Quan hệ với Tags được xử lý hiệu quả bằng cách xóa liên kết cũ và tạo lại liên kết mới.
-        /// </summary>
-        public override async Task UpdateAsync(long id, NewsDTO dto, CancellationToken ct = default)
-        {
-            // Lấy entity gốc kèm theo danh sách Tags hiện tại của nó.
-            var entity = await _newsRepo.GetNewsForUpdateAsync(id);
-            if (entity == null) throw new KeyNotFoundException($"News with id {id} not found.");
-
-            // Map các thuộc tính đơn giản (Title, Content...) từ DTO sang entity
-            _mapper.Map(dto, entity);
-
-            // Xử lý logic cập nhật Tags một cách hiệu quả
-            if (dto.TagIds != null)
-            {
-               
-                if (dto.TagIds.Any())
-                {
-                    // Tạo các "stub entity" chỉ chứa Id cho các tag mới
-                    var tagsToAttach = dto.TagIds.Select(tagId => new Tag { Id = tagId }).ToList();
-
-                    // Attach chúng vào DbContext để EF biết chúng đã tồn tại
-                    foreach (var tag in tagsToAttach)
+                    var tagNewsDtos = dto.TagIds.Select(tagId => new TagNewDTO
                     {
-                        _tagRepo.Attach(tag);
+                        TagId = tagId,
+                        NewId = entity.Id
+                    }).ToList();
+
+                    // map list
+                    var tagNewsEntities = _mapper.Map<List<TagNew>>(tagNewsDtos);
+
+                    // Add từng tag nếu repo không có AddRangeAsync
+                    foreach (var tag in tagNewsEntities)
+                    {
+                        await _tagNewRepo.AddAsync(tag, ct);
                     }
-
-                
                 }
+
+                await _uow.SaveChangesAsync(ct);
+                return _mapper.Map<NewsDTO>(entity);
             }
-
-            await _uow.SaveChangesAsync(ct);
-        }
-
-        // === CÁC PHƯƠNG THỨC APPLY... CHO SEARCH, FILTER, SORT ===
-
-        protected override IQueryable<News> ApplySearch(IQueryable<News> query, string searchQuery)
-        {
-            if (string.IsNullOrWhiteSpace(searchQuery)) return query;
-            var lowerCaseSearchQuery = searchQuery.Trim().ToLower();
-
-            // Câu lệnh này giờ đã an toàn vì query đã được Include Author ở GetPagedAsync
-            return query.Where(s =>
-                s.User.UserName.ToLower().Contains(lowerCaseSearchQuery) ||
-                s.Content.ToLower().Contains(lowerCaseSearchQuery)
-            );
-        }
-
-        protected override IQueryable<News> ApplyFilter(IQueryable<News> query, string filterField, string filterValue)
-        {
-            // Logic filter riêng cho 'isactive'
-            if (filterField.Equals("isactive", System.StringComparison.OrdinalIgnoreCase))
+            catch (Exception ex)
             {
-                if (bool.TryParse(filterValue, out bool isActive))
-                {
-                    return query.Where(s => s.Status.Equals(isActive));
-                }
-               
-                return query;
+                _logger.LogError(ex, "Error creating news");
+                throw;
             }
-
-            // Với các trường filter khác, gọi về cho base xử lý
-            return base.ApplyFilter(query, filterField, filterValue);
         }
-        public async Task<NewsDTO?> UpdateBannerAsync(long newsId, IFormFile file , CancellationToken ct = default)
+
+
+        // ===========================================
+        //                 UPDATE
+        // ===========================================
+        public override async Task<NewsDTO?> UpdateAsync(long id, NewsDTO dto, CancellationToken ct = default)
         {
-            if(file == null || file.Length == 0)
-                throw new ArgumentException("File banner không hợp lệ", nameof(file));
-            var news =  await _repo.Query()
-                .FirstOrDefaultAsync(n => n.Id == newsId, ct);
-            if (news == null) throw new KeyNotFoundException($"News with id {newsId} not found.");
+            try
+            {
+                var news = await _newsRepo.GetByIdAsync(dto.Id, ct);
+                if (news == null)
+                {
+                    _logger.LogWarning("News not found: {Id}", dto.Id);
+                    return null;
+                }
+
+                // Update fields
+                news.Title = dto.Title;
+                news.Content = dto.Content;
+                news.Status = dto.Status;
+                news.ScheduledAt = dto.ScheduledAt;
+                news.PublishedAt = dto.ScheduledAt ?? news.PublishedAt;
+                news.UpdatedAt = DateTimeOffset.UtcNow;
+                news.PublishedBy = GetUserId();
+
+                await _uow.SaveChangesAsync(ct);
+
+                return _mapper.Map<NewsDTO>(news);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Update news failed: {Id}", dto.Id);
+                throw;
+            }
+        }
+
+        // ===========================================
+        //                 DELETE
+        // ===========================================
+        public override async Task<NewsDTO?> DeleteAsync(long id, CancellationToken ct = default)
+        {
+            try
+            {
+                var news = await _newsRepo.GetByIdAsync(id, ct);
+                if (news == null)
+                {
+                    _logger.LogWarning("News not found: {Id}", id);
+                    return null;
+                }
+
+                _newsRepo.Remove(news);
+                await _uow.SaveChangesAsync(ct);
+
+                return _mapper.Map<NewsDTO>(news);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Delete news failed: {Id}", id);
+                throw;
+            }
+        }
+
+        // ===========================================
+        //           BANNER UPDATE (CLEAN)
+        // ===========================================
+        public async Task<NewsDTO?> UpdateBannerAsync(long newsId, IFormFile file, CancellationToken ct = default)
+        {
+            if (file == null || file.Length == 0)
+                throw new ArgumentException("File banner không hợp lệ");
+
+            var news = await _newsRepo.GetByIdAsync(newsId);
+            if (news == null)
+                throw new KeyNotFoundException($"News {newsId} not found");
+
+            // Xóa ảnh cũ
             if (!string.IsNullOrWhiteSpace(news.BannerPublicId))
             {
                 try
                 {
                     await _photoService.DeletePhotoAsync(news.BannerPublicId);
                 }
-                catch
+                catch (Exception ex)
                 {
-                    Console.WriteLine("Xoá ảnh cũ thất bại, có thể ảnh không tồn tại trên Cloudinary.");
+                    _logger.LogWarning(ex, "Không xoá được ảnh cũ Banner");
                 }
             }
-            var uploadResult = await _photoService.AddPhotoAsync(file, PhotoPreset.NewsBanner);
-            if(uploadResult == null || string.IsNullOrWhiteSpace(uploadResult.Url))
-                throw new Exception("Upload banner thất bại.");
-            news.Banner = uploadResult.Url;
-            news.BannerPublicId = uploadResult.PublicId;
+
+            // Upload ảnh mới
+            var upload = await _photoService.AddPhotoAsync(file, PhotoPreset.NewsBanner);
+            if (upload == null)
+                throw new Exception("Upload banner thất bại");
+
+            news.Banner = upload.Url;
+            news.BannerPublicId = upload.PublicId;
             news.UpdatedAt = DateTimeOffset.UtcNow;
 
-            _repo.Update(news);
+            _newsRepo.Update(news);
             await _uow.SaveChangesAsync(ct);
 
             return _mapper.Map<NewsDTO>(news);
+        }
+
+        // ===========================================
+        //            SEARCH / FILTER
+        // ===========================================
+        protected override IQueryable<News> ApplySearch(IQueryable<News> query, string searchQuery)
+        {
+            if (string.IsNullOrWhiteSpace(searchQuery))
+                return query;
+
+            searchQuery = searchQuery.ToLower();
+
+            return query.Where(s =>
+                s.User.UserName.ToLower().Contains(searchQuery) ||
+                s.Content.ToLower().Contains(searchQuery));
+        }
+
+        protected override IQueryable<News> ApplyFilter(IQueryable<News> query, string field, string value)
+        {
+            if (field.Equals("isactive", StringComparison.OrdinalIgnoreCase))
+            {
+                if (bool.TryParse(value, out var isActive))
+                    return query.Where(s => s.Status == NewStatus.Publish);
+            }
+
+            return base.ApplyFilter(query, field, value);
         }
     }
 }
