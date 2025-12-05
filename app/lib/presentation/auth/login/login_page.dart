@@ -56,25 +56,30 @@ class LoginPage extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(
-                        'Chưa có tài khoản?',
-                        style: TextStyle(color: AppColors.textSecondary),
+                      Flexible(
+                        child: Text(
+                          'Chưa có tài khoản?',
+                          style: TextStyle(color: AppColors.textSecondary),
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
-                      TextButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const RegisterPage(),
+                      Flexible(
+                        child: TextButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const RegisterPage(),
+                              ),
+                            );
+                          },
+                          child: const Text(
+                            'Đăng ký ngay',
+                            style: TextStyle(
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.bold,
+                              decoration: TextDecoration.underline,
                             ),
-                          );
-                        },
-                        child: const Text(
-                          'Đăng ký ngay',
-                          style: TextStyle(
-                            color: AppColors.primary,
-                            fontWeight: FontWeight.bold,
-                            decoration: TextDecoration.underline,
                           ),
                         ),
                       ),

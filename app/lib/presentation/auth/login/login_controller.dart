@@ -4,6 +4,9 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:hola_bike_app/application/usecases/usecase_login.dart';
 import 'package:hola_bike_app/presentation/home/home_screen.dart';
 
+import 'package:hola_bike_app/data/sources/local/trip_local_storage.dart';
+import 'package:hola_bike_app/presentation/trip/trip_tracking_page.dart';
+
 class LoginController extends ChangeNotifier {
   final formKey = GlobalKey<FormState>();
   final emailController = TextEditingController();
@@ -32,6 +35,20 @@ class LoginController extends ChangeNotifier {
 
       if (response.success) {
         await secureStorage.write(key: 'access_token', value: response.token);
+
+        final tripStorage = TripLocalStorage();
+        final session = await tripStorage.loadSession();
+
+        if (session != null) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (_) => TripTrackingPage(rentalId: session.rentalId),
+            ),
+          );
+          return;
+        }
+
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (_) => HomeScreen()),

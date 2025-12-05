@@ -154,8 +154,19 @@ class _RegisterFormState extends State<RegisterForm> {
           ),
           _buildField(
             _emailController,
-            'Email',
+            'Email * ',
             keyboardType: TextInputType.emailAddress,
+            validator: (v) {
+              if (v == null || v.isEmpty) {
+                return 'Vui lòng nhập email';
+              }
+
+              final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+              if (!emailRegex.hasMatch(v)) {
+                return 'Email không hợp lệ';
+              }
+              return null;
+            },
           ),
           _dropdownGender(),
           _buildDatePickerField(_birthController),
