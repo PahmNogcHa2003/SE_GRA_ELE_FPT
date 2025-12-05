@@ -7,16 +7,13 @@ import { getStations, getNearbyStations } from '../../services/station.service';
 import type { StationDTO, StationPagedApiResponse } from '../../types/station';
 
 const { Search } = Input;
-
-/** ===== bạn có thể tinh chỉnh 4 con số này nếu cần ===== */
-const NAV_H = 32;        // chiều cao navbar (không đổi nav, chỉ để tính chiều cao nội dung)
-const BANNER_H = 190;    // chiều cao banner
-const TOP_BOTTOM_GAP = 12; // khoảng cách trên/dưới phần card (nhỏ thôi)
-const FOOTER_GUARD = 12; // khoảng cách tối thiểu tới footer (nhỏ thôi)
+const NAV_H = 32;        
+const BANNER_H = 190;   
+const TOP_BOTTOM_GAP = 12; 
+const FOOTER_GUARD = 12; 
 
 const calcPanelHeight = `calc(100vh - ${NAV_H + TOP_BOTTOM_GAP + FOOTER_GUARD}px - ${BANNER_H}px)`;
 
-/** debounce nhỏ gọn */
 function useDebouncedValue<T>(value: T, delay = 350) {
   const [debounced, setDebounced] = React.useState(value);
   React.useEffect(() => { const t = setTimeout(() => setDebounced(value), delay); return () => clearTimeout(t); }, [value, delay]);

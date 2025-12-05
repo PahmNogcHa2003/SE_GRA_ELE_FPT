@@ -82,16 +82,19 @@ const toVehicleLabel = (v: string | undefined) => (v?.toLowerCase() === "ebike" 
 
 const prettyErr = (e: any) => {
   if (!e) return "Đã có lỗi xảy ra";
-  if (typeof e === "string") return e;
-  if (e?.message) {
-    try {
-      const j = JSON.parse(e.message);
-      return j?.message || j?.error || e.message;
-    } catch {
-      return e.message;
+  const resp = e.response;
+  if (resp && resp.data) {
+    const d = resp.data;
+    if (typeof d === "string") return d;
+    if (typeof d === "object") {
+      if (d.message) return d.message;
+      if (d.error) return d.error;
+      if (Array.isArray(d.errors) && d.errors.length > 0) {
+        return d.errors.join("; ");
+      }
+      if (typeof d.title === "string") return d.title;
     }
   }
-  return "Đã có lỗi xảy ra";
 };
 
 const mapMode = (m: number | string | undefined): "IMMEDIATE" | "ON_FIRST_USE" =>

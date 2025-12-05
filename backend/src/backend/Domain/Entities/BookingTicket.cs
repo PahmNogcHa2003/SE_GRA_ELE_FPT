@@ -24,6 +24,12 @@ public class BookingTicket : BaseEntity<long>
 
     public int? UsedMinutes { get; set; }
 
+    [Column(TypeName = "int")]
+    public int? OverusedMinutes { get; set; } 
+
+    [Column(TypeName = "decimal(18,2)")]
+    public decimal? OverusedFee { get; set; } 
+
     [Precision(0)]
     public DateTimeOffset? AppliedAt { get; set; }
 

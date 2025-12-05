@@ -21,6 +21,9 @@ public partial class News : BaseEntity<long>
     [StringLength(255)]
     public string? Banner { get; set; }
 
+    [StringLength(255)]
+    public string? BannerPublicId { get; set; }
+
     public string? Content { get; set; }
 
     [Required]
@@ -39,6 +42,8 @@ public partial class News : BaseEntity<long>
     [Required]
     [Precision(0)]
     public DateTimeOffset CreatedAt { get; set; }
+
+    public DateTimeOffset UpdatedAt { get; set; }   
 
     [Required]
     public long UserId { get; set; }

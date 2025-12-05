@@ -15,6 +15,7 @@ export interface NewsDTO {
   userId: number;
   tagIds: number[];
   tagNames?: string[];
+  updatedAt: string;
 }
 
 // Param gọi API lấy danh sách News (tuỳ theo controller của bạn)

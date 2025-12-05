@@ -10,6 +10,5 @@ namespace Application.Interfaces.Staff.Repository
 {
     public interface ITagRepository : IRepository<Domain.Entities.Tag, long>
     {
-        Task<List<Tag>> FindOrCreateTagsAsync(IEnumerable<string> tagNames);
     }
 }

@@ -24,6 +24,7 @@ public partial class HolaBikeContext : IdentityDbContext<AspNetUser, IdentityRol
     public DbSet<CategoriesVehicle> CategoriesVehicles { get; set; }
     public DbSet<VehicleUsageLog> VehicleUsageLogs { get; set; }
     public DbSet<Rental> Rentals { get; set; }
+    public DbSet<RentalHistory> RentalHistories { get; set; }
 
     // --- VÉ & THANH TOÁN ---
     public DbSet<TicketPlan> TicketPlans { get; set; }
@@ -41,7 +42,14 @@ public partial class HolaBikeContext : IdentityDbContext<AspNetUser, IdentityRol
     public DbSet<Tag> Tags { get; set; }
     public DbSet<TagNew> TagNews { get; set; }
     public DbSet<Contact> Contacts { get; set; }
+    public DbSet<UserLifetimeStats> UserLifetimeStats { get; set; }
 
+    // --- Khuyến mãi ---
+    public DbSet<PromotionCampaign> PromotionCampaigns { get; set; }
+
+    // --- Quest ---
+    public DbSet<Quest> Quests { get; set; }
+    public DbSet<UserQuestProgress> UserQuests { get; set; }
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);

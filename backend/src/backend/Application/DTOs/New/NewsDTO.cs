@@ -5,6 +5,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Application.DTOs.BaseDTO;
+using Domain.Enums;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 
 namespace Application.DTOs.New
@@ -16,7 +18,6 @@ namespace Application.DTOs.New
         public string Title { get; set; } = null!;
 
         [Required]
-        [StringLength(200)]
         public string Slug { get; set; } = null!;
 
         [StringLength(255)]
@@ -27,24 +28,11 @@ namespace Application.DTOs.New
         [Required]
         [StringLength(20)]
         [Unicode(false)]
-        public string Status { get; set; } = "Draft";
-
-        [Precision(0)]
-        public DateTimeOffset? PublishedAt { get; set; }
-
-        public long? PublishedBy { get; set; }
+        public string Status { get; set; } 
 
         [Precision(0)]
         public DateTimeOffset? ScheduledAt { get; set; }
-
-        [Required]
-        [Precision(0)]
-        public DateTimeOffset CreatedAt { get; set; }
-
-        [Required]
-        public long UserId { get; set; }
-        public List<long> TagIds { get; set; } = new List<long>();
-        public List<string>? TagNames { get; set; } 
+        public List<long> TagIds { get; set; }
 
     }
 }

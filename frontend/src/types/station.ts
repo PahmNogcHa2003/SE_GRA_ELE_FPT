@@ -10,6 +10,7 @@ export interface StationDTO {
     image?: string;
     vehicleAvailable?: number;
     distanceKm?: number;
+    updatedAt: string;
 }
 export interface GetStationsParams {
   page?: number;

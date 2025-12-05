@@ -28,11 +28,23 @@ public partial class Station : BaseEntity<long>
     [StringLength(255)]
     public string? Image { get; set; }
 
+    [StringLength(255)]
+    public string? ImagePublicId { get; set; }
+
+    public DateTimeOffset UpdatedAt { get; set; }
+
     [InverseProperty("Station")]
     public virtual ICollection<StationLog> StationLogs { get; set; } = new List<StationLog>();
 
     [InverseProperty("Station")]
     public virtual ICollection<Vehicle> Vehicles { get; set; } = new List<Vehicle>();
+
+    [InverseProperty(nameof(Rental.StartStation))]
+    public ICollection<Rental> RentalsStarted { get; set; } = new List<Rental>();
+
+    [InverseProperty(nameof(Rental.EndStation))]
+    public ICollection<Rental> RentalsEnded { get; set; } = new List<Rental>();
+
 
     // Phương thức logic nghiệp vụ: Kích hoạt lại trạm
     public void Activate()

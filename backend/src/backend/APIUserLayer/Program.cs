@@ -66,17 +66,6 @@ builder.Services.AddHttpClient("ProvincesAPI", client =>
 #endif
 });
 
-
-// Add CORS
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowAll",
-        builder => builder.AllowAnyOrigin()
-                          .AllowAnyMethod()
-                          .AllowAnyHeader());
-});
-
-
 // Add Authentication & JWT
 builder.Services.AddAuthentication(options =>
 {
@@ -152,10 +141,18 @@ async Task SeedIdentityAsync(IServiceProvider services)
 }
 
 // Add CORS
-builder.Services.AddCors(o => o.AddPolicy("frontend", p =>
-    p.WithOrigins("http://localhost:5173")
-     .AllowAnyHeader().AllowAnyMethod().AllowCredentials()
-));
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("frontend", policy =>
+        policy
+            .SetIsOriginAllowed(origin => true) 
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials()
+    );
+});
+
+
 
 // Add Swagger with Auth support
 builder.Services.AddEndpointsApiExplorer();
@@ -245,15 +242,10 @@ if (app.Environment.IsDevelopment())
 }
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseMiddleware<ValidationMiddleware>();
-app.UseMiddleware<ResponseMiddleware>();
-
-app.UseHttpsRedirection();
 
 app.UseRouting();
 
-app.UseCors("AllowAll"); // Sử dụng chính sách CORS
-
-app.UseAuthentication(); // This must come before UseAuthorization
+app.UseForwardedHeaders();
 
 app.UseCors("frontend");
 

@@ -42,22 +42,18 @@ namespace Infrastructure.Repositories.User
                  from up in _dbContext.Set<UserProfile>().AsNoTracking()
                  join u in _dbContext.Set<AspNetUser>().AsNoTracking()
                      on up.UserId equals u.Id
-                 join k in _dbContext.Set<KycForm>().AsNoTracking()
-                     on up.UserId equals k.UserId into kycGroup
-                 from kyc in kycGroup
-                     .OrderByDescending(x => x.SubmittedAt)
-                     .Take(1)
-                     .DefaultIfEmpty()
                  where up.UserId == userId
                  select new UserProfileDTO
                  {
-                     UserId = userId,
+
+                     UserId = up.UserId,
                      FullName = up.FullName,
                      Email = u.Email,
                      PhoneNumber = u.PhoneNumber,
                      Dob = up.Dob,
                      Gender = up.Gender,
                      AvatarUrl = up.AvatarUrl,
+
                      EmergencyName = up.EmergencyName,
                      EmergencyPhone = up.EmergencyPhone,
                      ProvinceCode = up.ProvinceCode,
@@ -76,8 +72,33 @@ namespace Infrastructure.Repositories.User
                      CreatedAt = up.CreatedAt,
                      UpdatedAt = up.UpdatedAt,
 
-                     IsVerify = kyc != null ? kyc.Status : "None"
-                 };
+
+                     TotalCaloriesBurned = _dbContext.UserLifetimeStats
+                .Where(s => s.UserId == userId)
+                .Sum(s => (decimal?)s.TotalCaloriesBurned) ?? 0,
+
+                     TotalCo2SavedKg = _dbContext.UserLifetimeStats
+                .Where(s => s.UserId == userId)
+                .Sum(s => (decimal?)s.TotalCo2SavedKg) ?? 0,
+
+                     TotalDistanceKm = _dbContext.UserLifetimeStats
+                .Where(s => s.UserId == userId)
+                .Sum(s => (decimal?)s.TotalDistanceKm) ?? 0,
+
+                     TotalDurationMinutes = _dbContext.UserLifetimeStats
+                .Where(s => s.UserId == userId)
+                .Sum(s => (int?)s.TotalDurationMinutes) ?? 0,
+
+                     TotalTrips = _dbContext.UserLifetimeStats
+                .Where(s => s.UserId == userId)
+                .Sum(s => (int?)s.TotalTrips) ?? 0,
+
+                     IsVerify = _dbContext.KycForms
+                .Where(k => k.UserId == userId)
+                .OrderByDescending(k => k.SubmittedAt)
+                .Select(k => k.Status)
+                .FirstOrDefault() ?? "None"                
+        };
             return await q.FirstOrDefaultAsync(ct);
         }
   

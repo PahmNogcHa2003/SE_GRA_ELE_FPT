@@ -1,4 +1,6 @@
 ﻿using Application.DTOs.JsonConvert;
+using Application.DTOs.RentalHistory;
+using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -51,6 +53,16 @@ namespace Application.DTOs.UserProfile
 
         public string? AddressDetail { get; set; }
 
+        public decimal TotalDistanceKm { get; set; }
+
+        public int TotalTrips { get; set; }
+
+        public int TotalDurationMinutes { get; set; }
+
+        public decimal TotalCo2SavedKg { get; set; }
+
+        public decimal TotalCaloriesBurned { get; set; }
+
         [Required]
         [StringLength(15)]
         public string NumberCard { get; set; } // ĐÃ SỬA: string
@@ -77,5 +89,7 @@ namespace Application.DTOs.UserProfile
         [Required]
         [Precision(0)]
         public DateTimeOffset UpdatedAt { get; set; }
+
+        public List<RentalHistoryDTO> rentalHistories = new List<RentalHistoryDTO>();
     }
 }

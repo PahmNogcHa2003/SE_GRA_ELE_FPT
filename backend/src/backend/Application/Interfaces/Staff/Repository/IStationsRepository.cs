@@ -9,5 +9,6 @@ namespace Application.Interfaces.Staff.Repository
 {
     public interface IStationsRepository : IRepository<Domain.Entities.Station, long>
     {
+        Task<string?> GetStationNameByIdAsync(long stationId);
     }
 }

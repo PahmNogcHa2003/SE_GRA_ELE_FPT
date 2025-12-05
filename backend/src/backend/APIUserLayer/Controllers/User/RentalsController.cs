@@ -1,10 +1,12 @@
 ﻿using APIUserLayer.Controllers.Base;
 using Application.Common;
 using Application.DTOs.Rental;
+using Application.DTOs.RentalHistory;
 using Application.Interfaces.User.Service;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
+using Application.Services.Identity;
 
 namespace APIUserLayer.Controllers.User
 {
@@ -14,10 +16,11 @@ namespace APIUserLayer.Controllers.User
     public class RentalsController : UserBaseController
     {
         private readonly IRentalsService _rentalsService;
-
-        public RentalsController(IRentalsService rentalsService)
+        private readonly IUserLifetimeStatsService _userLifetimeStatsService;
+        public RentalsController(IRentalsService rentalsService, IUserLifetimeStatsService userLifetimeStatsService )
         {
             _rentalsService = rentalsService;
+            _userLifetimeStatsService = userLifetimeStatsService;
         }
 
         /// <summary>
@@ -93,5 +96,32 @@ namespace APIUserLayer.Controllers.User
             // thì coi như yêu cầu không hợp lệ hoặc không tìm thấy.
             return NotFound(ApiResponse<object>.ErrorResponse("Không tìm thấy xe hoặc vị trí không hợp lệ."));
         }
+        ///<summary>
+        ///Lấy thông tin lịch sử đi xe của người dùng
+        ///<summary>
+        [HttpGet("history")]
+        public async Task<ActionResult<IEnumerable<RentalHistoryDTO>>> GetMyHistory(CancellationToken ct)
+        {
+            var list = await _rentalsService.GetMyRentalHistoryAsync(ct);
+            return Ok(ApiResponse<IEnumerable<RentalHistoryDTO>>.SuccessResponse(list, "Fetched rental history successfully."));
+        }
+
+        /// <summary>
+        /// Lấy thống kê quãng đường, số phút đi, calories của người dùng
+        /// </summary>
+        /// <param name="ct"></param>
+        /// <returns></returns>
+        [HttpGet("stats/summary")]
+        public async Task<IActionResult> GetRentalSummaryStats(CancellationToken ct)
+        {
+           var userId = ClaimsPrincipalExtensions.GetUserIdAsLong(User);
+           if(userId == null)
+            {
+                return Unauthorized(ApiResponse<object>.ErrorResponse("User ID not found in token."));
+            }
+           var stats = await _userLifetimeStatsService.GetMyStatsAsync(userId.Value, ct);
+           return Ok(ApiResponse<RentalStatsSummaryDTO>.SuccessResponse(stats, "Fetched rental summary stats successfully."));
+        }
+      
     }
 }

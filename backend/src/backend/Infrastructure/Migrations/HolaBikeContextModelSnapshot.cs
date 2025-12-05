@@ -136,6 +136,12 @@ namespace Infrastructure.Migrations
                         .HasPrecision(0)
                         .HasColumnType("datetimeoffset(0)");
 
+                    b.Property<decimal?>("OverusedFee")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int?>("OverusedMinutes")
+                        .HasColumnType("int");
+
                     b.Property<decimal>("PlanPrice")
                         .HasColumnType("decimal(18, 2)");
 
@@ -298,6 +304,10 @@ namespace Infrastructure.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
+                    b.Property<string>("BannerPublicId")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
                     b.Property<string>("Content")
                         .HasColumnType("nvarchar(max)");
 
@@ -331,6 +341,9 @@ namespace Infrastructure.Migrations
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
 
                     b.Property<long>("UserId")
                         .HasColumnType("bigint");
@@ -487,6 +500,113 @@ namespace Infrastructure.Migrations
                     b.ToTable("Payment");
                 });
 
+            modelBuilder.Entity("Domain.Entities.PromotionCampaign", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<decimal>("BonusPercent")
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<DateTimeOffset>("EndAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<decimal>("MinAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTimeOffset>("StartAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("PromotionCampaign");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Quest", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTimeOffset>("EndAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<decimal>("PromoReward")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("QuestType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<string>("Scope")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<DateTimeOffset>("StartAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<decimal?>("TargetDistanceKm")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int?>("TargetDurationMinutes")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("TargetTrips")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasPrecision(0)
+                        .HasColumnType("datetimeoffset(0)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Quest");
+                });
+
             modelBuilder.Entity("Domain.Entities.Rental", b =>
                 {
                     b.Property<long>("Id")
@@ -527,11 +647,60 @@ namespace Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("EndStationId");
+
+                    b.HasIndex("StartStationId");
+
                     b.HasIndex("UserId");
 
                     b.HasIndex("VehicleId");
 
                     b.ToTable("Rental");
+                });
+
+            modelBuilder.Entity("Domain.Entities.RentalHistory", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("ActionType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<double?>("CaloriesBurned")
+                        .HasColumnType("float");
+
+                    b.Property<double?>("Co2SavedKg")
+                        .HasColumnType("float");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(255)
+                        .IsUnicode(true)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<double?>("DistanceMeters")
+                        .HasColumnType("float");
+
+                    b.Property<int?>("DurationMinutes")
+                        .HasColumnType("int");
+
+                    b.Property<long>("RentalId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset>("Timestamp")
+                        .HasPrecision(0)
+                        .HasColumnType("datetimeoffset(0)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RentalId");
+
+                    b.ToTable("RentalHistory");
                 });
 
             modelBuilder.Entity("Domain.Entities.Station", b =>
@@ -546,6 +715,10 @@ namespace Infrastructure.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("Image")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("ImagePublicId")
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
@@ -565,6 +738,9 @@ namespace Infrastructure.Migrations
                     b.Property<string>("Name")
                         .HasMaxLength(150)
                         .HasColumnType("nvarchar(150)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
 
                     b.HasKey("Id");
 
@@ -717,7 +893,12 @@ namespace Infrastructure.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
+                    b.Property<long?>("VoucherId")
+                        .HasColumnType("bigint");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("VoucherId");
 
                     b.HasIndex(new[] { "PlanId" }, "IX_TicketPlanPrice_PlanId");
 
@@ -765,6 +946,44 @@ namespace Infrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("UserDevice");
+                });
+
+            modelBuilder.Entity("Domain.Entities.UserLifetimeStats", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<decimal>("TotalCaloriesBurned")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("TotalCo2SavedKg")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("TotalDistanceKm")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("TotalDurationMinutes")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TotalTrips")
+                        .HasColumnType("int");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasPrecision(0)
+                        .HasColumnType("datetimeoffset(0)");
+
+                    b.Property<long>("UserId")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("UserLifetimeStats");
                 });
 
             modelBuilder.Entity("Domain.Entities.UserProfile", b =>
@@ -867,6 +1086,51 @@ namespace Infrastructure.Migrations
                         .HasFilter("[NumberCard] IS NOT NULL");
 
                     b.ToTable("UserProfile");
+                });
+
+            modelBuilder.Entity("Domain.Entities.UserQuestProgress", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTimeOffset?>("CompletedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<decimal>("CurrentDistanceKm")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("CurrentDurationMinutes")
+                        .HasColumnType("int");
+
+                    b.Property<int>("CurrentTrips")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsCompleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTimeOffset>("LastUpdatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<long>("QuestId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset?>("RewardClaimedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<long>("UserId")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("QuestId");
+
+                    b.HasIndex(new[] { "UserId", "QuestId" }, "UQ_UserQuest")
+                        .IsUnique();
+
+                    b.ToTable("UserQuestProgress");
                 });
 
             modelBuilder.Entity("Domain.Entities.UserSession", b =>
@@ -1044,6 +1308,83 @@ namespace Infrastructure.Migrations
                     b.ToTable("VehicleUsageLogs");
                 });
 
+            modelBuilder.Entity("Domain.Entities.Voucher", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTimeOffset>("EndDate")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<bool>("IsPercentage")
+                        .HasColumnType("bit");
+
+                    b.Property<decimal?>("MaxDiscountAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("MinOrderAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTimeOffset>("StartDate")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("UsageLimit")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("UsagePerUser")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("Value")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Voucher");
+                });
+
+            modelBuilder.Entity("Domain.Entities.VoucherUsage", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<long?>("TicketPlanPriceId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset>("UsedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<long>("UserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("VoucherId")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TicketPlanPriceId");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("VoucherId");
+
+                    b.ToTable("VoucherUsage");
+                });
+
             modelBuilder.Entity("Domain.Entities.Wallet", b =>
                 {
                     b.Property<long>("Id")
@@ -1059,6 +1400,9 @@ namespace Infrastructure.Migrations
                         .IsRequired()
                         .HasMaxLength(3)
                         .HasColumnType("char(3)");
+
+                    b.Property<decimal>("PromoBalance")
+                        .HasColumnType("decimal(18, 2)");
 
                     b.Property<byte[]>("RowVer")
                         .IsConcurrencyToken()
@@ -1157,6 +1501,9 @@ namespace Infrastructure.Migrations
                         .HasMaxLength(6)
                         .IsUnicode(false)
                         .HasColumnType("varchar(6)");
+
+                    b.Property<decimal>("PromoAfter")
+                        .HasColumnType("decimal(18, 2)");
 
                     b.Property<string>("Source")
                         .IsRequired()
@@ -1398,6 +1745,16 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Domain.Entities.Rental", b =>
                 {
+                    b.HasOne("Domain.Entities.Station", "EndStation")
+                        .WithMany("RentalsEnded")
+                        .HasForeignKey("EndStationId");
+
+                    b.HasOne("Domain.Entities.Station", "StartStation")
+                        .WithMany("RentalsStarted")
+                        .HasForeignKey("StartStationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("Domain.Entities.AspNetUser", "User")
                         .WithMany("Rentals")
                         .HasForeignKey("UserId")
@@ -1410,9 +1767,24 @@ namespace Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.Navigation("EndStation");
+
+                    b.Navigation("StartStation");
+
                     b.Navigation("User");
 
                     b.Navigation("Vehicle");
+                });
+
+            modelBuilder.Entity("Domain.Entities.RentalHistory", b =>
+                {
+                    b.HasOne("Domain.Entities.Rental", "Rental")
+                        .WithMany("Histories")
+                        .HasForeignKey("RentalId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Rental");
                 });
 
             modelBuilder.Entity("Domain.Entities.StationLog", b =>
@@ -1453,13 +1825,30 @@ namespace Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Domain.Entities.Voucher", "Voucher")
+                        .WithMany("TicketPlanPrices")
+                        .HasForeignKey("VoucherId");
+
                     b.Navigation("Plan");
+
+                    b.Navigation("Voucher");
                 });
 
             modelBuilder.Entity("Domain.Entities.UserDevice", b =>
                 {
                     b.HasOne("Domain.Entities.AspNetUser", "User")
                         .WithMany("UserDevices")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Domain.Entities.UserLifetimeStats", b =>
+                {
+                    b.HasOne("Domain.Entities.AspNetUser", "User")
+                        .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1476,6 +1865,17 @@ namespace Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Domain.Entities.UserQuestProgress", b =>
+                {
+                    b.HasOne("Domain.Entities.Quest", "Quest")
+                        .WithMany()
+                        .HasForeignKey("QuestId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Quest");
                 });
 
             modelBuilder.Entity("Domain.Entities.UserSession", b =>
@@ -1538,6 +1938,31 @@ namespace Infrastructure.Migrations
                     b.Navigation("User");
 
                     b.Navigation("Vehicle");
+                });
+
+            modelBuilder.Entity("Domain.Entities.VoucherUsage", b =>
+                {
+                    b.HasOne("Domain.Entities.TicketPlanPrice", "TicketPlanPrice")
+                        .WithMany()
+                        .HasForeignKey("TicketPlanPriceId");
+
+                    b.HasOne("Domain.Entities.AspNetUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.Voucher", "Voucher")
+                        .WithMany("VoucherUsages")
+                        .HasForeignKey("VoucherId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("TicketPlanPrice");
+
+                    b.Navigation("User");
+
+                    b.Navigation("Voucher");
                 });
 
             modelBuilder.Entity("Domain.Entities.Wallet", b =>
@@ -1679,10 +2104,16 @@ namespace Infrastructure.Migrations
             modelBuilder.Entity("Domain.Entities.Rental", b =>
                 {
                     b.Navigation("BookingTickets");
+
+                    b.Navigation("Histories");
                 });
 
             modelBuilder.Entity("Domain.Entities.Station", b =>
                 {
+                    b.Navigation("RentalsEnded");
+
+                    b.Navigation("RentalsStarted");
+
                     b.Navigation("StationLogs");
 
                     b.Navigation("Vehicles");
@@ -1713,6 +2144,13 @@ namespace Infrastructure.Migrations
                     b.Navigation("Rentals");
 
                     b.Navigation("VehicleUsageLogs");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Voucher", b =>
+                {
+                    b.Navigation("TicketPlanPrices");
+
+                    b.Navigation("VoucherUsages");
                 });
 
             modelBuilder.Entity("Domain.Entities.Wallet", b =>

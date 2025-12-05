@@ -7,6 +7,7 @@ using Application.Interfaces.User.Service;
 using Application.Services.Base;
 using AutoMapper;
 using Domain.Entities;
+using Domain.Enums;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using System.Threading;
@@ -106,7 +107,7 @@ namespace Application.Services.User
                     Console.WriteLine("Xoá ảnh cũ thất bại, có thể ảnh không tồn tại trên Cloudinary");
                 }
             }
-            var upload = await _photoService.AddPhotoAsync(file);
+            var upload = await _photoService.AddPhotoAsync(file, PhotoPreset.Avatar);
             if (upload == null || string.IsNullOrWhiteSpace(upload.Url))
                 throw new Exception("Upload ảnh thất bại");
             entity.AvatarUrl = upload.Url;
