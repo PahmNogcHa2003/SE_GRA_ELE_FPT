@@ -10,7 +10,7 @@
 
 
     <application
-        android:label="hola_bike_app"
+        android:label="Eco Journey"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

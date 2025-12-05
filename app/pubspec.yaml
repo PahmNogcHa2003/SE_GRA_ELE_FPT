@@ -107,14 +107,8 @@ flutter:
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
 
-# --- CẤU HÌNH CHO FLUTTER LAUNCHER ICONS ---
-# Đảm bảo mục này KHÔNG bị thụt lề, ngang hàng với 'flutter:'
 flutter_launcher_icons:
   android: true 
   ios: true
-  # **QUAN TRỌNG:** Đảm bảo đường dẫn này trỏ đến file icon gốc của bạn
+
   image_path: "assets/images/logo_green.png" 
-  # Tùy chọn: Dùng Adaptive Icon cho Android (Android 8.0+)
-  # android: "launcher_icon" # Khai báo để dùng adaptive icon (tên mặc định)
-  # adaptive_icon_background: "#FFFFFF" 
-  # adaptive_icon_foreground: "assets/images/app_icon_foreground.png"
