@@ -1,17 +1,15 @@
 // src/components/common/Navbar.tsx
 import React, { useState } from 'react';
-import { FaBell, FaGlobe } from 'react-icons/fa';
 import Button from './Button'; 
 import Logo from '../../assets/images/logo_green.png';
 import { useAuth } from '../../features/auth/context/authContext';
-import { App, Dropdown, Avatar, type MenuProps, Space } from 'antd';
+import { App, Dropdown, Avatar, type MenuProps } from 'antd';
 import { Link, useNavigate } from 'react-router-dom'; // Dùng Link/Navigate cho SPA
 import {
   UserOutlined,
   WalletOutlined,
   CreditCardOutlined,
   LogoutOutlined,
-  HistoryOutlined,
   DownOutlined,
 } from '@ant-design/icons';
 import { CgPassword } from 'react-icons/cg';

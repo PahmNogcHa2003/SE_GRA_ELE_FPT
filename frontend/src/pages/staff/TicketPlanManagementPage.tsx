@@ -24,7 +24,7 @@ import {
 } from '../../services/ticketplan.service';
 import type { TableProps } from 'antd';
 import type { TicketPlan, CreateTicketPlan, UpdateTicketPlan } from '../../types/manage.ticket';
-import type { ApiResponse, PagedResult } from '../../types/api';
+import type { ApiResponse } from '../../types/api';
 
 const { Search } = Input;
 
@@ -124,7 +124,7 @@ const TicketPlanManagementPage: React.FC = () => {
 
   // Xử lý thay đổi Table (Phân trang, Sắp xếp)
   const handleTableChange: TableProps<TicketPlan>['onChange'] = (
-    pagination, filters, sorter
+    pagination /*filters, sorter*/
   ) => {
     setQueryParams(prev => ({
       ...prev,

@@ -4,11 +4,10 @@ import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../features/auth/context/authContext';
 import { getWallet, getWalletTransactions } from '../../services/wallet.service';
-import { Button, Spin, Table } from 'antd'; 
+import { Spin, Table } from 'antd'; 
 import type { TableProps } from 'antd';
 import type { WalletTransaction, Wallet } from '../../types/wallet';
 import { FaWallet } from 'react-icons/fa'; 
-import { MdOutlineDangerous } from "react-icons/md";
 
 // Hàm format tiền tệ
 const formatCurrency = (amount: number) => {

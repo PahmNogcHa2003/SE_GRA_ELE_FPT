@@ -5,7 +5,6 @@ import { useMutation } from '@tanstack/react-query';
 import { createPaymentUrl } from '../../services/payment.service';
 import { Form, InputNumber, Button, Alert, Radio, Spin, Divider, Tooltip } from 'antd';
 import { FaExclamationTriangle } from 'react-icons/fa';
-import { useNavigate } from 'react-router-dom';
 import type { ApiResponse } from '../../types/api';
 import type { CreatePaymentPayload, PaymentUrlResponse } from '../../types/payment';
 
@@ -22,7 +21,6 @@ const TopUpPage: React.FC = () => {
   const amount = Form.useWatch('amount', form) as number | undefined;
   const { user } = useAuth();
   const [paymentMethod, setPaymentMethod] = useState<'VNPAY' | 'ZALOPAY'>('VNPAY');
-  const navigate = useNavigate();
 
   const { mutate, isPending, error } = useMutation<
     PaymentUrlResponse,

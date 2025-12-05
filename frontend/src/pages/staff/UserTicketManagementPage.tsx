@@ -5,10 +5,8 @@ import {
   Button, 
   Input, 
   Space, 
-  Modal, 
   Form, 
   Input as AntInput, 
-  Popconfirm,
   Tag,
   App
 } from 'antd';
@@ -21,7 +19,7 @@ import {
 } from '../../services/manage.user.ticket.service';
 import type { TableProps } from 'antd';
 import type { ManageUserTicket } from '../../types/manage.ticket';
-import type { ApiResponse,PagedResult } from '../../types/api';
+import type { ApiResponse } from '../../types/api';
 
 const { Search } = Input;
 
@@ -83,7 +81,7 @@ const UserTicketManagementPage: React.FC = () => {
 
   // Xử lý thay đổi Table
   const handleTableChange: TableProps<ManageUserTicket>['onChange'] = (
-    pagination, filters, sorter
+    pagination, /*filters, sorter*/
   ) => {
     setQueryParams(prev => ({
       ...prev,

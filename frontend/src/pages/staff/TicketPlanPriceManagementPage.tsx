@@ -7,7 +7,6 @@ import {
   Space, 
   Modal, 
   Form, 
-  Input as AntInput, 
   InputNumber,
   Checkbox, 
   Popconfirm,
@@ -29,8 +28,8 @@ import {
   getPagedTicketPlans, // Dùng để lấy danh sách Plan
 } from '../../services/ticketplan.service';
 import type { TableProps } from 'antd';
-import type { TicketPlanPrice, CreateTicketPlanPrice, UpdateTicketPlanPrice, TicketPlan } from '../../types/manage.ticket';
-import type { ApiResponse, PagedResult} from '../../types/api';
+import type { TicketPlanPrice, CreateTicketPlanPrice, UpdateTicketPlanPrice } from '../../types/manage.ticket';
+import type { ApiResponse} from '../../types/api';
 import dayjs from 'dayjs'; // Cần cài: npm install dayjs
 
 const { Search } = Input;
@@ -137,7 +136,7 @@ const TicketPlanPriceManagementPage: React.FC = () => {
   const formHook = useTicketPriceForm(handleFormSubmit);
 
   const handleTableChange: TableProps<TicketPlanPrice>['onChange'] = (
-    pagination, filters, sorter
+    pagination, filters, /*sorter*/
   ) => {
     setQueryParams(prev => ({
       ...prev,

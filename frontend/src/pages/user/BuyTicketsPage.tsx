@@ -18,7 +18,6 @@ import {
   Statistic,
   Tabs,
   Tag,
-  Tooltip,
 } from "antd";
 import { currencyVN } from "../../utils/datetime";
 
@@ -72,11 +71,7 @@ const WalletIcon: React.FC<{ className?: string }> = ({ className }) => (
     👛
   </IconBase>
 );
-const RefreshCcw: React.FC<{ className?: string }> = ({ className }) => (
-  <IconBase label="refresh" className={className}>
-    🔄
-  </IconBase>
-);
+
 
 const toVehicleLabel = (v: string | undefined) => (v?.toLowerCase() === "ebike" ? "Xe điện" : "Xe đạp");
 

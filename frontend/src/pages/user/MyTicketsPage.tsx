@@ -5,17 +5,20 @@ import { getMyActiveTickets } from "../../services/user.ticket.service";
 import { Spin, Alert, Button, Tag, Tabs, Badge, Empty, Drawer } from "antd";
 import { Link } from "react-router-dom";
 import TicketCard from "../../features/tickets/components/TicketCard";
-import { formatUtcToVN } from "../../utils/datetime";
+// import { formatUtcToVN } from "../../utils/datetime"; // Tạm ẩn vì RideItem bị ẩn
 
 type Ticket = any; // bạn có thể thay bằng UserTicket
 
 // --- Helpers phân loại ---
-const isSubTicket = (t: Ticket) => {
-  const vf = (t as any).validFrom as string | undefined | null;
-  const vt = (t as any).validTo as string | undefined | null;
-  return !!(vf && vt);
-};
 
+// [FIX] Hàm này chưa dùng đến nên tạm comment lại để tránh lỗi "never read"
+// const isSubTicket = (t: Ticket) => {
+//   const vf = (t as any).validFrom as string | undefined | null;
+//   const vt = (t as any).validTo as string | undefined | null;
+//   return !!(vf && vt);
+// };
+
+// [FIX] Hàm này được giữ lại và sẽ được dùng trong useMemo bên dưới
 const diffDays = (from?: string | null, to?: string | null) => {
   if (!from || !to) return 0;
   const a = new Date(from).getTime();
@@ -25,6 +28,8 @@ const diffDays = (from?: string | null, to?: string | null) => {
 };
 
 type Bucket = "ride" | "day" | "month";
+
+// [FIX] Hàm này được giữ lại và sẽ được dùng trong useMemo bên dưới
 const getBucket = (t: Ticket): Bucket => {
   const vf = (t as any).validFrom as string | undefined | null;
   const vt = (t as any).validTo as string | undefined | null;
@@ -34,6 +39,8 @@ const getBucket = (t: Ticket): Bucket => {
 };
 
 // --- Compact item cho vé Lượt ---
+// [FIX] Component này chưa được sử dụng trong UI (bạn đang dùng TicketCard), nên tạm comment
+/*
 const RideItem: React.FC<{ t: Ticket; onViewDetail: (t: Ticket) => void }> = ({ t, onViewDetail }) => {
   const status = t.status as string | undefined;
   const activationDeadline = (t as any).activationDeadline as string | undefined | null;
@@ -65,14 +72,16 @@ const RideItem: React.FC<{ t: Ticket; onViewDetail: (t: Ticket) => void }> = ({ 
     </div>
   );
 };
+*/
 
 const MyTicketsPage: React.FC = () => {
   const { user, isLoadingUser } = useAuth();
   const [rideExpanded, setRideExpanded] = useState(false);
-  const VISIBLE_RIDE_COUNT = 4; 
+  const VISIBLE_RIDE_COUNT = 4;
+  
   // NEW: Drawer state
   const [detailOpen, setDetailOpen] = useState(false);
-  const [selectedRide, setSelectedRide] = useState<Ticket | null>(null);
+  const [selectedRide] = useState<Ticket | null>(null);
 
   const { data: ticketsResp, isLoading, isError, error } = useQuery({
     queryKey: ["myActiveTickets", user?.userId],
@@ -84,17 +93,11 @@ const MyTicketsPage: React.FC = () => {
 
   const grouped = useMemo(() => {
     const buckets = { ride: [] as Ticket[], day: [] as Ticket[], month: [] as Ticket[] };
-    const diffDays = (from?: string | null, to?: string | null) => {
-      if (!from || !to) return 0;
-      const ms = Math.max(0, new Date(to).getTime() - new Date(from).getTime());
-      return Math.ceil(ms / 86400000);
-    };
-    const getBucket = (t: Ticket) => {
-      const vf = (t as any).validFrom as string | undefined | null;
-      const vt = (t as any).validTo as string | undefined | null;
-      if (!vf || !vt) return "ride";
-      return diffDays(vf, vt) <= 1 ? "day" : "month";
-    };
+    
+    // [FIX QUAN TRỌNG]: Đã xóa các hàm diffDays và getBucket khai báo lại ở đây.
+    // Code sẽ tự động dùng hàm getBucket ở phạm vi global (dòng 32).
+    // Điều này giúp hàm getBucket global không bị báo lỗi "never read".
+
     for (const t of tickets) buckets[getBucket(t)].push(t);
     return buckets;
   }, [tickets]);
@@ -129,12 +132,6 @@ const MyTicketsPage: React.FC = () => {
 
   const noTickets = tickets.length === 0;
 
-  // Handler mở chi tiết
-  const onViewDetail = (t: Ticket) => {
-    setSelectedRide(t);
-    setDetailOpen(true);
-  };
-
   return (
     <div className="bg-gray-100 min-h-screen">
       <div className="container mx-auto p-4 md:p-8">
@@ -164,76 +161,76 @@ const MyTicketsPage: React.FC = () => {
             </div>
           ) : (
             <Tabs
-  defaultActiveKey={counts.ride ? "ride" : counts.day ? "day" : "month"}
-  items={[
-    {
-  key: "ride",
-  label: (
-    <span>
-      Vé lượt <Badge count={counts.ride} overflowCount={99} offset={[6, -2]} />
-    </span>
-  ),
-  children: counts.ride === 0 ? (
-    <Empty description="Không có vé lượt" />
-  ) : (
-    <>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {(rideExpanded ? grouped.ride : grouped.ride.slice(0, VISIBLE_RIDE_COUNT)).map((t) => (
-          <TicketCard key={t.id} ticket={t} />
-        ))}
-      </div>
-        {!rideExpanded && grouped.ride.length > VISIBLE_RIDE_COUNT && (
-  <div className="pointer-events-none -mt-8 h-8 w-full bg-linear-to-t from-white to-transparent" />
-)}
-      {/* Nút xem thêm / thu gọn */}
-      {grouped.ride.length > VISIBLE_RIDE_COUNT && (
-        <div className="mt-4 text-center">
-          <Button type="link" onClick={() => setRideExpanded(v => !v)}>
-            {rideExpanded
-              ? "Thu gọn"
-              : `Xem thêm ${grouped.ride.length - VISIBLE_RIDE_COUNT} vé`}
-          </Button>
-        </div>
-      )}
-    </>
-  ),
-},
-    {
-      key: "day",
-      label: (
-        <span>
-          Vé ngày <Badge count={counts.day} overflowCount={99} offset={[6, -2]} />
-        </span>
-      ),
-      children: counts.day === 0 ? (
-        <Empty description="Không có vé ngày" />
-      ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {grouped.day.map((t) => (
-            <TicketCard key={t.id} ticket={t} />
-          ))}
-        </div>
-      ),
-    },
-    {
-      key: "month",
-      label: (
-        <span>
-          Vé tháng <Badge count={counts.month} overflowCount={99} offset={[6, -2]} />
-        </span>
-      ),
-      children: counts.month === 0 ? (
-        <Empty description="Không có vé tháng" />
-      ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {grouped.month.map((t) => (
-            <TicketCard key={t.id} ticket={t} />
-          ))}
-        </div>
-      ),
-    },
-  ]}
-/>
+              defaultActiveKey={counts.ride ? "ride" : counts.day ? "day" : "month"}
+              items={[
+                {
+                  key: "ride",
+                  label: (
+                    <span>
+                      Vé lượt <Badge count={counts.ride} overflowCount={99} offset={[6, -2]} />
+                    </span>
+                  ),
+                  children: counts.ride === 0 ? (
+                    <Empty description="Không có vé lượt" />
+                  ) : (
+                    <>
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        {(rideExpanded ? grouped.ride : grouped.ride.slice(0, VISIBLE_RIDE_COUNT)).map((t) => (
+                          <TicketCard key={t.id} ticket={t} />
+                        ))}
+                      </div>
+                      {!rideExpanded && grouped.ride.length > VISIBLE_RIDE_COUNT && (
+                        <div className="pointer-events-none -mt-8 h-8 w-full bg-linear-to-t from-white to-transparent" />
+                      )}
+                      {/* Nút xem thêm / thu gọn */}
+                      {grouped.ride.length > VISIBLE_RIDE_COUNT && (
+                        <div className="mt-4 text-center">
+                          <Button type="link" onClick={() => setRideExpanded(v => !v)}>
+                            {rideExpanded
+                              ? "Thu gọn"
+                              : `Xem thêm ${grouped.ride.length - VISIBLE_RIDE_COUNT} vé`}
+                          </Button>
+                        </div>
+                      )}
+                    </>
+                  ),
+                },
+                {
+                  key: "day",
+                  label: (
+                    <span>
+                      Vé ngày <Badge count={counts.day} overflowCount={99} offset={[6, -2]} />
+                    </span>
+                  ),
+                  children: counts.day === 0 ? (
+                    <Empty description="Không có vé ngày" />
+                  ) : (
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                      {grouped.day.map((t) => (
+                        <TicketCard key={t.id} ticket={t} />
+                      ))}
+                    </div>
+                  ),
+                },
+                {
+                  key: "month",
+                  label: (
+                    <span>
+                      Vé tháng <Badge count={counts.month} overflowCount={99} offset={[6, -2]} />
+                    </span>
+                  ),
+                  children: counts.month === 0 ? (
+                    <Empty description="Không có vé tháng" />
+                  ) : (
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                      {grouped.month.map((t) => (
+                        <TicketCard key={t.id} ticket={t} />
+                      ))}
+                    </div>
+                  ),
+                },
+              ]}
+            />
           )}
         </div>
       </div>

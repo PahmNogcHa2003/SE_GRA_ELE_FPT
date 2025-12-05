@@ -12,7 +12,7 @@ import {
   Row,
   Col,
 } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, PictureOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { TableProps } from 'antd';
 import Swal from 'sweetalert2';
@@ -40,7 +40,7 @@ const ManageStationsPage: React.FC = () => {
 
   // input file ẩn để upload ảnh
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const [stationIdForImage, setStationIdForImage] = useState<number | null>(null);
+  const [stationIdForImage /*setStationIdForImage*/] = useState<number | null>(null);
 
   const { data: stationsData, isLoading } = useQuery({
     queryKey: ['stations', queryParams],
@@ -160,13 +160,13 @@ const ManageStationsPage: React.FC = () => {
   };
 
   // Mở dialog chọn file
-  const handleClickChangeImage = (id: number) => {
-    setStationIdForImage(id);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ''; // reset
-      fileInputRef.current.click();
-    }
-  };
+  // const handleClickChangeImage = (id: number) => {
+  //   setStationIdForImage(id);
+  //   if (fileInputRef.current) {
+  //     fileInputRef.current.value = ''; // reset
+  //     fileInputRef.current.click();
+  //   }
+  // };
 
   // Khi user chọn file
   const handleFileChange: React.ChangeEventHandler<HTMLInputElement> = (e) => {

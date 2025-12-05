@@ -13,7 +13,7 @@
     Col,
     Select,
     } from 'antd';
-    import { PlusOutlined, EditOutlined, DeleteOutlined, PictureOutlined } from '@ant-design/icons';
+    import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
     import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
     import type { TableProps } from 'antd';
     import Swal from 'sweetalert2';
@@ -35,7 +35,7 @@
 
     // input file ẩn cho banner
     const fileInputRef = useRef<HTMLInputElement | null>(null);
-    const [newsIdForBanner, setNewsIdForBanner] = useState<number | null>(null);
+    const [newsIdForBanner /*setNewsIdForBanner*/] = useState<number | null>(null);
 
     const { data: newsResponse, isLoading } = useQuery({
         queryKey: ['news', queryParams],
@@ -139,14 +139,14 @@
         });
     };
 
-    // click nút đổi banner
-    const handleClickChangeBanner = (id: number) => {
-        setNewsIdForBanner(id);
-        if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-        fileInputRef.current.click();
-        }
-    };
+    // // click nút đổi banner
+    // const handleClickChangeBanner = (id: number) => {
+    //     setNewsIdForBanner(id);
+    //     if (fileInputRef.current) {
+    //     fileInputRef.current.value = '';
+    //     fileInputRef.current.click();
+    //     }
+    // };
 
     // khi chọn file banner
     const handleFileChange: React.ChangeEventHandler<HTMLInputElement> = (e) => {
