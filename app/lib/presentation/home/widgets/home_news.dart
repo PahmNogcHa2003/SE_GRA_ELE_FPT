@@ -10,17 +10,17 @@ class HomeNews extends StatelessWidget {
       {
         'title': '🎉 Sinh nhật EcoJourney rộn ràng',
         'img':
-            'https://img.freepik.com/free-vector/realistic-golden-wheel-fortune-background_23-2149639949.jpg',
+            'https://res.cloudinary.com/dt7e4s6mr/image/upload/v1763397093/holabike/news/mjqzqbgg16kyepxr7rsb.png',
       },
       {
         'title': '🚴 Ưu đãi khi nạp điểm',
         'img':
-            'https://img.freepik.com/free-vector/people-riding-bike-city_23-2148444190.jpg',
+            'https://res.cloudinary.com/dt7e4s6mr/image/upload/v1763397637/holabike/news/haishhp4cei8xnejljht.png',
       },
       {
         'title': '🌿 Đi xe xanh - Sống xanh',
         'img':
-            'https://img.freepik.com/free-vector/eco-bike-illustration_23-2148482403.jpg',
+            'https://res.cloudinary.com/dt7e4s6mr/image/upload/v1763397667/holabike/news/x4agn5qcqh3xz6vhdicn.jpg',
       },
     ];
 

@@ -25,7 +25,7 @@ class HomeMenu extends StatelessWidget {
         'label': 'Chuyến đi',
         'router': '/trip-tracking-history',
       },
-      {'icon': Icons.help_outline, 'label': 'Hướng dẫn', 'router': '/guide'},
+      {'icon': Icons.emoji_events, 'label': 'Ranking', 'router': '/ranking'},
       {'icon': Icons.newspaper, 'label': 'Tin tức', 'router': '/notifications'},
       {
         'icon': Icons.account_balance_wallet_outlined,

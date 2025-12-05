@@ -13,9 +13,10 @@ class _HomePromoState extends State<HomePromo> {
   int _index = 0;
 
   final promos = [
-    'https://img.freepik.com/free-vector/realistic-golden-wheel-fortune-background_23-2149639949.jpg',
-    'https://img.freepik.com/free-vector/special-offer-banner-template_1361-1224.jpg',
-    'https://img.freepik.com/free-vector/summer-sale-banner-with-bike_23-2148554415.jpg',
+    'https://res.cloudinary.com/dt7e4s6mr/image/upload/v1763397692/holabike/news/th8r2e7fixddy0wo9201.jpg',
+    'https://res.cloudinary.com/dt7e4s6mr/image/upload/v1763397093/holabike/news/mjqzqbgg16kyepxr7rsb.png',
+    'https://res.cloudinary.com/dt7e4s6mr/image/upload/v1763397667/holabike/news/x4agn5qcqh3xz6vhdicn.jpg',
+    'https://res.cloudinary.com/dt7e4s6mr/image/upload/v1763397637/holabike/news/haishhp4cei8xnejljht.png',
   ];
 
   @override
