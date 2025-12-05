@@ -118,32 +118,50 @@ namespace Application.Services.Staff
         {
             try
             {
-                var news = await _newsRepo.GetByIdAsync(dto.Id, ct);
+                var news = await _newsRepo.GetByIdAsync(id, ct);
                 if (news == null)
-                {
-                    _logger.LogWarning("News not found: {Id}", dto.Id);
                     return null;
-                }
 
-                // Update fields
+                // Update main fields
                 news.Title = dto.Title;
+                news.Slug = dto.Slug;
                 news.Content = dto.Content;
                 news.Status = dto.Status;
                 news.ScheduledAt = dto.ScheduledAt;
                 news.PublishedAt = dto.ScheduledAt ?? news.PublishedAt;
                 news.UpdatedAt = DateTimeOffset.UtcNow;
-                news.PublishedBy = GetUserId();
+                news.UserId = GetUserId();
 
+                // Remove old tags
+                var oldTags = await _tagNewRepo.Query()
+                    .Where(t => t.NewId == news.Id)
+                    .ToListAsync(ct);
+
+                foreach (var t in oldTags)
+                    _tagNewRepo.Remove(t);
+
+                // Add new tags using constructor (đúng nhất)
+                if (dto.TagIds?.Any() == true)
+                {
+                    foreach (var tagId in dto.TagIds)
+                    {
+                        var tagNew = new TagNew(news.Id, tagId);
+                        await _tagNewRepo.AddAsync(tagNew, ct);
+                    }
+                }
+
+                _newsRepo.Update(news);
                 await _uow.SaveChangesAsync(ct);
 
                 return _mapper.Map<NewsDTO>(news);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Update news failed: {Id}", dto.Id);
+                _logger.LogError(ex, "Update news failed: {Id}", id);
                 throw;
             }
         }
+
 
         // ===========================================
         //                 DELETE
@@ -154,9 +172,20 @@ namespace Application.Services.Staff
             {
                 var news = await _newsRepo.GetByIdAsync(id, ct);
                 if (news == null)
-                {
-                    _logger.LogWarning("News not found: {Id}", id);
                     return null;
+
+                // Delete tags
+                var tagLinks = await _tagNewRepo.Query()
+                    .Where(t => t.NewId == id)
+                    .ToListAsync(ct);
+
+                foreach (var t in tagLinks)
+                    _tagNewRepo.Remove(t);
+
+                // Delete banner if exists
+                if (!string.IsNullOrWhiteSpace(news.BannerPublicId))
+                {
+                    await _photoService.DeletePhotoAsync(news.BannerPublicId);
                 }
 
                 _newsRepo.Remove(news);
@@ -170,6 +199,7 @@ namespace Application.Services.Staff
                 throw;
             }
         }
+
 
         // ===========================================
         //           BANNER UPDATE (CLEAN)
