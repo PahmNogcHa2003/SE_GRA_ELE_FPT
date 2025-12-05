@@ -6,11 +6,11 @@ import 'package:hola_bike_app/presentation/auth/login/login_page.dart';
 import 'package:hola_bike_app/presentation/more/page/change_password_page.dart';
 import 'package:hola_bike_app/presentation/more/page/kyc/kyc_page.dart';
 import 'package:hola_bike_app/presentation/more/page/profile_page.dart';
+import 'package:hola_bike_app/presentation/ranking/leaderboard_page.dart';
 import 'package:hola_bike_app/presentation/splash/splash_page.dart';
 import 'package:hola_bike_app/presentation/tickets/my_ticket_page.dart';
 import 'package:hola_bike_app/presentation/tickets/ticket_page.dart';
 import 'package:hola_bike_app/presentation/trip/trip_tracking_history_page.dart';
-import 'package:hola_bike_app/presentation/trip/trip_tracking_page.dart';
 import 'package:hola_bike_app/presentation/wallet/page/pricing/pricing_page.dart';
 import 'package:hola_bike_app/presentation/wallet/walet_page.dart';
 import 'package:hola_bike_app/theme/app_colors.dart';
@@ -27,16 +27,11 @@ void _setupLoading() {
     ..loadingStyle = EasyLoadingStyle.custom
     ..indicatorSize = 60
     ..radius = 12
-    ..backgroundColor = Colors
-        .transparent // bỏ nền đen của hộp
+    ..backgroundColor = Colors.transparent
     ..indicatorColor = AppColors.primary
-    ..textColor = Colors
-        .transparent // ẩn chữ
-    // dùng Color.fromRGBO để chắc chắn không lỗi
-    ..maskColor =
-        const Color.fromRGBO(0, 0, 0, 0.7) // nền mờ xung quanh
-    ..maskType = EasyLoadingMaskType
-        .custom // rất quan trọng!
+    ..textColor = Colors.transparent
+    ..maskColor = const Color.fromRGBO(0, 0, 0, 0.7)
+    ..maskType = EasyLoadingMaskType.custom
     ..userInteractions = false
     ..dismissOnTap = false
     ..boxShadow = []
@@ -85,19 +80,14 @@ class MyApp extends StatelessWidget {
         '/profile': (context) => const ProfilePage(),
         '/tickets': (context) => const TicketPage(),
         '/my-ticket': (context) => const MyTicketPage(),
+        '/ranking': (context) => const LeaderboardPage(),
         '/trip-tracking-history': (context) => const TripTrackingHistoryPage(),
-        // // Các chức năng tài khoản
+
         '/verify': (context) => const KycPage(),
         '/change-password': (context) => const ChangePasswordPage(),
-        // '/delete-account': (context) => const DeleteAccountPage(),
-        // // Các trang thông tin
-        '/pricing': (context) => const PricingPage(),
-        // '/guide': (context) => const GuidePage(),
-        // '/policy': (context) => const PolicyPage(),
-        // '/website': (context) => const WebsitePage(),
-        // '/support': (context) => const SupportPage(),
 
-        // Trang đăng nhập (nếu có)
+        '/pricing': (context) => const PricingPage(),
+
         '/login': (context) => const LoginPage(),
       },
     );
