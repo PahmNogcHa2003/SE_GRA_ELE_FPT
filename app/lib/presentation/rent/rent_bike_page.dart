@@ -7,11 +7,14 @@ import 'package:hola_bike_app/application/usecases/usecase_scan-vehicle.dart';
 import 'package:hola_bike_app/application/usecases/usecase_ticket-active.dart';
 import 'package:hola_bike_app/domain/models/info_scan-vehicle.dart';
 import 'package:hola_bike_app/domain/models/info_ticket-active.dart';
+import 'package:hola_bike_app/domain/models/tracking_session.dart';
 import 'package:hola_bike_app/presentation/rent/widgets/widget_confirm-rent.dart';
 import 'package:hola_bike_app/presentation/rent/widgets/widget_ticket-list.dart';
 import 'package:hola_bike_app/presentation/rent/widgets/widget_vehicle-info.dart';
 import 'package:hola_bike_app/presentation/trip/trip_tracking_page.dart';
 import 'package:hola_bike_app/theme/app_colors.dart';
+
+import 'package:hola_bike_app/data/sources/local/trip_local_storage.dart';
 
 class RentBikePage extends StatefulWidget {
   final String bikeId;
@@ -27,10 +30,12 @@ class _RentBikePageState extends State<RentBikePage> {
   final secureStorage = const FlutterSecureStorage();
   final _rentalStartUsecase = RentalStartUsecase();
 
+  final tripStorage = TripLocalStorage();
+
   InfoScanVehicle? vehicleInfo;
   List<TicketInfo> tickets = [];
-  int? selectedTicketId; // để nullable
-  DateTime? startTime; // thêm biến lưu thời gian bắt đầu
+  int? selectedTicketId;
+  DateTime? startTime;
 
   @override
   void initState() {
@@ -56,7 +61,6 @@ class _RentBikePageState extends State<RentBikePage> {
         desiredAccuracy: LocationAccuracy.high,
       );
 
-      // gọi API scan xe
       final info = await _scanVehicleUsecase.execute(
         token: token,
         vehicleId: vehicleId,
@@ -64,13 +68,11 @@ class _RentBikePageState extends State<RentBikePage> {
         currentLongitude: pos.longitude,
       );
 
-      // gọi API lấy vé
       final activeTickets = await _ticketActiveUsecase.execute(token);
 
       setState(() {
         vehicleInfo = info;
         tickets = activeTickets;
-        // gán selectedTicketId bằng id của vé đầu tiên nếu có
         if (tickets.isNotEmpty) {
           selectedTicketId = tickets.first.id;
         }
@@ -94,7 +96,6 @@ class _RentBikePageState extends State<RentBikePage> {
       return;
     }
 
-    // gán thời gian bắt đầu khi user bấm nút
     startTime = DateTime.now();
 
     EasyLoading.show(status: 'Đang xác nhận thuê xe...');
@@ -104,26 +105,32 @@ class _RentBikePageState extends State<RentBikePage> {
 
       final vehicleId = int.parse(widget.bikeId);
 
-      // gọi API RentalStart để xác nhận thuê
       final rentalResult = await _rentalStartUsecase.execute(
         token: token,
         vehicleId: vehicleId,
         userTicketId: selectedTicketId!,
-        startTime: startTime!, // truyền thời gian bắt đầu
+        startTime: startTime!,
       );
 
       EasyLoading.dismiss();
 
       if (rentalResult.success) {
         EasyLoading.showSuccess('Thuê xe thành công!');
+
+        final session = TrackingSession(
+          rentalId: rentalResult.rentalId,
+          startTime: DateTime.now(),
+          totalMeters: 0.0,
+          routePoints: [],
+        );
+
+        await tripStorage.saveSession(session);
+
         Future.delayed(const Duration(seconds: 1), () {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (_) => TripTrackingPage(
-                rentalId: rentalResult.retaalId,
-                // có thể truyền startTime nếu TripTrackingPage cần
-              ),
+              builder: (_) => TripTrackingPage(rentalId: rentalResult.rentalId),
             ),
           );
         });
@@ -184,7 +191,8 @@ class _RentBikePageState extends State<RentBikePage> {
               ),
             ),
           ),
-          ConfirmRentButton(onConfirm: _confirmRent),
+          // Chỉ hiển thị nút nếu có vé
+          if (tickets.isNotEmpty) ConfirmRentButton(onConfirm: _confirmRent),
         ],
       ),
     );

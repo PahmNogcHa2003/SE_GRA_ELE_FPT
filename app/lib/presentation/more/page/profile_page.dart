@@ -1,8 +1,50 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:hola_bike_app/application/usecases/usecase_profile.dart';
 import 'package:hola_bike_app/presentation/more/page/edit_profile_page.dart';
+import 'package:hola_bike_app/domain/models/info_profile.dart';
 
-class ProfilePage extends StatelessWidget {
+class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
+
+  @override
+  State<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
+  final secureStorage = const FlutterSecureStorage();
+  final ProfileUsecase _usecase = ProfileUsecase();
+
+  InfoProfile? profile;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+  }
+
+  Future<void> _loadProfile() async {
+    EasyLoading.show();
+    try {
+      final token = await secureStorage.read(key: 'access_token');
+      if (token == null) throw Exception('Không tìm thấy access token');
+
+      final info = await _usecase.execute(token: token);
+
+      setState(() {
+        profile = info;
+      });
+    } catch (e) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Lỗi tải hồ sơ cá nhân')));
+      });
+    } finally {
+      EasyLoading.dismiss();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -23,77 +65,98 @@ class ProfilePage extends StatelessWidget {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            // Avatar và tên
-            Center(
-              child: Column(
-                children: const [
-                  CircleAvatar(radius: 50, child: Icon(Icons.person, size: 50)),
-                  SizedBox(height: 12),
-                  Text(
-                    'EcoJourney',
-                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // Card thống kê
-            Card(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              elevation: 4,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  vertical: 16,
-                  horizontal: 8,
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: const [
-                    StatBox(label: 'Km đã đạp', value: '0 km'),
-                    StatBox(label: 'Thời gian', value: '0 giờ'),
-                    StatBox(label: 'Chuyến đi', value: '0 chuyến'),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // Thông tin cá nhân
-            Container(
+      body: profile == null
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
               padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade100,
-                borderRadius: BorderRadius.circular(12),
-              ),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
-                  InfoRow(
-                    icon: Icons.email,
-                    label: 'Email',
-                    value: 'ecojourney@gmail.com',
+                children: [
+                  // Avatar và tên
+                  Center(
+                    child: Column(
+                      children: [
+                        CircleAvatar(
+                          radius: 50,
+                          backgroundImage: NetworkImage(profile!.avatarUrl),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          profile!.fullName,
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  SizedBox(height: 12),
-                  InfoRow(
-                    icon: Icons.cake,
-                    label: 'Ngày sinh',
-                    value: '01/01/2025',
+                  const SizedBox(height: 24),
+
+                  // Card thống kê
+                  Card(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 4,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 16,
+                        horizontal: 8,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          StatBox(
+                            label: 'Km đã đạp',
+                            value: '${profile!.totalDistanceKm} km',
+                          ),
+                          StatBox(
+                            label: 'Thời gian',
+                            value: '${profile!.totalDurationMinutes} phút',
+                          ),
+                          StatBox(
+                            label: 'Chuyến đi',
+                            value: '${profile!.totalTrips} chuyến',
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                  SizedBox(height: 12),
-                  InfoRow(icon: Icons.home, label: 'Địa chỉ', value: 'FPT'),
+                  const SizedBox(height: 24),
+
+                  // Thông tin cá nhân
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        InfoRow(
+                          icon: Icons.email,
+                          label: 'Email',
+                          value: profile!.email,
+                        ),
+                        const SizedBox(height: 12),
+                        InfoRow(
+                          icon: Icons.cake,
+                          label: 'Ngày sinh',
+                          value: profile!.dob,
+                        ),
+                        const SizedBox(height: 12),
+                        InfoRow(
+                          icon: Icons.home,
+                          label: 'Địa chỉ',
+                          value: profile!.addressDetail,
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
-          ],
-        ),
-      ),
     );
   }
 }
