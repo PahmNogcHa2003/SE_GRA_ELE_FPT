@@ -10,6 +10,7 @@ using AutoMapper;
 using Domain.Entities;
 using Domain.Enums;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System.Security.Claims;
 
@@ -53,6 +54,15 @@ namespace Application.Services.Staff
             return long.TryParse(strId, out var id) ? id : 0;
         }
 
+        protected override IQueryable<News> GetQueryWithIncludes()
+        {
+            return _newsRepo.Query()
+                .AsNoTracking()
+                .Include(n => n.TagNews)
+                    .ThenInclude(tn => tn.Tag)
+                .Include(n => n.User);
+        }
+
         // ===========================================
         //                  CREATE
         // ===========================================
@@ -63,23 +73,31 @@ namespace Application.Services.Staff
                 var entity = _mapper.Map<News>(dto);
                 entity.CreatedAt = DateTimeOffset.UtcNow;
                 entity.UpdatedAt = DateTimeOffset.UtcNow;
-                entity.PublishedBy = GetUserId();
+                entity.UserId = GetUserId();
                 entity.ScheduledAt = dto.ScheduledAt ?? DateTimeOffset.UtcNow;
                 entity.PublishedAt = dto.ScheduledAt ?? DateTimeOffset.UtcNow;
 
                 // Insert News
                 await _newsRepo.AddAsync(entity, ct);
+                await _uow.SaveChangesAsync(ct); // cần có entity.Id
 
                 // Insert Tags
                 if (dto.TagIds?.Any() == true)
                 {
-                    var tagNews = dto.TagIds.Select(tagId => new TagNewDTO
+                    var tagNewsDtos = dto.TagIds.Select(tagId => new TagNewDTO
                     {
                         TagId = tagId,
                         NewId = entity.Id
                     }).ToList();
 
-                    await _tagNewRepo.AddAsync(_mapper.Map<TagNew>(tagNews), ct);
+                    // map list
+                    var tagNewsEntities = _mapper.Map<List<TagNew>>(tagNewsDtos);
+
+                    // Add từng tag nếu repo không có AddRangeAsync
+                    foreach (var tag in tagNewsEntities)
+                    {
+                        await _tagNewRepo.AddAsync(tag, ct);
+                    }
                 }
 
                 await _uow.SaveChangesAsync(ct);
@@ -91,6 +109,7 @@ namespace Application.Services.Staff
                 throw;
             }
         }
+
 
         // ===========================================
         //                 UPDATE

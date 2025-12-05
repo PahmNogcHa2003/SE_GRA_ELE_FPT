@@ -33,7 +33,10 @@ namespace Application.Mapping
             CreateMap<Domain.Entities.Vehicle, DTOs.Vehicle.VehicleDTO>().ReverseMap();
             CreateMap<Domain.Entities.Tag, TagDTO>().ReverseMap();
             CreateMap<Wallet, WalletDTO>().ReverseMap();
-            CreateMap<News, NewsDTO>().ReverseMap();
+            CreateMap<News, NewsDTO>()
+            .ForMember(dest => dest.TagIds,
+               opt => opt.MapFrom(src => src.TagNews.Select(t => t.TagId).ToList()));
+
             CreateMap<TagNew, TagNewDTO>().ReverseMap();
             CreateMap<WalletTransaction, WalletTransactionDTO>().ReverseMap();
             CreateMap<CreateTicketPlanDTO, TicketPlan>();
@@ -69,8 +72,7 @@ namespace Application.Mapping
             CreateMap<Quest, QuestDTO>();
             CreateMap<QuestCreateDTO, Quest>();
             CreateMap<QuestUpdateDTO, Quest>();
-
-
+            CreateMap<TagNewDTO, TagNew>().ReverseMap();
         }
     }
 }

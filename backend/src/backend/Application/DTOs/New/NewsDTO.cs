@@ -18,7 +18,7 @@ namespace Application.DTOs.New
         public string Title { get; set; } = null!;
 
         [Required]
-        public IFormFile Slug { get; set; } = null!;
+        public string Slug { get; set; } = null!;
 
         [StringLength(255)]
         public string? Banner { get; set; }
@@ -32,8 +32,7 @@ namespace Application.DTOs.New
 
         [Precision(0)]
         public DateTimeOffset? ScheduledAt { get; set; }
-        public List<long> TagIds { get; set; } = new List<long>();
-        public List<string>? TagNames { get; set; } 
+        public List<long> TagIds { get; set; }
 
     }
 }
