@@ -10,6 +10,7 @@ class RentalEndApi {
     required int rentalId,
     required double currentLatitude,
     required double currentLongitude,
+    required double distanceMeters,
   }) async {
     final url = Uri.parse('$baseUrl/Rentals/$rentalId/end');
 
@@ -31,6 +32,7 @@ class RentalEndApi {
               "rentalId": rentalId,
               "currentLatitude": currentLatitude,
               "currentLongitude": currentLongitude,
+              "distanceMeters": distanceMeters,
             }),
           )
           .timeout(const Duration(seconds: 15));
