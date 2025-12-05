@@ -7,7 +7,8 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:hola_bike_app/application/usecases/usecase_rental-end.dart';
 import 'package:hola_bike_app/core/utils/toast_util.dart';
-import 'package:hola_bike_app/data/sources/remote/api_rental-end.dart';
+import 'package:hola_bike_app/data/sources/local/trip_local_storage.dart';
+import 'package:hola_bike_app/domain/models/tracking_session.dart';
 import 'package:hola_bike_app/presentation/home/home_screen.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -26,8 +27,12 @@ class TripTrackingPage extends StatefulWidget {
 class _TripTrackingPageState extends State<TripTrackingPage> {
   final MapController _mapController = MapController();
   StreamSubscription<Position>? _positionSub;
+  Timer? _persistTimer;
+
   final secureStorage = const FlutterSecureStorage();
   final _rentalEndUsecase = RentalEndUsecase();
+  final TripLocalStorage _tripStorage = TripLocalStorage();
+
   final List<LatLng> _routePoints = [];
   LatLng? _currentPos;
   double _totalMeters = 0;
@@ -36,13 +41,37 @@ class _TripTrackingPageState extends State<TripTrackingPage> {
   @override
   void initState() {
     super.initState();
-    _startTracking();
+    _loadSessionOrStartTracking();
   }
 
   @override
   void dispose() {
     _positionSub?.cancel();
+    _persistTimer?.cancel();
     super.dispose();
+  }
+
+  Future<void> _loadSessionOrStartTracking() async {
+    final session = await _tripStorage.loadSession();
+
+    if (session != null) {
+      setState(() {
+        _startTime = session.startTime;
+        _totalMeters = session.totalMeters;
+        _routePoints.addAll(session.routePoints);
+        if (_routePoints.isNotEmpty) {
+          _currentPos = _routePoints.last;
+          _mapController.move(_currentPos!, 17);
+        }
+      });
+      _startTracking();
+    } else {
+      _startTracking();
+    }
+
+    _persistTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      _persistSession();
+    });
   }
 
   Future<void> _startTracking() async {
@@ -53,7 +82,7 @@ class _TripTrackingPageState extends State<TripTrackingPage> {
     }
 
     setState(() {
-      _startTime = DateTime.now();
+      _startTime ??= DateTime.now();
     });
 
     EasyLoading.show(status: 'Đang bắt đầu hành trình...');
@@ -88,8 +117,26 @@ class _TripTrackingPageState extends State<TripTrackingPage> {
         });
   }
 
+  Future<void> _persistSession() async {
+    if (_startTime == null) return;
+
+    final session = TrackingSession(
+      rentalId: widget.rentalId,
+      startTime: _startTime!,
+      totalMeters: _totalMeters,
+      routePoints: List<LatLng>.from(_routePoints),
+    );
+
+    await _tripStorage.saveSession(session);
+  }
+
   Future<void> _returnBike() async {
     EasyLoading.show();
+
+    final km = (_totalMeters / 1000).toStringAsFixed(2);
+    final carbon = (double.parse(km) * 0.15).toStringAsFixed(2);
+    final calories = (double.parse(km) * 25).toStringAsFixed(0);
+
     try {
       final token = await secureStorage.read(key: 'access_token');
       if (token == null) {
@@ -102,18 +149,18 @@ class _TripTrackingPageState extends State<TripTrackingPage> {
         return;
       }
 
-      // Gọi API trả xe
-      final result = await _rentalEndUsecase.execute(
+      await _rentalEndUsecase.execute(
         token: token,
         rentalId: widget.rentalId,
         currentLatitude: _currentPos!.latitude,
         currentLongitude: _currentPos!.longitude,
+        distanceMeters: (_totalMeters),
       );
 
-      // Hiển thị thông báo thành công bằng Toast
       ToastUtil.showSuccess("✅ Trả xe thành công");
 
-      // Kết thúc hành trình, quay về màn trước
+      await _tripStorage.clearSession();
+
       _stopTracking();
     } catch (e) {
       ToastUtil.showError("❌ Lỗi trả xe, vui lòng đến gần trạm");
@@ -123,9 +170,10 @@ class _TripTrackingPageState extends State<TripTrackingPage> {
 
   void _stopTracking() {
     _positionSub?.cancel();
+    _persistTimer?.cancel();
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (_) => HomeScreen()),
+      MaterialPageRoute(builder: (_) => const HomeScreen()),
     );
   }
 
@@ -209,58 +257,63 @@ class _TripTrackingPageState extends State<TripTrackingPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Hành trình thuê xe'),
-        backgroundColor: AppColors.primary,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
+    return WillPopScope(
+      onWillPop: () async => false, // luôn trả về false => không cho pop
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Hành trình thuê xe'),
+          backgroundColor: AppColors.primary,
+          automaticallyImplyLeading: false, // ẩn nút back trên AppBar
         ),
-      ),
-      body: Stack(
-        children: [
-          FlutterMap(
-            mapController: _mapController,
-            options: MapOptions(
-              initialCenter: _currentPos ?? const LatLng(21.0285, 105.8048),
-              initialZoom: 15,
-              maxZoom: 18,
-              minZoom: 5,
-            ),
-            children: [
-              TileLayer(
-                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                userAgentPackageName: 'com.example.hola_bike_app',
+        body: Stack(
+          children: [
+            FlutterMap(
+              mapController: _mapController,
+              options: MapOptions(
+                initialCenter: _currentPos ?? const LatLng(21.0285, 105.8048),
+                initialZoom: 15,
+                maxZoom: 18,
+                minZoom: 5,
               ),
-              PolylineLayer(
-                polylines: [
-                  Polyline(
-                    points: _routePoints,
-                    color: AppColors.primary,
-                    strokeWidth: 5,
-                  ),
-                ],
-              ),
-              if (_currentPos != null)
-                MarkerLayer(
-                  markers: [
-                    Marker(
-                      point: _currentPos!,
-                      width: 60,
-                      height: 60,
-                      child: const Icon(
-                        Icons.location_pin,
-                        color: Colors.red,
-                        size: 40,
-                      ),
+              children: [
+                TileLayer(
+                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  userAgentPackageName: 'com.example.hola_bike_app',
+                ),
+                PolylineLayer(
+                  polylines: [
+                    Polyline(
+                      points: _routePoints,
+                      color: AppColors.primary,
+                      strokeWidth: 5,
                     ),
                   ],
                 ),
-            ],
-          ),
-          Positioned(left: 16, right: 16, bottom: 24, child: _buildTripInfo()),
-        ],
+                if (_currentPos != null)
+                  MarkerLayer(
+                    markers: [
+                      Marker(
+                        point: _currentPos!,
+                        width: 60,
+                        height: 60,
+                        child: const Icon(
+                          Icons.location_pin,
+                          color: Colors.red,
+                          size: 40,
+                        ),
+                      ),
+                    ],
+                  ),
+              ],
+            ),
+            Positioned(
+              left: 16,
+              right: 16,
+              bottom: 24,
+              child: _buildTripInfo(),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -70,7 +70,10 @@ class _PaymentWebViewPageState extends State<PaymentWebViewPage> {
           onNavigationRequest: (request) {
             final url = request.url;
 
-            if (!_hasCalledBack && url.contains("localhost")) {
+            if (!_hasCalledBack &&
+                url.contains(
+                  "https://ecojourneyhola.vercel.app/payment/payment-return",
+                )) {
               _hasCalledBack = true;
 
               final uri = Uri.parse(url);

@@ -88,7 +88,7 @@ class _RecentTransactionsState extends State<RecentTransactions> {
           _buildEmptyState()
         else
           Container(
-            height: 300, // Giới hạn chiều cao để có thể scroll trong box
+            height: 400, // Giới hạn chiều cao để có thể scroll trong box
             padding: const EdgeInsets.only(right: 4),
             child: Scrollbar(
               thumbVisibility: true,
