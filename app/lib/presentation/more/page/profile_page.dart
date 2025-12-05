@@ -1,9 +1,13 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:hola_bike_app/application/usecases/usecase_update-profile.dart';
+import 'package:image_picker/image_picker.dart';
+
 import 'package:hola_bike_app/application/usecases/usecase_profile.dart';
-import 'package:hola_bike_app/presentation/more/page/edit_profile_page.dart';
 import 'package:hola_bike_app/domain/models/info_profile.dart';
+import 'package:hola_bike_app/presentation/more/page/edit_profile_page.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -15,6 +19,7 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   final secureStorage = const FlutterSecureStorage();
   final ProfileUsecase _usecase = ProfileUsecase();
+  final UpdateProfile _updateProfile = UpdateProfile();
 
   InfoProfile? profile;
 
@@ -25,7 +30,6 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> _loadProfile() async {
-    EasyLoading.show();
     try {
       final token = await secureStorage.read(key: 'access_token');
       if (token == null) throw Exception('Không tìm thấy access token');
@@ -41,8 +45,78 @@ class _ProfilePageState extends State<ProfilePage> {
           context,
         ).showSnackBar(const SnackBar(content: Text('Lỗi tải hồ sơ cá nhân')));
       });
-    } finally {
-      EasyLoading.dismiss();
+    } finally {}
+  }
+
+  // ✅ Hàm chọn ảnh hoặc chụp ảnh
+  Future<File?> _pickImage() async {
+    final picker = ImagePicker();
+
+    return showModalBottomSheet<File?>(
+      context: context,
+      builder: (context) {
+        return SafeArea(
+          child: Wrap(
+            children: [
+              ListTile(
+                leading: const Icon(Icons.photo_library),
+                title: const Text('Chọn từ thư viện'),
+                onTap: () async {
+                  final picked = await picker.pickImage(
+                    source: ImageSource.gallery,
+                  );
+                  Navigator.pop(
+                    context,
+                    picked != null ? File(picked.path) : null,
+                  );
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.camera_alt),
+                title: const Text('Chụp ảnh'),
+                onTap: () async {
+                  final picked = await picker.pickImage(
+                    source: ImageSource.camera,
+                  );
+                  Navigator.pop(
+                    context,
+                    picked != null ? File(picked.path) : null,
+                  );
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  // ✅ Upload avatar
+  Future<void> _updateAvatar() async {
+    final file = await _pickImage();
+    if (file == null) return;
+
+    final token = await secureStorage.read(key: 'access_token');
+    if (token == null) return;
+
+    EasyLoading.show(status: "Đang cập nhật...");
+
+    final success = await _updateProfile.updateAvatar(
+      token: token,
+      avatarFile: file,
+    );
+
+    EasyLoading.dismiss();
+
+    if (success) {
+      _loadProfile();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Cập nhật avatar thành công")),
+      );
+    } else {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Cập nhật avatar thất bại")));
     }
   }
 
@@ -54,13 +128,16 @@ class _ProfilePageState extends State<ProfilePage> {
         actions: [
           IconButton(
             icon: const Icon(Icons.settings),
-            onPressed: () {
-              Navigator.push(
+            onPressed: () async {
+              final result = await Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (context) => const EditProfilePage(),
                 ),
               );
+              if (result == true) {
+                _loadProfile(); // ✅ Reload lại profile
+              }
             },
           ),
         ],
@@ -71,13 +148,16 @@ class _ProfilePageState extends State<ProfilePage> {
               padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
-                  // Avatar và tên
+                  // ✅ Avatar + click để đổi ảnh
                   Center(
                     child: Column(
                       children: [
-                        CircleAvatar(
-                          radius: 50,
-                          backgroundImage: NetworkImage(profile!.avatarUrl),
+                        GestureDetector(
+                          onTap: _updateAvatar,
+                          child: CircleAvatar(
+                            radius: 50,
+                            backgroundImage: NetworkImage(profile!.avatarUrl),
+                          ),
                         ),
                         const SizedBox(height: 12),
                         Text(
@@ -90,9 +170,10 @@ class _ProfilePageState extends State<ProfilePage> {
                       ],
                     ),
                   ),
+
                   const SizedBox(height: 24),
 
-                  // Card thống kê
+                  // ✅ Card thống kê
                   Card(
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -122,9 +203,10 @@ class _ProfilePageState extends State<ProfilePage> {
                       ),
                     ),
                   ),
+
                   const SizedBox(height: 24),
 
-                  // Thông tin cá nhân
+                  // ✅ Thông tin cá nhân
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
