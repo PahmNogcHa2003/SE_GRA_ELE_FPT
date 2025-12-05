@@ -1,9 +1,4 @@
 // src/types/auth.ts
-
-/**
- * Dữ liệu gửi đi khi đăng nhập
- * Khớp với LoginDTO.cs
- */
 export interface LoginPayload {
   email: string;
   password: string;
@@ -11,14 +6,16 @@ export interface LoginPayload {
   pushToken: string;
   platform: string;
 }
-
-/**
- * Dữ liệu nhận về trong 'data' khi đăng nhập thành công
- * Khớp với AuthResponseDTO.cs
- */
 export interface AuthResponseData {
-  token: string;
-  roles : string[];
+  isSuccess: boolean;
+  message: string;
+  token?: string;
+  roles?: string[];
+}
+export interface ChangePasswordPayload {
+  currentPassword: string;
+  newPassword: string;
+  confirmNewPassword: string;
 }
 export interface User {
   userId: number; 
