@@ -28,7 +28,7 @@ const AboutSection: React.FC = () => {
           
           {/* Cột bên phải: Hình ảnh */}
           <div className="md:w-1/2">
-             <img 
+            <img 
               src={AboutUsImage} 
               alt="Eco Journey E-Bike" 
               className="w-full h-auto rounded-lg" 

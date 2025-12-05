@@ -647,6 +647,10 @@ namespace Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("EndStationId");
+
+                    b.HasIndex("StartStationId");
+
                     b.HasIndex("UserId");
 
                     b.HasIndex("VehicleId");
@@ -1740,6 +1744,16 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Domain.Entities.Rental", b =>
                 {
+                    b.HasOne("Domain.Entities.Station", "EndStation")
+                        .WithMany("RentalsEnded")
+                        .HasForeignKey("EndStationId");
+
+                    b.HasOne("Domain.Entities.Station", "StartStation")
+                        .WithMany("RentalsStarted")
+                        .HasForeignKey("StartStationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("Domain.Entities.AspNetUser", "User")
                         .WithMany("Rentals")
                         .HasForeignKey("UserId")
@@ -1751,6 +1765,10 @@ namespace Infrastructure.Migrations
                         .HasForeignKey("VehicleId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("EndStation");
+
+                    b.Navigation("StartStation");
 
                     b.Navigation("User");
 
@@ -2091,6 +2109,10 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Domain.Entities.Station", b =>
                 {
+                    b.Navigation("RentalsEnded");
+
+                    b.Navigation("RentalsStarted");
+
                     b.Navigation("StationLogs");
 
                     b.Navigation("Vehicles");

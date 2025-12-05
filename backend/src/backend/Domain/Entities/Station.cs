@@ -39,6 +39,13 @@ public partial class Station : BaseEntity<long>
     [InverseProperty("Station")]
     public virtual ICollection<Vehicle> Vehicles { get; set; } = new List<Vehicle>();
 
+    [InverseProperty(nameof(Rental.StartStation))]
+    public ICollection<Rental> RentalsStarted { get; set; } = new List<Rental>();
+
+    [InverseProperty(nameof(Rental.EndStation))]
+    public ICollection<Rental> RentalsEnded { get; set; } = new List<Rental>();
+
+
     // Phương thức logic nghiệp vụ: Kích hoạt lại trạm
     public void Activate()
     {

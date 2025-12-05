@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+// src/pages/staff/ManageStationsPage.tsx
+import React, { useRef, useState } from 'react';
 import {
   Table,
   Button,
@@ -7,20 +8,20 @@ import {
   Typography,
   Input,
   Tag,
-  // message, // THAY ĐỔI: Không cần dùng message của antd nữa
-  // Popconfirm, // THAY ĐỔI: Không cần dùng Popconfirm nữa
   Select,
   Row,
   Col,
 } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined, PictureOutlined } from '@ant-design/icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { TableProps } from 'antd';
-import Swal from 'sweetalert2'; // THÊM MỚI: Import SweetAlert2
+import Swal from 'sweetalert2';
 
+import * as photoService from '../../services/photo.service';
 import * as stationService from '../../services/station.service';
 import type { StationDTO, GetStationsParams } from '../../types/station';
 import StationForm from '../../features/stations/StationForm';
+import StationImageUploader from '../../components/stations/StationImageUploader';
 
 const { Title } = Typography;
 const { Search } = Input;
@@ -37,18 +38,19 @@ const ManageStationsPage: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingStation, setEditingStation] = useState<StationDTO | null>(null);
 
-  // --- React Query Hooks ---
+  // input file ẩn để upload ảnh
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [stationIdForImage, setStationIdForImage] = useState<number | null>(null);
 
   const { data: stationsData, isLoading } = useQuery({
     queryKey: ['stations', queryParams],
     queryFn: () => stationService.getStations(queryParams),
-    select: (res) => res.data,
+    select: (res) => res.data, 
   });
 
   const createMutation = useMutation({
     mutationFn: stationService.createStation,
     onSuccess: () => {
-      // THAY ĐỔI: Sử dụng SweetAlert2
       Swal.fire({
         title: 'Thành công!',
         text: 'Tạo trạm mới thành công!',
@@ -59,7 +61,6 @@ const ManageStationsPage: React.FC = () => {
       setIsModalOpen(false);
     },
     onError: () => {
-      // THAY ĐỔI: Sử dụng SweetAlert2
       Swal.fire({
         title: 'Lỗi!',
         text: 'Có lỗi xảy ra khi tạo trạm mới.',
@@ -73,7 +74,6 @@ const ManageStationsPage: React.FC = () => {
     mutationFn: ({ id, data }: { id: number; data: StationDTO }) =>
       stationService.updateStation(id, data),
     onSuccess: () => {
-      // THAY ĐỔI: Sử dụng SweetAlert2
       Swal.fire({
         title: 'Thành công!',
         text: 'Cập nhật trạm thành công!',
@@ -85,7 +85,6 @@ const ManageStationsPage: React.FC = () => {
       setEditingStation(null);
     },
     onError: () => {
-      // THAY ĐỔI: Sử dụng SweetAlert2
       Swal.fire({
         title: 'Lỗi!',
         text: 'Có lỗi xảy ra khi cập nhật trạm.',
@@ -98,18 +97,28 @@ const ManageStationsPage: React.FC = () => {
   const deleteMutation = useMutation({
     mutationFn: stationService.deleteStation,
     onSuccess: () => {
-      // THAY ĐỔI: Sử dụng SweetAlert2
       Swal.fire('Đã xóa!', 'Trạm đã được xóa thành công.', 'success');
       queryClient.invalidateQueries({ queryKey: ['stations'] });
     },
     onError: () => {
-      // THAY ĐỔI: Sử dụng SweetAlert2
       Swal.fire('Lỗi!', 'Có lỗi xảy ra khi xóa trạm.', 'error');
     },
   });
 
-  // --- Handlers ---
+  // mutation upload ảnh trạm
+  const uploadImageMutation = useMutation({
+    mutationFn: ({ id, file }: { id: number; file: File }) =>
+      photoService.uploadImageStation(id, file),
+    onSuccess: () => {
+      Swal.fire('Thành công!', 'Cập nhật ảnh trạm thành công.', 'success');
+      queryClient.invalidateQueries({ queryKey: ['stations'] });
+    },
+    onError: () => {
+      Swal.fire('Lỗi!', 'Upload ảnh trạm thất bại.', 'error');
+    },
+  });
 
+  // Handlers
   const handleOpenCreateModal = () => {
     setEditingStation(null);
     setIsModalOpen(true);
@@ -133,17 +142,16 @@ const ManageStationsPage: React.FC = () => {
     }
   };
 
-  // THAY ĐỔI: Tạo hàm xử lý xác nhận xóa bằng SweetAlert2
   const handleDeleteConfirm = (id: number) => {
     Swal.fire({
       title: 'Bạn có chắc chắn muốn xóa?',
-      text: "Hành động này không thể được hoàn tác!",
+      text: 'Hành động này không thể được hoàn tác!',
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#d33',
       cancelButtonColor: '#3085d6',
       confirmButtonText: 'Chắc chắn, xóa nó!',
-      cancelButtonText: 'Hủy bỏ'
+      cancelButtonText: 'Hủy bỏ',
     }).then((result) => {
       if (result.isConfirmed) {
         deleteMutation.mutate(id);
@@ -151,14 +159,41 @@ const ManageStationsPage: React.FC = () => {
     });
   };
 
+  // Mở dialog chọn file
+  const handleClickChangeImage = (id: number) => {
+    setStationIdForImage(id);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''; // reset
+      fileInputRef.current.click();
+    }
+  };
+
+  // Khi user chọn file
+  const handleFileChange: React.ChangeEventHandler<HTMLInputElement> = (e) => {
+    const file = e.target.files?.[0];
+    if (!file || stationIdForImage == null) return;
+
+    Swal.fire({
+      title: 'Cập nhật ảnh trạm?',
+      text: 'Ảnh cũ sẽ bị thay thế.',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Đồng ý',
+      cancelButtonText: 'Hủy',
+    }).then((result) => {
+      if (result.isConfirmed) {
+        uploadImageMutation.mutate({ id: stationIdForImage, file });
+      }
+    });
+  };
 
   const handleSearch = (value: string) => {
-    setQueryParams(prev => ({ ...prev, page: 1, search: value.trim() }));
+    setQueryParams((prev) => ({ ...prev, page: 1, search: value.trim() }));
   };
 
   const handleFilterChange = (value: string) => {
     const newParams: GetStationsParams = { ...queryParams, page: 1 };
-    
+
     if (value === 'all') {
       delete newParams.filterField;
       delete newParams.filterValue;
@@ -169,15 +204,15 @@ const ManageStationsPage: React.FC = () => {
     setQueryParams(newParams);
   };
 
-  const handleTableChange: TableProps<StationDTO>['onChange'] = (pagination, /*filters*/ sorter) => {
+  const handleTableChange: TableProps<StationDTO>['onChange'] = (pagination, sorter) => {
     const singleSorter = Array.isArray(sorter) ? sorter[0] : sorter;
-    
+
     const newParams: GetStationsParams = {
-        ...queryParams,
-        page: pagination.current,
-        pageSize: pagination.pageSize,
+      ...queryParams,
+      page: pagination.current,
+      pageSize: pagination.pageSize,
     };
-    
+
     if (singleSorter && singleSorter.order) {
       newParams.sortOrder = `${singleSorter.field}_${singleSorter.order === 'ascend' ? 'asc' : 'desc'}`;
     } else {
@@ -187,14 +222,44 @@ const ManageStationsPage: React.FC = () => {
     setQueryParams(newParams);
   };
 
-  // --- Table Columns Definition ---
-
   const columns: TableProps<StationDTO>['columns'] = [
     { title: 'ID', dataIndex: 'id', key: 'id', sorter: true },
-    { title: 'Ảnh' , dataIndex: 'image', key: 'image', render: (url: string) => (<img src={url} alt="station" style={{ width: 80, height: 50, objectFit: 'cover', borderRadius: 4 }} />) },
+        {
+      title: 'Ảnh',
+      dataIndex: 'image',
+      key: 'image',
+      render: (_, record) => (
+        <StationImageUploader
+          station={record}
+          onUploaded={() =>
+            queryClient.invalidateQueries({ queryKey: ['stations'] })
+          }
+        />
+      ),
+    },
     { title: 'Tên trạm', dataIndex: 'name', key: 'name', sorter: true },
-    { title: 'Địa chỉ', dataIndex: 'location', key: 'location', sorter: false },
+    {
+      title: 'Địa chỉ',
+      dataIndex: 'location',
+      key: 'location',
+      sorter: false,
+      render: (text: string) => (
+        <div
+          style={{
+            maxWidth: 250,
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            fontSize: 13,
+          }}
+          title={text} 
+        >
+          {text}
+        </div>
+      ),
+    },
     { title: 'Sức chứa', dataIndex: 'capacity', key: 'capacity', align: 'center', sorter: true },
+    {title : 'Xe đang có' , dataIndex : 'vehicleAvailable', key : 'vehicleAvailable', align : 'center', sorter : true},
     {
       title: 'Trạng thái',
       dataIndex: 'isActive',
@@ -213,10 +278,9 @@ const ManageStationsPage: React.FC = () => {
       render: (_, record) => (
         <Space size="middle">
           <Button icon={<EditOutlined />} onClick={() => handleOpenEditModal(record)} />
-          {/* THAY ĐỔI: Bỏ Popconfirm và gọi hàm mới */}
-          <Button 
-            icon={<DeleteOutlined />} 
-            danger 
+          <Button
+            icon={<DeleteOutlined />}
+            danger
             onClick={() => handleDeleteConfirm(record.id)}
             loading={deleteMutation.isPending && deleteMutation.variables === record.id}
           />
@@ -226,37 +290,38 @@ const ManageStationsPage: React.FC = () => {
   ];
 
   return (
-    <div style={{ padding: '24px' }}>
+    <div style={{ padding: '18px' }}>
       <Title level={2}>Quản lý trạm xe</Title>
 
       <Row justify="space-between" align="middle" style={{ marginBottom: 24 }} gutter={[16, 16]}>
         <Col>
-            <Space>
-                <span>Lọc theo trạng thái:</span>
-                <Select defaultValue="all" style={{ width: 150 }} onChange={handleFilterChange}>
-                    <Select.Option value="all">Tất cả</Select.Option>
-                    <Select.Option value="true">Hoạt động</Select.Option>
-                    <Select.Option value="false">Tạm dừng</Select.Option>
-                </Select>
-            </Space>
+          <Space>
+            <span>Lọc theo trạng thái:</span>
+            <Select defaultValue="all" style={{ width: 150 }} onChange={handleFilterChange}>
+              <Select.Option value="all">Tất cả</Select.Option>
+              <Select.Option value="true">Hoạt động</Select.Option>
+              <Select.Option value="false">Tạm dừng</Select.Option>
+            </Select>
+          </Space>
         </Col>
         <Col>
-            <Space>
-                <Search 
-                    placeholder="Tìm kiếm theo tên, địa chỉ..." 
-                    onSearch={handleSearch} 
-                    style={{ width: 300 }}
-                    allowClear
-                    enterButton
-                />
-                <Button type="primary" icon={<PlusOutlined />} onClick={handleOpenCreateModal}>
-                    Thêm trạm mới
-                </Button>
-            </Space>
+          <Space>
+            <Search
+              placeholder="Tìm kiếm theo tên, địa chỉ..."
+              onSearch={handleSearch}
+              style={{ width: 300 }}
+              allowClear
+              enterButton
+            />
+            <Button type="primary" icon={<PlusOutlined />} onClick={handleOpenCreateModal}>
+              Thêm trạm mới
+            </Button>
+          </Space>
         </Col>
       </Row>
 
       <Table
+        size="small"
         columns={columns}
         dataSource={stationsData?.items}
         loading={isLoading}
@@ -277,6 +342,13 @@ const ManageStationsPage: React.FC = () => {
         onCancel={handleCancelModal}
         footer={null}
         destroyOnClose
+        width={1000}       
+        centered           
+        bodyStyle={{
+          maxHeight: '80vh',
+          overflowY: 'auto',
+          padding: '24px',
+        }}
       >
         <StationForm
           initialValues={editingStation}
@@ -285,6 +357,15 @@ const ManageStationsPage: React.FC = () => {
           isLoading={createMutation.isPending || updateMutation.isPending}
         />
       </Modal>
+
+      {/* input file ẩn cho upload ảnh */}
+      <input
+        type="file"
+        accept="image/*"
+        style={{ display: 'none' }}
+        ref={fileInputRef}
+        onChange={handleFileChange}
+      />
     </div>
   );
 };

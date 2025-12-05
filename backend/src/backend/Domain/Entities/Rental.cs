@@ -50,6 +50,14 @@ public class Rental : BaseEntity<long>
     [InverseProperty(nameof(RentalHistory.Rental))]
     public ICollection<RentalHistory> Histories { get; set; } = new List<RentalHistory>();
 
+    [ForeignKey(nameof(StartStationId))]
+    [InverseProperty(nameof(Station.RentalsStarted))]
+    public Station? StartStation { get; set; }
+
+    [ForeignKey(nameof(EndStationId))]
+    [InverseProperty(nameof(Station.RentalsEnded))]
+    public Station? EndStation { get; set; }
+
     public void EndRental(DateTimeOffset endTime, long endStationId)
     {
         if (endTime < StartTime)

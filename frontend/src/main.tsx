@@ -6,6 +6,13 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './features/auth/context/authContext.tsx';
 import { ConfigProvider, App as AntdApp } from 'antd';
 
+// --- THÊM MỚI: Cấu hình Dayjs ---
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+
+// Kích hoạt plugin UTC cho toàn bộ ứng dụng
+dayjs.extend(utc);
+
 // ⚠️ Thứ tự import rất quan trọng
 // 1️⃣ AntD reset (nếu có)
 // import 'antd/dist/reset.css';
@@ -22,9 +29,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         <ConfigProvider
           theme={{
             token: {
-              colorPrimary: '#4CAF50',   
-              colorInfo: '#4CAF50',      
-              colorSuccess: '#388E3C',  
+              colorPrimary: '#4CAF50',
+              colorInfo: '#4CAF50',
+              colorSuccess: '#388E3C',
               colorWarning: '#FF9800',
               colorError: '#F44336',
               colorText: '#333333',
