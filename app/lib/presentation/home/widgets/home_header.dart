@@ -1,12 +1,47 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:hola_bike_app/data/sources/remote/api_user.dart';
 import 'package:hola_bike_app/presentation/wallet/walet_page.dart';
 import '../../../theme/app_colors.dart';
 
-class HomeHeader extends StatelessWidget {
-  final String name;
-  final double point;
+class HomeHeader extends StatefulWidget {
+  const HomeHeader({super.key});
 
-  const HomeHeader({super.key, required this.name, required this.point});
+  @override
+  State<HomeHeader> createState() => _HomeHeaderState();
+}
+
+class _HomeHeaderState extends State<HomeHeader> {
+  final secureStorage = const FlutterSecureStorage();
+  final userApi = UserApi();
+
+  String name = "";
+  double point = 0;
+  bool isLoading = true;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _loadUserInfo(); // ✅ Tự động reload mỗi khi widget được gọi lại
+  }
+
+  Future<void> _loadUserInfo() async {
+    try {
+      final token = await secureStorage.read(key: 'access_token');
+      if (token == null) return;
+
+      final info = await userApi.getUserInfo(token);
+
+      setState(() {
+        name = info.fullName;
+        point = info.walletBalance;
+        isLoading = false;
+      });
+    } catch (e) {
+      print("❌ Lỗi load user info: $e");
+      setState(() => isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -17,9 +52,7 @@ class HomeHeader extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 👋 Phần chào bên trái
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -30,7 +63,7 @@ class HomeHeader extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  name,
+                  isLoading ? "Đang tải..." : name,
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 24,
@@ -40,13 +73,13 @@ class HomeHeader extends StatelessWidget {
               ],
             ),
           ),
-          // 💰 Phần điểm bên phải
           GestureDetector(
-            onTap: () {
-              Navigator.push(
+            onTap: () async {
+              await Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const WalletScreen()),
               );
+              _loadUserInfo(); // ✅ Reload sau khi quay lại từ Wallet
             },
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -63,7 +96,7 @@ class HomeHeader extends StatelessWidget {
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    '$point điểm',
+                    isLoading ? "..." : "$point điểm",
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 16,
