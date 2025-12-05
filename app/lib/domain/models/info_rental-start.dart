@@ -1,13 +1,13 @@
 class RentalStartInfo {
   final bool success;
-  final int retaalId;
+  final int rentalId;
 
-  RentalStartInfo({required this.success, required this.retaalId});
+  RentalStartInfo({required this.success, required this.rentalId});
 
   factory RentalStartInfo.fromJson(Map<String, dynamic> map) {
     return RentalStartInfo(
       success: map['success'] as bool,
-      retaalId: map['data'] as int,
+      rentalId: map['data'] as int,
     );
   }
 }

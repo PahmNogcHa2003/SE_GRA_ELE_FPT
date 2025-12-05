@@ -17,12 +17,12 @@ class Ticket {
 
   factory Ticket.fromJson(Map<String, dynamic> json) {
     return Ticket(
-      id: json['id'] as int,
-      code: json['code'] as String,
-      name: json['name'] as String,
-      type: json['type'] as String,
-      description: json['description'] as String,
-      prices: (json['prices'] as List<dynamic>)
+      id: (json['id'] as num?)?.toInt() ?? 0,
+      code: json['code'] ?? '',
+      name: json['name'] ?? '',
+      type: json['type'] ?? '',
+      description: json['description'] ?? '',
+      prices: (json['prices'] as List<dynamic>? ?? [])
           .map((e) => TicketPrice.fromJson(e as Map<String, dynamic>))
           .toList(),
     );
@@ -65,15 +65,17 @@ class TicketPrice {
 
   factory TicketPrice.fromJson(Map<String, dynamic> json) {
     return TicketPrice(
-      id: json['id'] as int,
-      vehicleType: json['vehicleType'] as String,
-      price: json['price'] as double,
-      validityDays: json['validityDays'] as int?,
-      durationLimitMinutes: json['durationLimitMinutes'] as int?,
-      dailyFreeDurationMinutes: json['dailyFreeDurationMinutes'] as int,
-      overageFeePer15Min: json['overageFeePer15Min'] as double,
-      activationMode: json['activationMode'] as int,
-      activationWindowDays: json['activationWindowDays'] as int?,
+      id: (json['id'] as num?)?.toInt() ?? 0,
+      vehicleType: json['vehicleType'] ?? '',
+      price: (json['price'] as num?)?.toDouble() ?? 0.0,
+      validityDays: (json['validityDays'] as num?)?.toInt(),
+      durationLimitMinutes: (json['durationLimitMinutes'] as num?)?.toInt(),
+      dailyFreeDurationMinutes:
+          (json['dailyFreeDurationMinutes'] as num?)?.toInt() ?? 0,
+      overageFeePer15Min:
+          (json['overageFeePer15Min'] as num?)?.toDouble() ?? 0.0,
+      activationMode: (json['activationMode'] as num?)?.toInt() ?? 0,
+      activationWindowDays: (json['activationWindowDays'] as num?)?.toInt(),
     );
   }
 
