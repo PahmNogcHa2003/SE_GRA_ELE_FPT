@@ -25,6 +25,9 @@ public partial class Wallet : BaseEntity<long>
     public string Status { get; set; } = "Active";
 
     [Column(TypeName = "decimal(18, 2)")]
+    public decimal PromoBalance { get; set; } = 0;
+
+    [Column(TypeName = "decimal(18, 2)")]
     public decimal TotalDebt { get; set; } = 0;
 
     [Timestamp] 

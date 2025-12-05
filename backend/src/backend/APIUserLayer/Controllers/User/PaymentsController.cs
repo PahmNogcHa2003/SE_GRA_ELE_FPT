@@ -16,20 +16,15 @@ public class PaymentsController : ControllerBase
     {
         _paymentService = paymentService;
     }
-
-    // Người dùng tạo URL thanh toán → phải đăng nhập
     [Authorize]
     [HttpPost("vnpay/create-url")]
     public async Task<IActionResult> CreateVnPayPaymentUrl(
         [FromBody] CreatePaymentRequestDTO request,
         CancellationToken cancellationToken)
     {
-        // Không dùng request.UserId nữa — lấy từ token
         var result = await _paymentService.CreateVnPayPaymentUrlAsync(request, HttpContext, cancellationToken);
         return Ok(result);
     }
-
-    // VNPay return/callback: thường KHÔNG cần [Authorize]
     [HttpGet("vnpay-return")]
     public async Task<IActionResult> VnPayReturn(CancellationToken ct)
     {

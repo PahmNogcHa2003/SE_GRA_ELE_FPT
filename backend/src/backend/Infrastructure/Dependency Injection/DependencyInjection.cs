@@ -78,12 +78,12 @@ namespace Infrastructure.Dependency_Injection
             services.AddScoped<IIdentificationPhotoRepository, IdentificationPhotoRepository>();
             services.AddScoped<IPhotoRepository, PhotoRepository>();
             services.AddScoped<IRentalHistoryRepository, RentalHistoryRepository>();
-
-            // Test
+            services.AddScoped<IPromotionCampaignRepository , PromotionCampaignRepository>();
             services.AddScoped<IStationsRepository, StationsRepository>();
             services.AddScoped<IVehicleRepository, VehicleRepository>();
             services.AddScoped<IRentalsRepository, RentalsRepository>();
             services.AddScoped<IBookingTicketRepository, BookingTicketRepository>();
+            services.AddScoped<IUserQuestProgressRepository, UserQuestProgressRepository>();
 
             // --- Location / HttpClient ---
             services.AddHttpClient("ProvincesAPI", client =>
@@ -125,6 +125,10 @@ namespace Infrastructure.Dependency_Injection
             services.AddScoped<ITransactionService, TransactionService>();
             services.AddScoped<IPhotoService, PhotoService>();
             services.AddScoped<IRentalHistoryService, RentalHistoryService>();
+            services.AddScoped<IUserLifetimeStatsService, UserLifetimeStatsService>();
+            services.AddScoped<IPromotionCampaignService, PromotionCampaignService>();
+            services.AddScoped<IQuestService, QuestService>();
+            services.AddScoped<IManageRentalsService, ManageRentalService>();
 
             // --- Mapper ---
             services.AddAutoMapper(typeof(AppMappingProfile).Assembly);

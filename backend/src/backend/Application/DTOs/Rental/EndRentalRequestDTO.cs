@@ -17,5 +17,8 @@ namespace Application.DTOs.Rental
         [Required(ErrorMessage = "Current longitude is required.")]
         [Range(-180.0, 180.0, ErrorMessage = "Invalid longitude value.")]
         public double CurrentLongitude { get; set; }
+
+        [Range(0, double.MaxValue, ErrorMessage = "Distance must be non-negative.")]
+        public double? DistanceMeters { get; set; }
     }
 }

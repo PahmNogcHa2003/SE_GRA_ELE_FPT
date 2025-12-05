@@ -10,7 +10,7 @@ namespace AdminLayer.Controllers.Staff
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+    [Authorize(Roles = "Admin")]
     public class StationsController : ControllerBase
     {
         private readonly IStationsService _stationsService;
@@ -19,9 +19,8 @@ namespace AdminLayer.Controllers.Staff
         {
             _stationsService = stationsService;
         }
-
+            
         #region Get Paged With Cache
-
         /// <summary>
         /// Lấy danh sách Station theo trang, có hỗ trợ cache, search/filter/sort
         /// </summary>

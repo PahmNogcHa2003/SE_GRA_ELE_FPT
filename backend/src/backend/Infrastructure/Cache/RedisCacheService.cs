@@ -35,8 +35,10 @@ namespace Infrastructure.Cache
 
             var json = JsonSerializer.Serialize(data);
 
-            // StackExchange.Redis nhận TimeSpan? trực tiếp (phiên bản mới)
-            await _db.StringSetAsync(key, json, (Expiration)expiry);
+            if (expiry.HasValue)
+                await _db.StringSetAsync(key, json, expiry.Value);
+            else
+                await _db.StringSetAsync(key, json);
         }
 
         /// <summary>

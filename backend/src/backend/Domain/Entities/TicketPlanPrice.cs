@@ -43,6 +43,12 @@ public partial class TicketPlanPrice : BaseEntity<long>
     [InverseProperty("PlanPrice")]
     public virtual ICollection<UserTicket> UserTickets { get; set; } = new List<UserTicket>();
 
+    public long? VoucherId { get; set; }
+
+    [ForeignKey(nameof(VoucherId))]
+    public virtual Voucher? Voucher { get; set; }
+
+
     // Constructor giả định để đảm bảo các giá trị cơ bản được thiết lập
     public TicketPlanPrice(long planId, decimal price, PlanActivationMode activationMode)
     {

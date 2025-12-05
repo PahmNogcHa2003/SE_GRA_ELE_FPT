@@ -28,42 +28,50 @@ const LoginModal: React.FC = () => {
   const [form] = Form.useForm();
   const { notification } = App.useApp();
   const navigate = useNavigate();
-
+  
   const mutation = useMutation({
-    mutationFn: loginApi,
-    onSuccess: async (response) => {
-      if (response.success && response.data) {
-        // Lưu token, fetch user info
-        await login(response.data);
-        form.resetFields();
-        closeLoginModal();
+  mutationFn: loginApi, // loginApi trả AuthResponseDTO trực tiếp
+  onSuccess: async (response) => {
+    console.log("Login response:", response);
+    if (response.isSuccess && response.token) {
+      await login({
+        token: response.token,
+        roles: response.roles ?? [],
+        isSuccess: response.isSuccess,
+        message: response.message,
+      });
 
-        // ✅ Kiểm tra roles để redirect
-        const roles = response.data.roles?.map((r) => r.toLowerCase()) ?? [];
-        if (roles.includes('admin') || roles.includes('staff')) {
-          notification.success({
-            message: 'Đăng nhập quản trị thành công!',
-            description: 'Chào mừng bạn đến với bảng điều khiển quản trị.',
-          });
-          navigate('/staff', { replace: true });
-        } else {
-          notification.success({
-            message: 'Đăng nhập thành công!',
-            description: 'Chào mừng bạn trở lại Eco Journey!',
-          });
-          navigate('/', { replace: true });
-        }
+      notification.success({
+        message: "Đăng nhập thành công!",
+        description: "Chào mừng bạn trở lại Eco Journey!",
+      });
+      form.resetFields();
+      closeLoginModal();
+      const userRoles = response.roles ?? [];
+      if (userRoles.includes("Admin") || userRoles.includes("Staff")) {
+        navigate("/staff", { replace: true });
       } else {
-        mutation.reset();
-        form.setFields([{ name: 'email', errors: [response.message] }]);
+        navigate("/", { replace: true });
       }
-    },
-    onError: (error: any) => {
-      const errorMsg = error.errors ? error.errors.join(', ') : 'Email hoặc mật khẩu không đúng.';
-      form.setFields([{ name: 'email', errors: [errorMsg] }]);
-    },
-  });
+      return;
+    }
+    form.setFields([
+      {
+        name: "password",
+        errors: [response.message || "Email hoặc mật khẩu không đúng."],
+      },
+    ]);
+  },
 
+  onError: (error : any) => {
+    const msg =
+      error?.response?.data?.message ||
+      "Email hoặc mật khẩu không đúng.";
+    form.setFields([
+      { name: "password", errors: [msg] },
+    ]);
+  },
+});
   const onFinish = (values: any) => {
     const payload: LoginPayload = {
       email: values.email,

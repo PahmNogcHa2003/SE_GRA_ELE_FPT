@@ -120,9 +120,17 @@ namespace Application.Services.Staff
 
         #endregion
 
-        public Task<List<Station>> GetAllWithCacheAsyncRaw() => _cacheService.GetAsync<List<Station>>(CACHE_KEY)
-    ?? _repo.Query().Where(s => s.IsActive).ToListAsync();
-        
+        public async Task<List<Station>> GetAllWithCacheAsyncRaw()
+        {
+            var cached = await _cacheService.GetAsync<List<Station>>(CACHE_KEY);
+            if (cached != null) return cached;
+
+            var data = await _repo.Query().Where(s => s.IsActive).ToListAsync();
+            await _cacheService.SetAsync(CACHE_KEY, data, TimeSpan.FromMinutes(5));
+            return data;
+        }
+
+
         protected override IQueryable<StationDTO> ProjectToDto(IQueryable<Station> query)
         {
             var readyStatuses = new[] { "Available" };
