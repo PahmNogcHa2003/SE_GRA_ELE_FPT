@@ -169,7 +169,7 @@ namespace Application.Services.User
         }
 
 
-        public async Task<WalletTransaction> ConvertPromoToBalanceAsync(long userId, decimal amount, CancellationToken ct)
+        public async Task<WalletTransaction> ConvertPromoToBalanceAsync(long? userId, decimal amount, CancellationToken ct)
         {
             if (amount <= 0) throw new ArgumentOutOfRangeException(nameof(amount), "Amount must be greater than 0.");
             var wallet = await _walletRepository.GetByUserIdAsync(userId, ct);
@@ -188,7 +188,7 @@ namespace Application.Services.User
             {
                 WalletId = wallet.Id,
                 Direction = "In",
-                Source = "PromoConvert",
+                Source = "Chuyển khuyến mãi",
                 Amount = amount,
                 BalanceAfter = wallet.Balance,
                 PromoAfter = wallet.PromoBalance,
@@ -199,6 +199,75 @@ namespace Application.Services.User
             await _unitOfWork.SaveChangesAsync(ct);
             return txn;
         }
+        public async Task<PayDebtResultDTO> PayAllDebtFromBalanceAsync(long userId, CancellationToken ct)
+        {
+            var wallet = await _walletRepository.GetByUserIdAsync(userId, ct);
+            if (wallet == null || wallet.Status != "Active")
+                throw new InvalidOperationException("Ví không tồn tại hoặc không hoạt động.");
+
+            if (wallet.TotalDebt <= 0)
+                throw new InvalidOperationException("Bạn không có khoản nợ nào cần thanh toán.");
+
+            if (wallet.Balance <= 0)
+                throw new InvalidOperationException("Số dư ví không đủ để thanh toán nợ.");
+
+            var unpaidDebts = await _walletDebtRepository.GetUnpaidDebtsByUserIdAsync(userId, ct);
+            if (unpaidDebts == null || !unpaidDebts.Any())
+                throw new InvalidOperationException("Không tìm thấy khoản nợ chưa thanh toán.");
+
+            var now = DateTimeOffset.UtcNow;
+
+            decimal originalDebt = wallet.TotalDebt;
+            decimal originalBalance = wallet.Balance;
+
+            decimal amountToPay = Math.Min(wallet.Balance, wallet.TotalDebt);
+            decimal remainingPay = amountToPay;
+
+            foreach (var debt in unpaidDebts)
+            {
+                if (remainingPay <= 0) break;
+
+                var pay = Math.Min(remainingPay, debt.Remaining);
+                debt.Remaining -= pay;
+                remainingPay -= pay;
+                wallet.TotalDebt -= pay;
+
+                if (debt.Remaining == 0)
+                {
+                    debt.Status = WalletDebtStatus.Paid;
+                    debt.PaidAt = now;
+                }
+
+                _walletDebtRepository.Update(debt);
+            }
+
+            wallet.Balance -= amountToPay;
+            wallet.UpdatedAt = now;
+            _walletRepository.Update(wallet);
+
+            var txn = new WalletTransaction
+            {
+                WalletId = wallet.Id,
+                Direction = "Out",
+                Source = "Thanh toán nợ",
+                Amount = amountToPay,
+                BalanceAfter = wallet.Balance,
+                CreatedAt = now
+            };
+            await _walletTransactionRepository.AddAsync(txn, ct);
+
+            await _unitOfWork.SaveChangesAsync(ct);
+
+            return new PayDebtResultDTO
+            {
+                PaidAmount = amountToPay,
+                RemainingDebt = wallet.TotalDebt,
+                WalletBalanceAfter = wallet.Balance
+            };
+        }
+
+
+
         public Task<WalletTransaction> DebitAsync(long userId, decimal amount, string reason, long? orderId, CancellationToken cancellationToken)
         {
             throw new NotImplementedException();

@@ -9,10 +9,14 @@ namespace  Application.Services.Identity
 {
     public static class ClaimsPrincipalExtensions
     {
-        public static long? GetUserIdAsLong(this ClaimsPrincipal user)
+        public static long GetUserIdAsLong(this ClaimsPrincipal user)
         {
             var idStr = user?.FindFirstValue(ClaimTypes.NameIdentifier);
-            return long.TryParse(idStr, out var id) ? id : (long?)null;
+            if (long.TryParse(idStr, out var id))
+            {
+                return id;
+            }
+            throw new UnauthorizedAccessException("Không tìm thấy User ID trong Token.");
         }
     }
 }

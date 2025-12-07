@@ -10,6 +10,6 @@ namespace Application.Interfaces.User.Repository
 {
     public interface IWalletRepository : IRepository<Wallet,long>
     {
-        Task<Wallet?> GetByUserIdAsync(long userId, CancellationToken cancellationToken);
+        Task<Wallet?> GetByUserIdAsync(long? userId, CancellationToken cancellationToken);
     }
 }

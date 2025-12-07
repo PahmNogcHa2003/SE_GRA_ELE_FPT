@@ -62,9 +62,6 @@ namespace Application.Services.User
             if (!string.IsNullOrWhiteSpace(dto.FullName))
                 entity.FullName = dto.FullName;
 
-            if (!string.IsNullOrWhiteSpace(dto.AvatarUrl))
-                entity.AvatarUrl = dto.AvatarUrl;
-
             if (!string.IsNullOrWhiteSpace(dto.EmergencyName))
                 entity.EmergencyName = dto.EmergencyName;
 

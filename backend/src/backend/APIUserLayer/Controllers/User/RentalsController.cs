@@ -115,11 +115,7 @@ namespace APIUserLayer.Controllers.User
         public async Task<IActionResult> GetRentalSummaryStats(CancellationToken ct)
         {
            var userId = ClaimsPrincipalExtensions.GetUserIdAsLong(User);
-           if(userId == null)
-            {
-                return Unauthorized(ApiResponse<object>.ErrorResponse("User ID not found in token."));
-            }
-           var stats = await _userLifetimeStatsService.GetMyStatsAsync(userId.Value, ct);
+           var stats = await _userLifetimeStatsService.GetMyStatsAsync(userId, ct);
            return Ok(ApiResponse<RentalStatsSummaryDTO>.SuccessResponse(stats, "Fetched rental summary stats successfully."));
         }
       

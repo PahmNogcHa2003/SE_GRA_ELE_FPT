@@ -1,5 +1,6 @@
 ﻿using Application.DTOs;
 using Application.DTOs.CategoriesVehicle;
+using Application.DTOs.Contact;
 using Application.DTOs.Kyc;
 using Application.DTOs.New;
 using Application.DTOs.Promotion;
@@ -8,6 +9,7 @@ using Application.DTOs.Station;
 using Application.DTOs.Tag;
 using Application.DTOs.Tickets;
 using Application.DTOs.User;
+using Application.DTOs.Voucher;
 using Application.DTOs.Wallet;
 using Application.DTOs.WalletTransaction;
 using AutoMapper;
@@ -57,15 +59,18 @@ namespace Application.Mapping
             CreateMap<TicketPlanPrice, UserTicketPlanPriceDTO>()
                 .ForMember(d => d.ActivationMode, m => m.MapFrom(s => (ActivationModeDTO)(int)s.ActivationMode));
             CreateMap<TicketPlan, UserTicketPlanDTO>();
-            CreateMap<Domain.Entities.Contact, DTOs.Contact.CreateContactDTO>().ReverseMap();
-            CreateMap<Domain.Entities.Contact, DTOs.Contact.ReplyContactDTO>().ReverseMap();
-            CreateMap<Domain.Entities.Contact, DTOs.Contact.ManageContactDTO>().ReverseMap();
-            CreateMap<Domain.Entities.KycForm, DTOs.Kyc.CreateKycRequestDTO>().ReverseMap();
+            CreateMap<Contact, CreateContactDTO>().ReverseMap();
+            CreateMap<Contact, ReplyContactDTO>().ReverseMap();
+            CreateMap<Contact, ManageContactDTO>().ReverseMap();
+            CreateMap<KycForm, CreateKycRequestDTO>().ReverseMap();
             CreateMap<PromotionCampaign, PromotionDTO>().ReverseMap();
             CreateMap<PromotionCreateDTO, PromotionCampaign>();
             CreateMap<Quest, QuestDTO>();
             CreateMap<QuestCreateDTO, Quest>();
             CreateMap<QuestUpdateDTO, Quest>();
+            CreateMap<Voucher, VoucherDTO>();
+            CreateMap<createVoucherDto, Voucher>();
+            CreateMap<UpdateVoucherDTO, Voucher>();
 
             ConfigureNewsMapping();
 

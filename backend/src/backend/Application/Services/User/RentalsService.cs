@@ -230,10 +230,13 @@ namespace Application.Services.User
             var nowUtc = NowUtc();
             var nowVn = NowVn();
 
+            await using var transaction = await _uow.BeginTransactionAsync(ct);
+
             try
             {
                 _logger.LogInformation("Attempting to end rental with ID: {RentalId}", rentalId);
 
+                // ======== LOAD RENTAL ========
                 var rental = await _rentalRepo.Query()
                     .Include(r => r.BookingTickets)
                     .FirstOrDefaultAsync(r => r.Id == rentalId, ct);
@@ -241,7 +244,7 @@ namespace Application.Services.User
                 if (rental == null || rental.Status != RentalStatus.Ongoing)
                     throw new NotFoundException("Không tìm thấy cuốc xe hợp lệ hoặc cuốc xe đã kết thúc.");
 
-                // ==== Tìm trạm gần nhất trong bán kính ====
+                // ======== TÌM TRẠM GẦN NHẤT ========
                 var stations = await _stationRepo.Query()
                     .Where(s => s.IsActive)
                     .ToListAsync(ct);
@@ -270,7 +273,7 @@ namespace Application.Services.User
                         $"Khoảng cách hiện tại là {nearestStation.Distance:F2}m.");
                 }
 
-                //Cập nhật rental & xe
+                // ======== CẬP NHẬT RENTAL VÀ XE ========
                 rental.EndStationId = nearestStation.Station.Id;
                 rental.EndTime = nowUtc;
                 rental.Status = RentalStatus.End;
@@ -283,15 +286,16 @@ namespace Application.Services.User
                     vehicle.StationId = nearestStation.Station.Id;
                     _vehicleRepo.Update(vehicle);
                 }
-                //Xử lý vé
+
+                // ======== XỬ LÝ VÉ ========
                 var duration = (int)(nowUtc - rental.StartTime).TotalMinutes;
                 var bookingTicket = rental.BookingTickets.FirstOrDefault();
 
                 UserTicket? userTicket = null;
                 TicketPlanPrice? plan = null;
 
-                int freeFromRemaining = 0; // dùng DurationLimitMinutes / RemainingMinutes
-                int freePerRide = 0; // dùng DailyFreeDurationMinutes
+                int freeFromRemaining = 0;
+                int freePerRide = 0;
                 int overtimeMinutes = 0;
                 decimal overtimeFee = 0m;
 
@@ -302,47 +306,44 @@ namespace Application.Services.User
                     {
                         plan = await _planPriceRepo.GetByIdAsync(userTicket.PlanPriceId, ct);
 
-                        var isSubscription = plan?.ValidityDays.GetValueOrDefault() > 0; // vé ngày / vé tháng
-                        var isTripPass = !isSubscription;                             // vé lượt
+                        var isSubscription = plan?.ValidityDays.GetValueOrDefault() > 0;
+                        var isTripPass = !isSubscription;
 
-                        // a) Trừ lượt nếu có (vé lượt)
+                        // A) Vé lượt: trừ lượt
                         if (userTicket.RemainingRides.HasValue && userTicket.RemainingRides.Value > 0)
-                        {
                             userTicket.RemainingRides -= 1;
-                        }
 
-                        // b) Free theo "tổng phút của vé" (vé lượt + vé ngày)
+                        // B) Free theo tổng phút còn lại
                         if (plan?.DurationLimitMinutes.HasValue == true &&
                             userTicket.RemainingMinutes.HasValue)
                         {
-                            var remainingBefore = userTicket.RemainingMinutes.Value;
-                            freeFromRemaining = Math.Min(remainingBefore, duration);
-                            userTicket.RemainingMinutes = Math.Max(0, remainingBefore - freeFromRemaining);
+                            var before = userTicket.RemainingMinutes.Value;
+                            freeFromRemaining = Math.Min(before, duration);
+                            userTicket.RemainingMinutes = Math.Max(0, before - freeFromRemaining);
                         }
 
-                        // c) Free theo mỗi chuyến (vé tháng 79k/300k)
+                        // C) Free theo mỗi chuyến (79k/300k)
                         if (plan?.DailyFreeDurationMinutes.HasValue == true)
                         {
                             var rest = duration - freeFromRemaining;
                             if (rest > 0)
-                            {
                                 freePerRide = Math.Min(rest, plan.DailyFreeDurationMinutes.Value);
-                            }
                         }
 
-                        // d) Phút vượt → tạo nợ
+                        // D) Phút vượt
                         overtimeMinutes = duration - freeFromRemaining - freePerRide;
                         if (overtimeMinutes < 0) overtimeMinutes = 0;
 
                         if (overtimeMinutes > 0 && (plan?.OverageFeePer15Min ?? 0) > 0)
                         {
-                            var blocks = Math.Ceiling(overtimeMinutes / 15.0); // 1–15p = 1 block
+                            var blocks = Math.Ceiling(overtimeMinutes / 15.0);
                             overtimeFee = (decimal)blocks * plan!.OverageFeePer15Min!.Value;
                         }
 
-                        // e) Cập nhật trạng thái vé
-                        bool exhaustedRides = userTicket.RemainingRides.HasValue && userTicket.RemainingRides.Value <= 0;
-                        bool exhaustedMinutes = userTicket.RemainingMinutes.HasValue && userTicket.RemainingMinutes.Value <= 0;
+                        // E) Cập nhật trạng thái vé
+                        bool exhaustedRides = userTicket.RemainingRides.GetValueOrDefault() <= 0;
+                        bool exhaustedMinutes = userTicket.RemainingMinutes.GetValueOrDefault() <= 0;
+
                         var exp = EffectiveExpiry(userTicket);
                         bool expiredByDate = exp.HasValue && exp.Value <= nowUtc;
 
@@ -354,16 +355,13 @@ namespace Application.Services.User
                         {
                             if (isTripPass)
                             {
-                                // Vé lượt: dùng đúng 1 chuyến → sau chuyến đầu là Used
                                 userTicket.RemainingRides = 0;
                                 userTicket.RemainingMinutes = 0;
-
                                 if (userTicket.Status != UserTicketStatus.Expired)
                                     userTicket.Status = UserTicketStatus.Used;
                             }
                             else
                             {
-                                // Subscription (vé ngày / vé tháng)
                                 if (exhaustedRides || exhaustedMinutes)
                                     userTicket.Status = UserTicketStatus.Used;
                                 else
@@ -378,10 +376,11 @@ namespace Application.Services.User
                     bookingTicket.OverusedMinutes = overtimeMinutes > 0 ? overtimeMinutes : null;
                     bookingTicket.OverusedFee = overtimeFee > 0 ? overtimeFee : null;
                     bookingTicket.AppliedAt = nowUtc;
+
                     _bookingTicketRepo.Update(bookingTicket);
                 }
 
-                // ====== Tạo Order + WalletDebt nếu có overtimeFee ======
+                // ======== ORDER + WALLET DEBT ========
                 if (overtimeFee > 0)
                 {
                     var wallet = await _walletRepo.Query()
@@ -401,7 +400,6 @@ namespace Application.Services.User
                     };
 
                     await _orderRepo.AddAsync(overtimeOrder, ct);
-                    await _uow.SaveChangesAsync(ct); 
 
                     var debt = new WalletDebt
                     {
@@ -412,6 +410,7 @@ namespace Application.Services.User
                         Status = WalletDebtStatus.Unpaid,
                         CreatedAt = nowUtc
                     };
+
                     await _walletDebtRepo.AddAsync(debt, ct);
 
                     if (wallet != null)
@@ -420,44 +419,20 @@ namespace Application.Services.User
                         wallet.UpdatedAt = nowUtc;
                         _walletRepo.Update(wallet);
                     }
-
-                    _logger.LogInformation(
-                        "User {UserId} overtime {OverMinutes} minutes (fee {Fee}) on rental {RentalId}, order {OrderId}.",
-                        rental.UserId,
-                        overtimeMinutes,
-                        overtimeFee,
-                        rental.Id,
-                        overtimeOrder.Id);
                 }
 
-                // ====== RentalHistory End + stats ======
-                double? distanceMeters = null;
-                double? distanceKmDouble = null;
-                double? co2SavedKg = null;
-                double? caloriesBurned = null;
+                // ======== RENTAL HISTORY ========
+                double? distanceMeters = dto.DistanceMeters > 0 ? dto.DistanceMeters : null;
+                double? distanceKmDouble = distanceMeters.HasValue ? distanceMeters.Value / 1000.0 : null;
+                double? co2SavedKg = distanceKmDouble.HasValue ? distanceKmDouble.Value * 0.21 : null;
+                double? caloriesBurned = distanceKmDouble.HasValue ? distanceKmDouble.Value * 35.0 : null;
 
-                if (dto.DistanceMeters.HasValue && dto.DistanceMeters.Value > 0)
-                {
-                    distanceMeters = dto.DistanceMeters.Value;
-                    distanceKmDouble = distanceMeters.Value / 1000.0;
-                    co2SavedKg = distanceKmDouble.Value * 0.21;     
-                    caloriesBurned = distanceKmDouble.Value * 35.0; 
-                }
-                string descriptionBase =
+                var descriptionBase =
                     $"Kết thúc (giờ VN: {ToVn(nowUtc):HH:mm dd/MM}) tại trạm {nearestStation.Station.Name}";
 
-                string description;
-
-                if (distanceMeters.HasValue)
-                {
-                    description =
-                        $"{descriptionBase}, ~{distanceMeters.Value:F0}m (quãng đường do app ghi nhận), {duration} phút, " +
-                        $"Tiêu hao ~{(caloriesBurned ?? 0):F0} kcal, tiết kiệm ~{(co2SavedKg ?? 0):F3} kg CO₂.";
-                }
-                else
-                {
-                    description = $"{descriptionBase}, thời gian {duration} phút.";
-                }
+                string description = distanceMeters.HasValue
+                    ? $"{descriptionBase}, ~{distanceMeters.Value:F0}m, {duration} phút, tiêu hao {(caloriesBurned ?? 0):F0} kcal, tiết kiệm {(co2SavedKg ?? 0):F3} kg CO₂."
+                    : $"{descriptionBase}, thời gian {duration} phút.";
 
                 var history = new RentalHistory
                 {
@@ -465,50 +440,32 @@ namespace Application.Services.User
                     Timestamp = nowUtc,
                     ActionType = "End",
                     DurationMinutes = duration,
-                    DistanceMeters = distanceMeters,               
+                    DistanceMeters = distanceMeters,
                     Co2SavedKg = co2SavedKg,
                     CaloriesBurned = caloriesBurned,
                     Description = description
                 };
-
                 await _rentalHistoryRepo.AddAsync(history, ct);
 
-                // Cập nhật thống kê người dùng sau chuyến đi
-                decimal distanceKmForStats = 0m;
-                decimal co2ForStats = 0m;
-                decimal caloriesForStats = 0m;
-
-                if (distanceKmDouble.HasValue)
-                {
-                    distanceKmForStats = (decimal)distanceKmDouble.Value;
-                }
-                if (co2SavedKg.HasValue)
-                {
-                    co2ForStats = (decimal)co2SavedKg.Value;
-                }
-                if (caloriesBurned.HasValue)
-                {
-                    caloriesForStats = (decimal)caloriesBurned.Value;
-                }
-
+                // ======== UPDATE STATS & QUESTS ========
                 await _userLifetimeStatsService.UpdateAfterRideAsync(
                     rental.UserId,
-                    distanceKmForStats,
+                    (decimal?)distanceKmDouble ?? 0,
                     duration,
-                    co2ForStats,
-                    caloriesForStats,
+                    (decimal?)co2SavedKg ?? 0,
+                    (decimal?)caloriesBurned ?? 0,
                     ct);
 
                 await _questService.ProcessRideAsync(
                     rental.UserId,
-                    distanceKmForStats,
+                    (decimal?)distanceKmDouble ?? 0,
                     duration,
                     nowUtc,
                     ct);
 
-
-                // Lưu tất cả
+                // ======== SAVE ALL + COMMIT ========
                 await _uow.SaveChangesAsync(ct);
+                await transaction.CommitAsync(ct);
 
                 _logger.LogInformation(
                     "Rental {RentalId} ended successfully at station {StationId}.",
@@ -519,11 +476,12 @@ namespace Application.Services.User
             }
             catch (Exception ex)
             {
+                await transaction.RollbackAsync(ct);
                 _logger.LogError(ex, "Error while ending rental {RentalId}", dto.RentalId);
                 throw;
             }
         }
-    
+
 
         public async Task<VehicleDetailDTO> GetVehicleByCode(RequestVehicleDTO requestVehicleDTO)
         {

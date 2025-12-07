@@ -10,6 +10,7 @@ namespace Application.DTOs.Voucher
 {
     public class VoucherDTO
     {
+        public long Id { get; set; }
         [Required]
         [StringLength(50)]
         public string Code { get; set; } = null!;

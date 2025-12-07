@@ -84,7 +84,8 @@ namespace Infrastructure.Dependency_Injection
             services.AddScoped<IRentalsRepository, RentalsRepository>();
             services.AddScoped<IBookingTicketRepository, BookingTicketRepository>();
             services.AddScoped<IUserQuestProgressRepository, UserQuestProgressRepository>();
-
+            services.AddScoped<IVoucherRepository, VoucherRepository>();
+            services.AddScoped<IVoucherUsageRepository, VoucherUsageRepository>();
             // --- Location / HttpClient ---
             services.AddHttpClient("ProvincesAPI", client =>
             {
@@ -128,7 +129,10 @@ namespace Infrastructure.Dependency_Injection
             services.AddScoped<IUserLifetimeStatsService, UserLifetimeStatsService>();
             services.AddScoped<IPromotionCampaignService, PromotionCampaignService>();
             services.AddScoped<IQuestService, QuestService>();
+            services.AddScoped<IQuestAdminService, QuestAdminService>();
             services.AddScoped<IManageRentalsService, ManageRentalService>();
+            services.AddScoped<IVoucherService, VoucherService>();
+            services.AddScoped<IVoucherUsageService, VoucherUsageService>();
 
             // --- Mapper ---
             services.AddAutoMapper(typeof(AppMappingProfile).Assembly);

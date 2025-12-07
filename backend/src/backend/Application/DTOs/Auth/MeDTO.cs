@@ -20,4 +20,4 @@ namespace Application.DTOs.Auth
         public string[] Roles { get; set; } = Array.Empty<string>();
         public decimal? WalletBalance { get; set; }
     }
-}
+} 

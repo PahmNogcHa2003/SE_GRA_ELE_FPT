@@ -14,7 +14,7 @@ using System.Threading.Tasks;
 
 namespace Application.Services.User
 {
-    public class VoucherService : GenericService<Voucher, createVoucherDto, long>, IVoucherService
+    public class VoucherService : GenericService<Voucher, VoucherDTO, long>, IVoucherService
     {
         public VoucherService(IRepository<Voucher, long> repo, IMapper mapper, IUnitOfWork uow) : base(repo, mapper, uow)
         {

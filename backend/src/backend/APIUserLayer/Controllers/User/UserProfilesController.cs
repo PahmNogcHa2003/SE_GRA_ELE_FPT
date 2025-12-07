@@ -95,18 +95,6 @@ namespace APIUserLayer.Controllers.User
                 return BadRequest(ApiResponse<object>.ErrorResponse(
                     "Kích thước ảnh vượt quá 5MB. Vui lòng chọn ảnh nhỏ hơn."));
             }
-            var allowedContentTypes = new[]
-            {
-                "image/jpeg",
-                "image/png",
-                "image/webp",
-                "image/jpg"
-            };
-            if (!allowedContentTypes.Contains(file.ContentType))
-            {
-                return BadRequest(ApiResponse<object>.ErrorResponse(
-                    "Định dạng ảnh không hợp lệ. Chỉ chấp nhận JPEG, PNG, WEBP."));
-            }
             var updatedProfile = await _userProfilesService.UpdateAvatarAsync(userId, file, ct);
 
             if (updatedProfile == null)

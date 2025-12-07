@@ -16,7 +16,7 @@ namespace Infrastructure.Repositories.User
         {
         }
 
-        public async Task<Wallet?> GetByUserIdAsync(long userId, CancellationToken cancellationToken)
+        public async Task<Wallet?> GetByUserIdAsync(long? userId, CancellationToken cancellationToken)
         {
 
             return await _dbContext.Wallets.FirstOrDefaultAsync(w => w.UserId == userId, cancellationToken);
