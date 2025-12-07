@@ -40,3 +40,35 @@ export const getWalletTransactions = async (
     throw error;
   }
 };
+/** Chuyển số dư khuyến mãi sang tài khoản chính
+ */
+export const convertPromoToBalance = async (
+  amount: number
+): Promise<ApiResponse<WalletTransaction>> => {
+  try {
+    const response = await http.post<ApiResponse<WalletTransaction>>(
+      '/wallets/convert-promo',
+      { amount }
+    );
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      // Nếu bạn muốn log hoặc xử lý riêng:
+      console.error('convertPromoToBalance error:', error.response?.data || error.message);
+    }
+    throw error;
+  }
+};
+/** 
+ * Thanh toán toàn bộ nợ
+ */
+export const payAllDebt = async (): Promise<ApiResponse<null>> => {
+  try {
+    const response = await http.post<ApiResponse<null>>(
+      '/wallets/pay-all-debt'
+    );
+    return response.data;
+  } catch (error: any) {
+    throw error as ApiResponse<null>;
+  }
+};  

@@ -1,6 +1,6 @@
 // src/services/ticketService.ts
 import type { ApiResponse } from '../types/api.ts';
-import type { UserTicket, PurchaseTicketRequest, UserTicketPlan } from '../types/user.ticket';
+import type { UserTicket, PurchaseTicketRequest, UserTicketPlan, PreviewTicketRequest } from '../types/user.ticket';
 import http from './http.ts';
 
 /**
@@ -37,7 +37,6 @@ export const purchaseTicket = async (
 };
 /**
  * Lấy danh sách các gói vé đang bán trên thị trường
- * (API này KHÔNG bọc ApiResponse)
  * @param vehicleType 'bike' hoặc 'ebike' (tùy chọn)
  */
 export const getTicketMarket = async (vehicleType?: 'bike' | 'ebike'): Promise<UserTicketPlan[]> => {
@@ -50,5 +49,23 @@ export const getTicketMarket = async (vehicleType?: 'bike' | 'ebike'): Promise<U
   } catch (error: any) {
     console.error("Lỗi khi lấy danh sách vé:", error);
     throw new Error(error.message || "Không thể tải danh sách vé.");
+  }
+};
+/**
+ * Xem trước giá vé với mã voucher (nếu có)
+ * @param payload 
+ * @returns 
+ */
+export const previewTicketPrice =  async (
+  payload : PreviewTicketRequest   
+): Promise<ApiResponse<{subtotal: number; discount: number; total: number; voucherMessage?: string;}>> => {
+  try {
+    const response = await http.post<ApiResponse<{subtotal: number; discount: number; total: number; voucherMessage?: string;}>>(
+      'UserTicket/preview',
+      payload
+    );
+    return response.data;
+  } catch (error: any) {
+    throw error as ApiResponse<null>;
   }
 };

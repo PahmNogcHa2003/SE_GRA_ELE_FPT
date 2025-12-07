@@ -32,7 +32,6 @@ const LoginModal: React.FC = () => {
   const mutation = useMutation({
   mutationFn: loginApi, // loginApi trả AuthResponseDTO trực tiếp
   onSuccess: async (response) => {
-    console.log("Login response:", response);
     if (response.isSuccess && response.token) {
       await login({
         token: response.token,

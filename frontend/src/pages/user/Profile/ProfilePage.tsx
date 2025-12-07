@@ -19,7 +19,7 @@ import {
   Tabs,
   ConfigProvider, // Thêm cái này để chỉnh style Tabs
 } from "antd";
-import { UserOutlined, TrophyOutlined } from "@ant-design/icons"; // Thêm icon cho đẹp
+import { UserOutlined, TrophyOutlined, FlagOutlined } from "@ant-design/icons"; // Thêm icon cho đẹp
 import type {
   UserProfileDTO,
   UpdateUserProfileBasicDTO,
@@ -27,8 +27,10 @@ import type {
 import { getMyProfile, updateMyProfile } from "../../../services/profile.service";
 import AvatarUploader from "../../../components/profile/AvatarUploader";
 import { useAuth } from "../../../features/auth/context/authContext";
+import ProfileQuestsTab from "./ProfileQuestsTab"; 
 import dayjs from "dayjs";
 import ProfileAchievementsTab from "./ProfileAchievementsTab";
+import { useLocation } from "react-router-dom";
 
 const { Item } = Form;
 const { Title, Text } = Typography;
@@ -40,7 +42,9 @@ const ProfilePage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [profile, setProfile] = useState<UserProfileDTO | null>(null);
-
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const defaultTab = searchParams.get("tab") || "profile";
   // Trạng thái verify
   const verifyState = useMemo(() => {
     const raw = profile?.isVerify?.toString().toLowerCase() ?? "";
@@ -257,7 +261,7 @@ const ProfilePage: React.FC = () => {
             >
             <Tabs
             className="mt-8 custom-separated-tabs" 
-            defaultActiveKey="profile"
+            defaultActiveKey={defaultTab}
             items={[
                 {
                 key: "profile",
@@ -554,6 +558,11 @@ const ProfilePage: React.FC = () => {
                     </Col>
                     </Row>
                 ),
+                },
+                {
+                key: "quests",
+                label: <span className="flex items-center gap-2"><FlagOutlined /> Nhiệm vụ đang diễn ra </span>,
+                children: <ProfileQuestsTab />,
                 },
                 {
                 key: "achievements",

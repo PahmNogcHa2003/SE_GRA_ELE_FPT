@@ -21,8 +21,19 @@ id: number;
 
 export interface PurchaseTicketRequest {
   planPriceId: number;
+  voucherCode?: string;
+}
+export interface PreviewTicketRequest {
+  planPriceId: number;
+  voucherCode?: string;
 }
 
+export interface PreviewTicketPriceDTO {
+  subtotal: number;
+  discount: number;
+  total: number;
+  voucherMessage?: string;
+}
 export interface UserTicketPlanPrice {
   id: number;
   vehicleType?: string;

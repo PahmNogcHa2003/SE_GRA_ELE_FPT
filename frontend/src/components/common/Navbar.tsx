@@ -11,6 +11,8 @@ import {
   CreditCardOutlined,
   LogoutOutlined,
   DownOutlined,
+  TrophyOutlined,
+  FlagOutlined,
 } from '@ant-design/icons';
 import { CgPassword } from 'react-icons/cg';
 
@@ -48,36 +50,46 @@ const Navbar: React.FC = () => {
   };
 
   // 1. MENU USER (Thêm Lịch sử chuyến đi)
-  const userMenuItems: MenuProps['items'] = [
-    {
-      key: 'profile',
-      label: <Link to="/profile">Trang cá nhân</Link>,
-      icon: <UserOutlined />,
-    },
-    {
-      key: 'wallet',
-      label: <Link to="/wallet">Ví của tôi</Link>,
-      icon: <WalletOutlined />,
-    },
-    {
-      key: 'tickets',
-      label: <Link to="/my-tickets">Vé của tôi</Link>,
-      icon: <CreditCardOutlined />,
-    },
-    {
-      key: 'changePassword',
-      label: <Link to="/change-password">Đổi mật khẩu</Link>,
-      icon: <CgPassword />,
-    },
-    { type: 'divider' },
-    {
-      key: 'logout',
-      label: 'Đăng xuất',
-      icon: <LogoutOutlined />,
-      danger: true,
-      onClick: showLogoutConfirm,
-    },
-  ];
+const userMenuItems: MenuProps['items'] = [
+  {
+    key: 'profile',
+    label: <Link to="/profile">Trang cá nhân</Link>,
+    icon: <UserOutlined />,
+  },
+  {
+    key: 'achievements',
+    label: <Link to="/profile?tab=achievements">Thành tích</Link>,
+    icon: <TrophyOutlined />,
+  },
+  {
+    key: 'quests',
+    label: <Link to="/profile?tab=quests">Nhiệm vụ</Link>,
+    icon: <FlagOutlined />,
+  },
+  {
+    key: 'wallet',
+    label: <Link to="/wallet">Ví của tôi</Link>,
+    icon: <WalletOutlined />,
+  },
+  {
+    key: 'tickets',
+    label: <Link to="/my-tickets">Vé của tôi</Link>,
+    icon: <CreditCardOutlined />,
+  },
+  {
+    key: 'changePassword',
+    label: <Link to="/change-password">Đổi mật khẩu</Link>,
+    icon: <CgPassword />,
+  },
+  { type: 'divider' },
+  {
+    key: 'logout',
+    label: 'Đăng xuất',
+    icon: <LogoutOutlined />,
+    danger: true,
+    onClick: showLogoutConfirm,
+  },
+];
 
   // Helper function để render NavItem
   const renderNavItem = (link: any) => {

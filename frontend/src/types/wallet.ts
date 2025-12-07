@@ -2,6 +2,7 @@ export interface Wallet {
   id: number;
   userId: number;
   balance: number;
+  promoBalance : number;
   totalDebt: number; 
   status: string;
   createdAt: string;
@@ -16,5 +17,6 @@ export interface WalletTransaction {
   amount: number;
   source: string; 
   balanceAfter: number;
+  promoAfter : number;
   createdAt: string; 
 }
