@@ -84,10 +84,10 @@ namespace Application.Services.Staff
                 query = query.Where(r => r.StartTime <= filter.ToStartTimeUtc.Value);
 
             if (filter.FromEndTimeUtc.HasValue)
-                query = query.Where(r => r.EndTime >= filter.FromEndTimeUtc.Value);
+                query = query.Where(r => r.EndTime.HasValue && r.EndTime.Value >= filter.FromEndTimeUtc.Value);
 
             if (filter.ToEndTimeUtc.HasValue)
-                query = query.Where(r => r.EndTime <= filter.ToEndTimeUtc.Value);
+                query = query.Where(r => r.EndTime.HasValue && r.EndTime.Value <= filter.ToEndTimeUtc.Value);
 
             if (!string.IsNullOrWhiteSpace(filter.Keyword))
             {
@@ -185,7 +185,8 @@ namespace Application.Services.Staff
                 Id = h.Id,
                 ActionType = h.ActionType,
                 TimestampUtc = h.Timestamp,
-                Description = h.Description
+                Description = h.Description,
+                DistanceKm = h.DistanceMeters.HasValue ? h.DistanceMeters.Value / 1000.0 : null
             }).ToList();
 
             // Tìm Order + Debt liên quan đến overtime (nếu có)

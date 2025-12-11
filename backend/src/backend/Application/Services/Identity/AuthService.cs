@@ -28,7 +28,7 @@ namespace Application.Services.Identity
         private readonly IUnitOfWork _unitOfWork;
         private readonly IWalletService _walletService;
         private readonly IUserWalletService _userWalletService;
-        private  readonly IEmailRepository _emailService;
+        private readonly IEmailRepository _emailService;
         private readonly IKycService _kycService;
 
         public AuthService(

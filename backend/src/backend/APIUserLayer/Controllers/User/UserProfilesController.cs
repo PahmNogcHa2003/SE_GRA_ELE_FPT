@@ -3,6 +3,7 @@ using Application.Common;
 using Application.DTOs.UserProfile;
 using Application.Interfaces.Photo;
 using Application.Interfaces.User.Service;
+using Application.Services.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -16,12 +17,10 @@ namespace APIUserLayer.Controllers.User
     public class UserProfilesController : UserBaseController
     {
         private readonly IUserProfilesService _userProfilesService;
-        private readonly IPhotoService _photoService;
 
-        public UserProfilesController(IUserProfilesService userProfilesService, IPhotoService photoService)
+        public UserProfilesController(IUserProfilesService userProfilesService)
         {
             _userProfilesService = userProfilesService;
-            _photoService = photoService;
         }
 
         /// <summary>
@@ -32,11 +31,9 @@ namespace APIUserLayer.Controllers.User
         [ProducesResponseType(typeof(ApiResponse<object>), 404)]
         public async Task<IActionResult> GetMyProfile()
         {
-            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (!long.TryParse(userIdString, out var userId))
-                return Unauthorized(ApiResponse<object>.ErrorResponse("Token không hợp lệ hoặc không tìm thấy User ID."));
+            var userIdString = User.GetUserIdAsLong();
 
-            var profile = await _userProfilesService.GetByUserIdAsync(userId);
+            var profile = await _userProfilesService.GetByUserIdAsync(userIdString);
             if (profile == null)
                 return NotFound(ApiResponse<object>.ErrorResponse("Không tìm thấy UserProfile cho user này."));
 
@@ -53,14 +50,11 @@ namespace APIUserLayer.Controllers.User
         [ProducesResponseType(typeof(ApiResponse<object>), 404)]
         public async Task<IActionResult> UpdateMyProfile([FromBody] UpdateUserProfileBasicDTO dto)
         {
-            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (!long.TryParse(userIdString, out var userId))
-                return Unauthorized(ApiResponse<object>.ErrorResponse("Token không hợp lệ hoặc không tìm thấy User ID."));
-
+            var userIdString = User.GetUserIdAsLong();
             if (dto == null)
                 return BadRequest(ApiResponse<object>.ErrorResponse("Dữ liệu cập nhật không hợp lệ."));
 
-            var updated = await _userProfilesService.UpdateBasicByUserIdAsync(userId, dto);
+            var updated = await _userProfilesService.UpdateBasicByUserIdAsync(userIdString, dto);
             if (updated == null)
                 return NotFound(ApiResponse<object>.ErrorResponse("Không tìm thấy UserProfile để cập nhật."));
 

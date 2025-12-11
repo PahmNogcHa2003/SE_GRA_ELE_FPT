@@ -14,9 +14,6 @@ using System.Runtime.InteropServices;
 public class UserTicketService
     : GenericService<UserTicket, UserTicketDTO, long>, IUserTicketService
 {
-    private readonly IUnitOfWork _uow;
-    private readonly IMapper _mapper;
-
     private readonly IRepository<TicketPlanPrice, long> _planPriceRepo;
     private readonly IRepository<Order, long> _orderRepo;
     private readonly IRepository<Wallet, long> _walletRepo;
@@ -45,8 +42,6 @@ public class UserTicketService
         IVoucherUsageRepository voucherUsageRepository
     ) : base(userTicketRepo, mapper, uow)
     {
-        _uow = uow;
-        _mapper = mapper;
         _userTicketRepository = userTicketRepository;
         _planPriceRepo = planPriceRepo;
         _orderRepo = orderRepo;
