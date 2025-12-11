@@ -7,6 +7,7 @@ using Application.DTOs.Promotion;
 using Application.DTOs.Quest;
 using Application.DTOs.Station;
 using Application.DTOs.Tag;
+using Application.DTOs.TagNew;
 using Application.DTOs.Tickets;
 using Application.DTOs.User;
 using Application.DTOs.Voucher;
@@ -34,6 +35,11 @@ namespace Application.Mapping
             CreateMap<Domain.Entities.Vehicle, DTOs.Vehicle.VehicleDTO>().ReverseMap();
             CreateMap<Domain.Entities.Tag, TagDTO>().ReverseMap();
             CreateMap<Wallet, WalletDTO>().ReverseMap();
+            CreateMap<News, NewsDTO>()
+            .ForMember(dest => dest.TagIds,
+               opt => opt.MapFrom(src => src.TagNews.Select(t => t.TagId).ToList()));
+
+            CreateMap<TagNew, TagNewDTO>().ReverseMap();
             CreateMap<WalletTransaction, WalletTransactionDTO>().ReverseMap();
             CreateMap<CreateTicketPlanDTO, TicketPlan>();
             CreateMap<UpdateTicketPlanDTO, TicketPlan>()
@@ -90,6 +96,7 @@ namespace Application.Mapping
             // BẮT BUỘC Bỏ qua (Ignore) việc map thuộc tính Tags.
             CreateMap<NewsDTO, Domain.Entities.News>()
                 .ForMember(dest => dest.TagNews, opt => opt.Ignore());
+            CreateMap<TagNewDTO, TagNew>().ReverseMap();
         }
     }
 }

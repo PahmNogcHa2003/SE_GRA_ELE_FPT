@@ -6,7 +6,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Domain.Entities;
 
-public enum PlanActivationMode { IMMEDIATE = 0, ON_FIRST_USE = 1 }
+public enum PlanActivationMode { IMMEDIATE = 0, ON_FIRST_USE = 1,
+    INSTANT = 2
+}
 
 [Table("TicketPlanPrice")]
 [Index(nameof(PlanId), Name = "IX_TicketPlanPrice_PlanId")]

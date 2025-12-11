@@ -86,6 +86,7 @@ namespace Infrastructure.Dependency_Injection
             services.AddScoped<IUserQuestProgressRepository, UserQuestProgressRepository>();
             services.AddScoped<IVoucherRepository, VoucherRepository>();
             services.AddScoped<IVoucherUsageRepository, VoucherUsageRepository>();
+
             // --- Location / HttpClient ---
             services.AddHttpClient("ProvincesAPI", client =>
             {

@@ -1,250 +1,213 @@
-﻿//using Application.DTOs.Rental;
-//using Application.Exceptions;
-//using Application.Interfaces;
-//using Application.Interfaces.Staff.Repository;
-//using Application.Interfaces.User.Repository;
-//using Application.Services.User;
-//using Domain.Entities;
-//using Domain.Enums;
-//using Infrastructure.Persistence;
-//using Infrastructure.Repositories.User;
-//using Infrastructure.Repositories.Staff; // <-- Thêm namespace repo Staff (nếu có)
-//using Microsoft.AspNetCore.Http;
-//using Microsoft.EntityFrameworkCore;
-//using Microsoft.Extensions.Logging;
-//using Moq;
-//using System;
-//using System.Collections.Generic;
-//using System.Linq;
-//using System.Security.Claims;
-//using System.Threading.Tasks;
+﻿using Application.DTOs.Rental;
+using Application.Exceptions;
+using Application.Interfaces;
+using Application.Interfaces.Base;
+using Application.Interfaces.Staff.Repository;
+using Application.Interfaces.User.Repository;
+using Application.Interfaces.User.Service;
+using Application.Services.User;
+using Domain.Entities;
+using Domain.Enums;
+using Infrastructure.Persistence;
+using Infrastructure.Repositories.Staff;
+using Infrastructure.Repositories.User;
+using Infrastructure.Repositories;
+using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Moq;
+using System;
+using System.Security.Claims;
+using System.Threading.Tasks;
+using Xunit;
 
-//namespace Application.UnitTests.Features.Rentals
-//{
-//    public class RentalsServiceTests : IDisposable
-//    {
-//        // 1. Chỉ mock các dependency KHÔNG phải repository
-//        private readonly Mock<IHttpContextAccessor> _mockHttpContextAccessor = new();
-//        private readonly Mock<ILogger<RentalsService>> _mockLogger = new();
+namespace Application.UnitTests.Features.Rentals
+{
+    public class RentalsServiceTests : IDisposable
+    {
+        private readonly HolaBikeContext _context;
 
-//        // 2. Sử dụng CONTEXT và REPOSITORY "THẬT"
-//        private readonly HolaBikeContext _context;
-//        private readonly IStationsRepository _stationRepo; // Dùng interface
-//        private readonly IVehicleRepository _vehicleRepo;
-//        private readonly IUserTicketRepository _userTicketRepo;
-//        private readonly IRentalsRepository _rentalRepo;
-//        private readonly IBookingTicketRepository _bookingTicketRepo;
-//        private readonly IUnitOfWork _uow;
+        private readonly IStationsRepository _stationRepo;
+        private readonly IVehicleRepository _vehicleRepo;
+        private readonly IUserTicketRepository _userTicketRepo;
+        private readonly IRentalsRepository _rentalRepo;
+        private readonly IBookingTicketRepository _bookingTicketRepo;
+        private readonly IRentalHistoryRepository _rentalHistoryRepo;
+        private readonly IWalletRepository _walletRepo;
+        private readonly IWalletDebtRepository _walletDebtRepo;
+        private readonly IOrderRepository _orderRepo;
+        private readonly IRepository<TicketPlanPrice, long> _ticketPlanRepo;
 
-//        private readonly RentalsService _service;
+        private readonly IUnitOfWork _uow;
 
-//        // 3. Hàm khởi tạo (Constructor)
-//        public RentalsServiceTests()
-//        {
-//            // Tạo DbContext InMemory
-//            var options = new DbContextOptionsBuilder<HolaBikeContext>()
-//                .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
-//                .Options;
+        private readonly Mock<IQuestService> _mockQuestService = new();
+        private readonly Mock<IUserLifetimeStatsService> _mockUserLifetimeService = new();
+        private readonly Mock<IHttpContextAccessor> _mockHttpContext = new();
+        private readonly Mock<ILogger<RentalsService>> _mockLogger = new();
 
-//            _context = new HolaBikeContext(options);
+        private readonly RentalsService _service;
 
-//            // SỬA Ở ĐÂY: Khởi tạo TẤT CẢ repository "THẬT"
-//            // (Giả định tên class của bạn là StationsRepository, VehicleRepository...)
-//            _stationRepo = new StationsRepository(_context);
-//            _vehicleRepo = new VehicleRepository(_context);
-//            _userTicketRepo = new UserTicketRepository(_context);
-//            _rentalRepo = new RentalsRepository(_context);
-//            _bookingTicketRepo = new BookingTicketRepository(_context);
-//            _uow = new UnitOfWork(_context);
+        public RentalsServiceTests()
+        {
+            var options = new DbContextOptionsBuilder<HolaBikeContext>()
+                .UseInMemoryDatabase(Guid.NewGuid().ToString())
+                .Options;
 
-//            // SỬA Ở ĐÂY: Truyền TẤT CẢ repo thật vào service
-//            _service = new RentalsService(
-//                _stationRepo,         // <-- Repo thật
-//                _vehicleRepo,         // <-- Repo thật
-//                _userTicketRepo,      // <-- Repo thật
-//                _rentalRepo,          // <-- Repo thật
-//                _bookingTicketRepo,   // <-- Repo thật
-//                _uow,
-//                _mockHttpContextAccessor.Object,
-//                _mockLogger.Object
-//            );
+            _context = new HolaBikeContext(options);
 
-//            // Setup mock cơ bản
-//            SetupHttpContextWithUserId(1);
-//        }
+            _stationRepo = new StationsRepository(_context);
+            _vehicleRepo = new VehicleRepository(_context);
+            _userTicketRepo = new UserTicketRepository(_context);
+            _rentalRepo = new RentalsRepository(_context);
+            _bookingTicketRepo = new BookingTicketRepository(_context);
+            _rentalHistoryRepo = new RentalHistoryRepository(_context);
+            _walletRepo = new WalletRepository(_context);
+            _walletDebtRepo = new WalletDebtRepository(_context);
+            _orderRepo = new OrderRepository(_context);
 
-//        private void SetupHttpContextWithUserId(long userId)
-//        {
-//            var claimsPrincipal = new ClaimsPrincipal(new ClaimsIdentity(new Claim[]
-//            {
-//                new Claim(ClaimTypes.NameIdentifier, userId.ToString())
-//            }, "mock"));
+            // FIX: dùng BaseRepository thay vì TicketPlanPriceService
+            _ticketPlanRepo = new BaseRepository<TicketPlanPrice, long>(_context);
 
-//            _mockHttpContextAccessor.Setup(a => a.HttpContext)
-//                .Returns(new DefaultHttpContext { User = claimsPrincipal });
-//        }
+            _uow = new UnitOfWork(_context);
 
-//        // 4. Hàm dọn dẹp sau mỗi test
-//        public void Dispose()
-//        {
-//            _context.Database.EnsureDeleted();
-//            _context.Dispose();
-//        }
+            _service = new RentalsService(
+                _stationRepo,
+                _vehicleRepo,
+                _userTicketRepo,
+                _rentalRepo,
+                _bookingTicketRepo,
+                _rentalHistoryRepo,
+                _walletRepo,
+                _walletDebtRepo,
+                _orderRepo,
+                _ticketPlanRepo,
+                _uow,
+                _mockHttpContext.Object,
+                _mockQuestService.Object,
+                _mockUserLifetimeService.Object,
+                _mockLogger.Object
+            );
 
-//        // 5. Các Test Case
-//        //[Fact]
-//        //public async Task CreateRentalAsync_ShouldCreateRental_WhenValidData()
-//        //{
-//        //    // Arrange
-//        //    // SỬA Ở ĐÂY: "Seed" data thay vì mock
-//        //    var category = new CategoriesVehicle { Id = 1, Name = "Xe đạp thường" };
-//        //    var vehicle = new Vehicle
-//        //    {
-//        //        Id = 1,
-//        //        Status = VehicleStatus.Available,
-//        //        BikeCode = "TEST-001",
-//        //        CategoryId = 1,
-//        //        Category = category,
-//        //        StationId = 5 // Xe đang ở trạm số 5
-//        //    };
-//        //    _context.CategoriesVehicles.Add(category);
-//        //    _context.Vehicles.Add(vehicle);
-//        //    await _context.SaveChangesAsync();
+            SetUser(1);
+        }
 
-//        //    var createRentalDTO = new CreateRentalDTO { VehicleId = 1, UserTicketId = 10 };
+        private void SetUser(long id)
+        {
+            var claims = new ClaimsPrincipal(
+                new ClaimsIdentity(
+                    new[] { new Claim(ClaimTypes.NameIdentifier, id.ToString()) },
+                    "mock"
+                )
+            );
 
-//        //    // (Không cần mock _mockVehicleRepo nữa)
+            _mockHttpContext.Setup(x => x.HttpContext)
+                .Returns(new DefaultHttpContext { User = claims });
+        }
 
-//        //    // Act
-//        //    var result = await _service.CreateRentalAsync(createRentalDTO);
+        public void Dispose()
+        {
+            _context.Database.EnsureDeleted();
+            _context.Dispose();
+        }
 
-//        //    // Assert
-//        //    Assert.True(result);
-//        //    Assert.Equal(1, _context.Rentals.Count());
-//        //    var rentalInDb = await _context.Rentals.FirstAsync();
-//        //    Assert.Equal(1, rentalInDb.UserId);
-//        //    Assert.Equal(1, rentalInDb.VehicleId);
-//        //    Assert.Equal("Ongoing", rentalInDb.Status);
-//        //    Assert.Equal(5, rentalInDb.StartStationId); // Phải lấy đúng trạm 5
-//        //}
+        [Fact]
+        public async Task CreateRentalAsync_ShouldThrowBadRequest_WhenVehicleInUse()
+        {
+            var category = new CategoriesVehicle { Id = 1, Name = "Xe đạp" };
+            var vehicle = new Vehicle
+            {
+                Id = 1,
+                Status = VehicleStatus.InUse,
+                BikeCode = "X01",
+                CategoryId = 1,
+                Category = category,
+                StationId = 5
+            };
 
-//        [Fact]
-//        public async Task CreateRentalAsync_ShouldThrowBadRequest_WhenVehicleInUse()
-//        {
-//            // Arrange
-//            // SỬA Ở ĐÂY: "Seed" data
-//            var category = new CategoriesVehicle { Id = 1, Name = "Xe đạp thường" };
-//            var vehicle = new Vehicle
-//            {
-//                Id = 1,
-//                Status = VehicleStatus.InUse, // Xe đang bận
-//                BikeCode = "TEST-001",
-//                CategoryId = 1,
-//                Category = category,
-//                StationId = 5
-//            };
-//            _context.CategoriesVehicles.Add(category);
-//            _context.Vehicles.Add(vehicle);
-//            await _context.SaveChangesAsync();
+            _context.CategoriesVehicles.Add(category);
+            _context.Vehicles.Add(vehicle);
+            await _context.SaveChangesAsync();
 
-//            var createRentalDTO = new CreateRentalDTO { VehicleId = 1, UserTicketId = 10 };
+            var dto = new CreateRentalDTO { VehicleId = 1, UserTicketId = 10 };
 
-//            // (Không cần mock _mockVehicleRepo nữa)
+            await Assert.ThrowsAsync<BadRequestException>(() =>
+                _service.CreateRentalAsync(dto));
+        }
 
-//            // Act & Assert
-//            await Assert.ThrowsAsync<BadRequestException>(() => _service.CreateRentalAsync(createRentalDTO));
-//        }
+        [Fact]
+        public async Task EndRentalAsync_ShouldEndRental_WhenValid()
+        {
+            var category = new CategoriesVehicle { Id = 1, Name = "Normal" };
+            var station = new Station
+            {
+                Id = 99,
+                Name = "Trạm trả xe",
+                IsActive = true,
+                Lat = 21.013590m,
+                Lng = 105.526310m
+            };
+            var vehicle = new Vehicle
+            {
+                Id = 1,
+                Status = VehicleStatus.InUse,
+                CategoryId = 1,
+                Category = category,
+                StationId = null
+            };
+            var ticket = new UserTicket
+            {
+                Id = 10,
+                UserId = 1,
+                Status = "Active",
+                RemainingRides = 5
+            };
+            var rental = new Rental
+            {
+                Id = 1,
+                UserId = 1,
+                VehicleId = 1,
+                StartStationId = 1,
+                Status = RentalStatus.Ongoing.ToString(),
+                StartTime = DateTimeOffset.UtcNow.AddMinutes(-30)
+            };
+            var booking = new BookingTicket
+            {
+                Id = 1,
+                RentalId = 1,
+                UserTicketId = 10
+            };
 
-//        [Fact]
-//        public async Task EndRentalAsync_ShouldEndRental_WhenValidData()
-//        {
-//            // Arrange
-//            // 1. "SEED" DATA: Thêm TẤT CẢ data cần thiết
-//            var category = new CategoriesVehicle { Id = 1, Name = "Xe đạp thường" };
-//            var vehicle = new Vehicle
-//            {
-//                Id = 1,
-//                Status = VehicleStatus.InUse,
-//                StationId = null,
-//                BikeCode = "TEST-001",
-//                CategoryId = 1,
-//                Category = category // Thêm category
-//            };
-//            var station = new Station
-//            {
-//                Id = 99,
-//                Name = "Trạm Trả Xe",
-//                IsActive = true,
-//                Lat = 21.013590m,
-//                Lng = 105.526310m
-//            };
-//            var userTicket = new UserTicket
-//            {
-//                Id = 10, // Khớp với UserTicketId
-//                UserId = 1, // Khớp với UserId
-//                Status = "Active",
-//                RemainingRides = 5 // Sẽ bị trừ 1
-//            };
-//            var bookingTicket = new BookingTicket { Id = 1, RentalId = 1, UserTicketId = 10 };
-//            var ongoingRental = new Rental
-//            {
-//                Id = 1,
-//                UserId = 1,
-//                VehicleId = 1,
-//                StartStationId = 1,
-//                Status = "Ongoing",
-//                StartTime = DateTimeOffset.UtcNow.AddMinutes(-30),
-//                BookingTickets = new List<BookingTicket> { bookingTicket }
-//            };
+            _context.CategoriesVehicles.Add(category);
+            _context.Stations.Add(station);
+            _context.Vehicles.Add(vehicle);
+            _context.UserTickets.Add(ticket);
+            _context.Rentals.Add(rental);
+            _context.BookingTickets.Add(booking);
 
-//            // Thêm tất cả vào Context
-//            _context.CategoriesVehicles.Add(category);
-//            _context.Vehicles.Add(vehicle);
-//            _context.Stations.Add(station);
-//            _context.UserTickets.Add(userTicket);
-//            _context.Rentals.Add(ongoingRental); // Booking ticket được thêm gián tiếp
-//            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync();
+            _context.ChangeTracker.Clear();
 
-//            // =================================================================
-//            // ⭐ FIX: THÊM DÒNG NÀY
-//            // Ngừng theo dõi (detach) tất cả các entity đã seed ở trên.
-//            // Điều này giải phóng DbContext để service có thể 'Update'
-//            // các entity mới mà không bị xung đột tracking.
-//            _context.ChangeTracker.Clear();
-//            // =================================================================
+            var request = new EndRentalRequestDTO
+            {
+                RentalId = 1,
+                CurrentLatitude = 21.013590,
+                CurrentLongitude = 105.526310
+            };
 
-//            var endRentalDto = new EndRentalRequestDTO
-//            {
-//                RentalId = 1,
-//                CurrentLatitude = 21.013590,
-//                CurrentLongitude = 105.526310
-//            };
+            var result = await _service.EndRentalAsync(request);
 
-//            // 2. KHÔNG CẦN SETUP MOCK REPO NÀO CẢ
+            Assert.True(result);
 
-//            // Act
-//            var result = await _service.EndRentalAsync(endRentalDto);
+            var rentalDb = await _context.Rentals.FindAsync(1L);
+            Assert.Equal(RentalStatus.End.ToString(), rentalDb.Status);
+            Assert.Equal(99, rentalDb.EndStationId);
 
-//            // Assert
-//            Assert.True(result);
+            var vehicleDb = await _context.Vehicles.FindAsync(1L);
+            Assert.Equal(VehicleStatus.Available, vehicleDb.Status);
+            Assert.Equal(99, vehicleDb.StationId);
 
-//            // Kiểm tra cuốc xe
-//            // (Lưu ý: dùng FindAsync vì context đã bị clear)
-//            var rentalInDb = await _context.Rentals.FindAsync(1L);
-//            Assert.NotNull(rentalInDb); // Thêm kiểm tra null
-//            Assert.Equal(RentalStatus.End, rentalInDb.Status);
-//            Assert.Equal(99, rentalInDb.EndStationId);
-
-//            // Kiểm tra xe
-//            var vehicleInDb = await _context.Vehicles.FindAsync(1L);
-//            Assert.NotNull(vehicleInDb); // Thêm kiểm tra null
-//            Assert.Equal("Available", vehicleInDb.Status);
-//            Assert.Equal(99, vehicleInDb.StationId);
-
-//            // Kiểm tra vé
-//            var ticketInDb = await _context.UserTickets.FindAsync(10L);
-//            Assert.NotNull(ticketInDb); // Thêm kiểm tra null
-//            Assert.Equal(4, ticketInDb.RemainingRides);
-//        }
-//    }
-//}
+            var ticketDb = await _context.UserTickets.FindAsync(10L);
+            Assert.Equal(4, ticketDb.RemainingRides);
+        }
+    }
+}
