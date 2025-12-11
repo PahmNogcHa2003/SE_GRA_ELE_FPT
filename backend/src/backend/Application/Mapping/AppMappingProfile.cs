@@ -87,9 +87,7 @@ namespace Application.Mapping
             // Chiều từ Entity -> DTO (Khi lấy dữ liệu ra)
             CreateMap<News, NewsDTO>()
                 .ForMember(dest => dest.TagIds,
-                    opt => opt.MapFrom(src => src.TagNews.Select(tn => tn.TagId)))
-                .ForMember(dest => dest.TagNames,
-                    opt => opt.MapFrom(src => src.TagNews.Select(tn => tn.Tag.Name)));
+                    opt => opt.MapFrom(src => src.TagNews.Select(tn => tn.TagId)));
 
             // === DÒNG QUAN TRỌNG NHẤT ĐỂ SỬA LỖI ===
             // Chiều từ DTO -> Entity (Khi tạo mới/cập nhật)

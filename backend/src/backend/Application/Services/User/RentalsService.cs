@@ -39,6 +39,7 @@ namespace Application.Services.User
         private readonly ILogger<RentalsService> _logger;
         private readonly IUserLifetimeStatsService _userLifetimeStatsService;
         private readonly IQuestService _questService;
+        private readonly IKycRepository _kycRepository;
         private static DateTime NowUtc() => DateTime.UtcNow;
 
         private static DateTime NowVn()
@@ -63,6 +64,7 @@ namespace Application.Services.User
             IRepository<TicketPlanPrice, long> planPriceRepo,
             IUnitOfWork uow,
             IHttpContextAccessor httpContextAccessor,
+            IKycRepository kycRepository,
             IQuestService questService,
             IUserLifetimeStatsService userLifetimeStatsService,
             ILogger<RentalsService> logger)
@@ -79,6 +81,7 @@ namespace Application.Services.User
             _planPriceRepo = planPriceRepo;
             _userLifetimeStatsService = userLifetimeStatsService;
             _questService = questService;
+            _kycRepository = kycRepository;
             _uow = uow;
             _httpContextAccessor = httpContextAccessor;
             _logger = logger;
@@ -103,6 +106,11 @@ namespace Application.Services.User
         public async Task<long> CreateRentalAsync(CreateRentalDTO dto, CancellationToken ct = default)
         {
             var userId = GetCurrentUserIdOrThrow();
+            var kyc = await _kycRepository.IsVerifiedAsync(userId, ct);
+            if (!kyc)
+            {
+                throw new BadRequestException("Vui lòng hoàn tất xác thực KYC trước khi thuê xe.");
+            }
             var unpaidDebts = await _walletDebtRepo.HasUnpaidDebtsAsync(userId, ct);
             if (unpaidDebts)
             {
