@@ -23,7 +23,7 @@ export interface TicketPlanPrice {
   id: number;
   planId: number;
   planName: string;
-  vehicleType?: string;
+  vehicleType: string;
   price: number;
   durationLimitMinutes?: number;
   dailyFreeDurationMinutes?: number;

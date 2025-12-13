@@ -134,19 +134,16 @@ const TicketPlanPriceManagementPage: React.FC = () => {
   };
   
   const formHook = useTicketPriceForm(handleFormSubmit);
+  const [vehicleTypeFilter, setVehicleTypeFilter] = useState<string | null>(null);
 
-  const handleTableChange: TableProps<TicketPlanPrice>['onChange'] = (
-    pagination, filters, /*sorter*/
-  ) => {
-    setQueryParams(prev => ({
-      ...prev,
-      page: pagination.current,
-      pageSize: pagination.pageSize,
-      // Lọc theo loại xe (API đã hỗ trợ)
-      filterField: 'vehicletype',
-      filterValue: filters.vehicleType?.join(','),
-    }));
-  };
+  const handleTableChange: TableProps<TicketPlanPrice>['onChange'] = (pagination) => {
+  setQueryParams(prev => ({
+    ...prev,
+    page: pagination.current,
+    pageSize: pagination.pageSize,
+  }));
+};
+
 
   const columns: TableProps<TicketPlanPrice>['columns'] = [
     { title: 'ID', dataIndex: 'id', key: 'id' },
@@ -155,11 +152,7 @@ const TicketPlanPriceManagementPage: React.FC = () => {
       title: 'Loại Xe', 
       dataIndex: 'vehicleType', 
       key: 'vehicleType',
-      filters: [
-        { text: 'Xe đạp (bike)', value: 'bike' },
-        { text: 'Xe điện (ebike)', value: 'ebike' },
-      ],
-      render: (type) => type === 'ebike' ? 'Xe điện' : 'Xe đạp'
+      render: (type) => type === 'EBike' ? 'Xe điện' : 'Xe đạp'
     },
     { title: 'Giá (VND)', dataIndex: 'price', key: 'price', render: (val) => val.toLocaleString('vi-VN') },
     { title: 'Thời hạn (Ngày)', dataIndex: 'validityDays', key: 'validityDays' },
@@ -196,9 +189,9 @@ const TicketPlanPriceManagementPage: React.FC = () => {
 
   return (
     <div>
-      <h2 className="text-2xl font-semibold mb-4">Quản lý Giá Vé (Ticket Plan Prices)</h2>
+      <h2 className="text-2xl font-semibold mb-4">Quản lý Giá Vé</h2>
       
-      <div className="flex justify-between mb-4">
+      <div className="flex justify-between mb-4 gap-4">
         <Button
           type="primary"
           icon={<PlusOutlined />}
@@ -207,12 +200,46 @@ const TicketPlanPriceManagementPage: React.FC = () => {
         >
           Thêm Giá Vé
         </Button>
-        <Search
-          placeholder="Tìm theo Tên gói, Loại xe..."
-          onSearch={(value) => setQueryParams(prev => ({ ...prev, page: 1, searchQuery: value }))}
-          style={{ width: 300 }}
-        />
+
+        <div className="flex gap-2">
+          {/* FILTER LOẠI XE */}
+          <Select
+            placeholder="Loại xe"
+            style={{ width: 160 }}
+            allowClear
+            onChange={(val) => {
+              setVehicleTypeFilter(val);
+              setQueryParams((prev) => ({
+                ...prev,
+                page: 1,
+                filterField: val ? "vehicleType" : undefined,
+                filterValue: val || undefined,
+              }));
+            }}
+            options={[
+              { label: "Xe đạp", value: "bike" },
+              { label: "Xe điện", value: "ebike" },
+            ]}
+          />
+
+          {/* SEARCH */}
+          <Search
+            placeholder="Tìm theo Tên gói, Loại xe..."
+            allowClear
+            onSearch={(value) =>
+              setQueryParams((prev) => ({
+                ...prev,
+                page: 1,
+                searchQuery: value,
+                filterField: vehicleTypeFilter ? "vehicleType" : undefined,
+                filterValue: vehicleTypeFilter || undefined,
+              }))
+            }
+            style={{ width: 300 }}
+          />
+        </div>
       </div>
+
 
       <Table
         columns={columns}
@@ -252,8 +279,8 @@ const TicketPlanPriceManagementPage: React.FC = () => {
           <div className="grid grid-cols-2 gap-x-4">
             <Form.Item name="vehicleType" label="Loại Xe" rules={[{ required: true }]}>
               <Select placeholder="Chọn loại xe">
-                <Select.Option value="bike">Xe đạp (bike)</Select.Option>
-                <Select.Option value="ebike">Xe điện (ebike)</Select.Option>
+                <Select.Option value="bike">Xe đạp</Select.Option>
+                <Select.Option value="ebike">Xe điện</Select.Option>
               </Select>
             </Form.Item>
             <Form.Item name="price" label="Giá (VND)" rules={[{ required: true }]}>
@@ -275,7 +302,7 @@ const TicketPlanPriceManagementPage: React.FC = () => {
           </Form.Item>
 
           <Form.Item name="isActive" valuePropName="checked">
-            <Checkbox>Đang hoạt động (Is Active)</Checkbox>
+            <Checkbox>Đang hoạt động</Checkbox>
           </Form.Item>
         </Form>
       </Modal>
