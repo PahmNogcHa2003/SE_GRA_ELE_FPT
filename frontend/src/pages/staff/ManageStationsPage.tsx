@@ -44,7 +44,7 @@ const ManageStationsPage: React.FC = () => {
 
   const { data: stationsData, isLoading } = useQuery({
     queryKey: ['stations', queryParams],
-    queryFn: () => stationService.getStations(queryParams),
+    queryFn: () => stationService.getStationsAdmin(queryParams),
     select: (res) => res.data, 
   });
 

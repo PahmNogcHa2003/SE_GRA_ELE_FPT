@@ -1,4 +1,4 @@
-import http from './http'; // <-- Import 'http' chung
+import { httpUser } from './http'; // <-- Import 'http' chung
 import type { 
   CreatePaymentPayload, 
   PaymentUrlResponse, 
@@ -15,7 +15,7 @@ export const createPaymentUrl = async (
   payload: CreatePaymentPayload,
 ): Promise<PaymentUrlResponse> => {
   // Interceptor tự động thêm token
-  const response = await http.post<PaymentUrlResponse>(
+  const response = await httpUser.post<PaymentUrlResponse>(
     '/Payments/vnpay/create-url',
     payload
   );
@@ -30,7 +30,7 @@ export const processVnPayReturn = async (
   queryString: string,
 ): Promise<PaymentResult> => { 
   // Interceptor tự động thêm token
-  const response = await http.get<PaymentResult>(
+  const response = await httpUser.get<PaymentResult>(
     `/Payments/vnpay-return?${queryString}`
   );
   console.log(queryString);

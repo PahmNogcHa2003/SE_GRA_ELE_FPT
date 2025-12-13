@@ -1,4 +1,4 @@
-import http from './http'; 
+import { httpUser } from './http'; 
 import axios from 'axios'; // <-- 1. Import axios để kiểm tra lỗi
 import type { ApiResponse,PagedResult } from '../types/api';
 import type { Wallet, WalletTransaction } from '../types/wallet';
@@ -9,7 +9,7 @@ import type { Wallet, WalletTransaction } from '../types/wallet';
  */
 export const getWallet = async (): Promise<ApiResponse<Wallet | null>> => {
   try {
-    const response = await http.get<ApiResponse<Wallet>>('/wallets');
+    const response = await httpUser.get<ApiResponse<Wallet>>('/wallets');
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response?.status === 404) {
@@ -28,7 +28,7 @@ export const getWalletTransactions = async (
   pageSize = 10
 ): Promise<ApiResponse<PagedResult<WalletTransaction> | null>> => {
   try {
-    const response = await http.get<ApiResponse<PagedResult<WalletTransaction>>>(
+    const response = await httpUser.get<ApiResponse<PagedResult<WalletTransaction>>>(
       '/wallet/transactions',
       { params: { page, pageSize, sortOrder: 'createdAt_desc' } }
     );
@@ -46,7 +46,7 @@ export const convertPromoToBalance = async (
   amount: number
 ): Promise<ApiResponse<WalletTransaction>> => {
   try {
-    const response = await http.post<ApiResponse<WalletTransaction>>(
+    const response = await httpUser.post<ApiResponse<WalletTransaction>>(
       '/wallets/convert-promo',
       { amount }
     );
@@ -64,7 +64,7 @@ export const convertPromoToBalance = async (
  */
 export const payAllDebt = async (): Promise<ApiResponse<null>> => {
   try {
-    const response = await http.post<ApiResponse<null>>(
+    const response = await httpUser.post<ApiResponse<null>>(
       '/wallets/pay-all-debt'
     );
     return response.data;

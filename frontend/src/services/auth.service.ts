@@ -1,4 +1,4 @@
-import http from './http'; // <-- Import 'http' chung
+import { httpAdmin } from './http'; // <-- Import 'http' chung
 import type {ChangePasswordPayload, LoginPayload, AuthResponseData, User } from '../types/auth';
 import type { ApiResponse } from '../types/api';
 
@@ -7,7 +7,7 @@ import type { ApiResponse } from '../types/api';
  */
 export const loginApi = async (payload: LoginPayload): Promise<AuthResponseData> => {
   try {
-  const res = await http.post<AuthResponseData>('/Auth/login', payload);
+  const res = await httpAdmin.post<AuthResponseData>('/Auth/login', payload);
   return res.data;
     } catch (error: any) {
     throw error as ApiResponse<null>; 
@@ -16,7 +16,7 @@ export const loginApi = async (payload: LoginPayload): Promise<AuthResponseData>
 
 export const getMeApi = async (): Promise<ApiResponse<User>> => {
   try {
-    const response = await http.get<ApiResponse<User>>('/Auth/me');
+    const response = await httpAdmin.get<ApiResponse<User>>('/Auth/me');
     return response.data;
   } catch (error: any) {
     throw error as ApiResponse<null>; 
@@ -25,7 +25,7 @@ export const getMeApi = async (): Promise<ApiResponse<User>> => {
 
 export const changePassword = async (payload: ChangePasswordPayload): Promise<AuthResponseData> => {
   try {
-    const response = await http.post<AuthResponseData>('/Auth/change-password', payload);
+    const response = await httpAdmin.post<AuthResponseData>('/Auth/change-password', payload);
     return response.data;
   } catch (error: any) {
     throw error as ApiResponse<null>;

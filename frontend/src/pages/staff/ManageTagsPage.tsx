@@ -21,7 +21,7 @@ const ManageTagsPage: React.FC = () => {
 
   const { data: tagsResponse, isLoading } = useQuery({
     queryKey: ['tags', queryParams],
-    queryFn: () => tagService.getTags(queryParams),
+    queryFn: () => tagService.getTagsAdmin(queryParams),
   });
   const tagsData = tagsResponse?.data;
 

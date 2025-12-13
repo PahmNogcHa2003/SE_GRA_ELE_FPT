@@ -5,18 +5,9 @@ import { getMyActiveTickets } from "../../services/user.ticket.service";
 import { Spin, Alert, Button, Tag, Tabs, Badge, Empty, Drawer } from "antd";
 import { Link } from "react-router-dom";
 import TicketCard from "../../features/tickets/components/TicketCard";
-// import { formatUtcToVN } from "../../utils/datetime"; // Tạm ẩn vì RideItem bị ẩn
 
-type Ticket = any; // bạn có thể thay bằng UserTicket
+type Ticket = any; 
 
-// --- Helpers phân loại ---
-
-// [FIX] Hàm này chưa dùng đến nên tạm comment lại để tránh lỗi "never read"
-// const isSubTicket = (t: Ticket) => {
-//   const vf = (t as any).validFrom as string | undefined | null;
-//   const vt = (t as any).validTo as string | undefined | null;
-//   return !!(vf && vt);
-// };
 
 // [FIX] Hàm này được giữ lại và sẽ được dùng trong useMemo bên dưới
 const diffDays = (from?: string | null, to?: string | null) => {
@@ -37,42 +28,6 @@ const getBucket = (t: Ticket): Bucket => {
   const days = diffDays(vf, vt);
   return days <= 1 ? "day" : "month";
 };
-
-// --- Compact item cho vé Lượt ---
-// [FIX] Component này chưa được sử dụng trong UI (bạn đang dùng TicketCard), nên tạm comment
-/*
-const RideItem: React.FC<{ t: Ticket; onViewDetail: (t: Ticket) => void }> = ({ t, onViewDetail }) => {
-  const status = t.status as string | undefined;
-  const activationDeadline = (t as any).activationDeadline as string | undefined | null;
-  const activatedAt = (t as any).activatedAt as string | undefined | null;
-
-  const statusColor =
-    status === "Ready" ? "green" :
-    status === "Active" ? "blue" :
-    status === "Expired" ? "default" : "default";
-
-  return (
-    <div className="flex items-center justify-between rounded-lg border border-gray-200 p-3 bg-white hover:shadow-sm transition">
-      <div className="min-w-0">
-        <div className="flex items-center gap-2">
-          <span className="font-semibold text-gray-800 truncate">{t.planName || "Vé lượt"}</span>
-          <Tag color="purple" className="m-0">Vé lượt</Tag>
-          <Tag color={statusColor} className="m-0">{status || "Unknown"}</Tag>
-        </div>
-        <div className="text-xs text-gray-500 mt-1 flex flex-wrap gap-x-4 gap-y-1">
-          {activatedAt && <span>Đã kích hoạt: <b>{formatUtcToVN(activatedAt)}</b></span>}
-          {!activatedAt && activationDeadline && <span>Hạn kích hoạt: <b>{formatUtcToVN(activationDeadline)}</b></span>}
-          {t.serialCode && <span>Mã vé: <span className="font-mono">{t.serialCode}</span></span>}
-        </div>
-      </div>
-
-      <div className="shrink-0 flex items-center gap-2">
-        <Button size="small" onClick={() => onViewDetail(t)}>Xem chi tiết</Button>
-      </div>
-    </div>
-  );
-};
-*/
 
 const MyTicketsPage: React.FC = () => {
   const { user, isLoadingUser } = useAuth();

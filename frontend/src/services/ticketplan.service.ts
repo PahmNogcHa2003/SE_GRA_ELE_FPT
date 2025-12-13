@@ -1,4 +1,4 @@
-import http from './http';
+import { httpAdmin } from './http';
 import type { ApiResponse ,PagedResult} from '../types/api';
 import type { 
   TicketPlan, 
@@ -18,14 +18,14 @@ export interface PagedRequestParams {
 }
 
 export const getPagedTicketPlans = (params: PagedRequestParams) => {
-  return http.get<ApiResponse<PagedResult<TicketPlan>>>('/TicketPlan', { params });
+  return httpAdmin.get<ApiResponse<PagedResult<TicketPlan>>>('/TicketPlan', { params });
 };
 export const createTicketPlan = (data: CreateTicketPlan) => {
-  return http.post<ApiResponse<TicketPlan>>('/TicketPlan', data);
+  return httpAdmin.post<ApiResponse<TicketPlan>>('/TicketPlan', data);
 };
 export const updateTicketPlan = (id: number, data: UpdateTicketPlan) => {
-  return http.put<ApiResponse<TicketPlan>>(`/TicketPlan/${id}`, data);
+  return httpAdmin.put<ApiResponse<TicketPlan>>(`/TicketPlan/${id}`, data);
 };
 export const deleteTicketPlan = (id: number) => {
-  return http.delete<ApiResponse<object>>(`/TicketPlan/${id}`);
+  return httpAdmin.delete<ApiResponse<object>>(`/TicketPlan/${id}`);
 };

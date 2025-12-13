@@ -1,5 +1,5 @@
     // src/services/rentalStats.service.ts
-    import http from "./http";
+    import { httpUser } from "./http";
     import type {
     RentalStatsSummaryDTO,
     LeaderboardEntryDTO,
@@ -9,7 +9,7 @@
 
     // 📊 Lấy thống kê tóm tắt của người dùng hiện tại
     export const getMyRentalStatsSummary = async (): Promise<RentalStatsSummaryDTO> => {
-    const res = await http.get<ApiResponse<RentalStatsSummaryDTO>>(
+    const res = await httpUser.get<ApiResponse<RentalStatsSummaryDTO>>(
         "/Rentals/stats/summary"
     );
     if (!res.data.success) {
@@ -23,7 +23,7 @@
     period: string = "lifetime",
     topN: number = 10
     ): Promise<LeaderboardEntryDTO[]> => {
-    const res = await http.get<ApiResponse<LeaderboardEntryDTO[]>>(
+    const res = await httpUser.get<ApiResponse<LeaderboardEntryDTO[]>>(
         "/Leaderboard",
         {
         params: { period, topN },
@@ -36,7 +36,7 @@
     };
     
     export const getMyRentalHistory = async (): Promise<RentalHistoryDTO[]> => {
-    const res = await http.get<ApiResponse<RentalHistoryDTO[]>>(
+    const res = await httpUser.get<ApiResponse<RentalHistoryDTO[]>>(
         "/Rentals/history"
     );
     if (!res.data.success) {

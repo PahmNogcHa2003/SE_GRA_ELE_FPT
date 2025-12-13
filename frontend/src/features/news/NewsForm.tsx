@@ -23,7 +23,7 @@ const NewsForm: React.FC<NewsFormProps> = ({ initialValues, onSubmit, onCancel, 
   // Lấy danh sách tất cả các tag để chọn
   const { data: tagsData, isLoading: isLoadingTags } = useQuery({
     queryKey: ['allTags'],
-    queryFn: () => tagService.getTags({ pageSize: 1000 }),
+    queryFn: () => tagService.getTagsAdmin({ pageSize: 1000 }),
     select: (res) => res.data.data?.items,
   });
 

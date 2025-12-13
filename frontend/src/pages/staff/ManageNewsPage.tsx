@@ -39,14 +39,14 @@
 
     const { data: newsResponse, isLoading } = useQuery({
         queryKey: ['news', queryParams],
-        queryFn: () => newsService.getNews(queryParams),
+        queryFn: () => newsService.getNewsAdmin(queryParams),
     });
 
     const newsData = newsResponse?.data; // ApiResponse<PagedResult<NewsDTO>> hoặc tương tự
 
     const { data: singleNewsData, isFetching: isFetchingSingleNews } = useQuery({
         queryKey: ['news', editingNews?.id],
-        queryFn: () => newsService.getNewsById(editingNews!.id),
+        queryFn: () => newsService.getNewsByIdAdmin(editingNews!.id),
         enabled: !!editingNews?.id,
         select: (res) => res.data.data,
     });
