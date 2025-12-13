@@ -25,6 +25,9 @@ import ManageCategoriesVehiclePage from '../pages/staff/ManageCategoriesVehicleP
 import TicketPlanManagementPage from '../pages/staff/TicketPlanManagementPage';
 import TicketPlanPriceManagementPage from '../pages/staff/TicketPlanPriceManagementPage';
 import UserTicketManagementPage from '../pages/staff/UserTicketManagementPage';
+import ManageRentalsPage from '../pages/staff/ManageRentalsPage';
+import ManageQuestsPage from '../pages/staff/ManageQuestsPage';
+import ManageTransactionsPage from '../pages/staff/ManageTransactionsPage';
 // Auth
 import AdminLogin from '../features/auth/admin/AdminLogin';
 import LoginModal from '../features/auth/components/LoginModal';
@@ -76,6 +79,9 @@ const AppRoutes = () => (
             <Route path="ticket-plans" element={<TicketPlanManagementPage />} />
             <Route path="ticket-plan-prices" element={<TicketPlanPriceManagementPage />} />
             <Route path="user-tickets" element={<UserTicketManagementPage />} />
+            <Route path="rentals" element={<ManageRentalsPage />} />
+            <Route path="quests" element={<ManageQuestsPage />} />
+            <Route path="transactions" element={<ManageTransactionsPage />} />
         </Route>
       {/* </Route> */}
       <Route path="/unauthorized" element={<div>Bạn không có quyền truy cập (403)</div>} />

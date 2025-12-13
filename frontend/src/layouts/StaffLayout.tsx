@@ -2,25 +2,140 @@
 import React from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { Layout, Menu, Dropdown, Avatar, Tag, App as AntdApp } from 'antd';
-import { HomeOutlined, CarOutlined, UserOutlined, LogoutOutlined, FileTextOutlined, DollarCircleOutlined } from '@ant-design/icons';
 import { useAuth } from '../features/auth/context/authContext';
-import { FaTicketAlt } from 'react-icons/fa';
+import { FaTicketAlt , FaMoneyBillAlt, FaChargingStation  } from 'react-icons/fa';
+import { FaTags , FaFileInvoiceDollar } from "react-icons/fa6";
+import { BiSolidDiscount } from "react-icons/bi";
+import { MdElectricBike, MdDirectionsBike  } from 'react-icons/md';
+import { LuGoal, LuTicketsPlane ,LuBike  } from "react-icons/lu";
+import { GiTicket } from "react-icons/gi";
+import {
+  HomeOutlined,
+  ShoppingOutlined,  
+  GiftOutlined,        
+  CustomerServiceOutlined, 
+  HistoryOutlined,     
+  WalletOutlined,      
+  TrophyOutlined,       
+  ReadOutlined,
+  UserOutlined, 
+  LogoutOutlined
+} from '@ant-design/icons';
 
 const { Header, Content, Sider } = Layout;
 
 const menuItems = [
-  { key: '/staff/dashboard', icon: <HomeOutlined />, label: <Link to="/staff/dashboard">Dashboard</Link> },
-  { key: '/staff/stations', icon: <CarOutlined />, label: <Link to="/staff/stations">Quản lý trạm</Link> },
-  { key: '/staff/vehicles', icon: <CarOutlined />, label: <Link to="/staff/vehicles">Quản lý xe</Link> },
-  { key: '/staff/categories-vehicle', icon: <CarOutlined />, label: <Link to="/staff/categories-vehicle">Quản lý loại xe</Link> },
-  { key: '/staff/tags', icon: <CarOutlined />, label: <Link to="/staff/tags">Quản lý thẻ (tin tức)</Link> },
-  { key: '/staff/news', icon: <CarOutlined />, label: <Link to="/staff/news">Quản lý tin tức</Link> },
-  { key: '/staff/ticket-plans', icon: <FileTextOutlined />, label: <Link to="/staff/ticket-plans">Quản lý Gói Vé</Link> },
-  { key: '/staff/ticket-plan-prices', icon: <DollarCircleOutlined />, label: <Link to="/staff/ticket-plan-prices">Quản lý Giá Vé</Link> },
-  { key: '/staff/user-tickets', icon: <FaTicketAlt />, label: <Link to="/staff/user-tickets">Quản lý Vé của người dùng</Link> },
-  // Bạn có thể thêm item riêng cho liên hệ & vé nếu đã có route cụ thể:
-  // { key: '/staff/contacts', icon: <CarOutlined />, label: <Link to="/staff/contacts">Quản lý liên hệ/phản hồi</Link> },
-  // { key: '/staff/tickets', icon: <CarOutlined />, label: <Link to="/staff/tickets">Quản lý vé</Link> },
+  // 1. Dashboard
+  { 
+    key: '/staff/dashboard', 
+    icon: <HomeOutlined />, 
+    label: <Link to="/staff/dashboard">Dashboard</Link> 
+  },
+
+  // 2. Nhóm VẬN HÀNH (Quản lý tài sản vật lý)
+  {
+    key: 'sub-operation',
+    icon: <MdElectricBike style={{ fontSize: '18px' }} />, 
+    label: 'Quản lý Vận hành',
+    children: [
+      { key: '/staff/stations', 
+        icon: <FaChargingStation />,
+        label: <Link to="/staff/stations">Trạm xe</Link> },
+
+      { key: '/staff/vehicles', 
+        icon: <LuBike style={{ fontSize: '18px' }} />,
+        label: <Link to="/staff/vehicles">Danh sách xe</Link> },
+
+      { key: '/staff/categories-vehicle', 
+        icon: <MdDirectionsBike style={{ fontSize: '18px' }} />,
+        label: <Link to="/staff/categories-vehicle">Loại xe</Link> },
+    ],
+  },
+
+  // 3. Nhóm KINH DOANH & GIAO DỊCH (Dữ liệu phát sinh hàng ngày)
+  {
+    key: 'sub-business',
+    icon: <ShoppingOutlined />,
+    label: 'Quản lý Giao dịch',
+    children: [
+      { 
+        key: '/staff/rentals', 
+        icon: <HistoryOutlined />, 
+        label: <Link to="/staff/rentals">Lịch sử Thuê xe</Link> 
+      },
+      { 
+        key: '/staff/orders', 
+        icon: <FaFileInvoiceDollar />,
+        label: <Link to="/staff/orders">Đơn hàng </Link> 
+      },
+      { 
+        key: '/staff/user-tickets', 
+        icon: <LuTicketsPlane />,
+        label: <Link to="/staff/user-tickets">Vé người dùng</Link> 
+      },
+      { 
+        key: '/staff/wallet-transactions', 
+        icon: <WalletOutlined />,
+        label: <Link to="/staff/transactions">Giao dịch Ví</Link> 
+      },
+    ],
+  },
+
+  // 4. Nhóm CẤU HÌNH VÉ (Setup sản phẩm)
+  {
+    key: 'sub-ticket-config',
+    icon: <FaTicketAlt />,
+    label: 'Cấu hình Gói Vé',
+    children: [
+      { key: '/staff/ticket-plans',
+        icon: <GiTicket />, 
+        label: <Link to="/staff/ticket-plans">Danh sách Gói vé</Link> },
+      { key: '/staff/ticket-plan-prices', 
+        icon: <FaMoneyBillAlt />,
+        label: <Link to="/staff/ticket-plan-prices">Bảng giá vé</Link> },
+    ],
+  },
+
+  // 5. Nhóm MARKETING & GAMIFICATION (Thu hút người dùng)
+  {
+    key: 'sub-marketing',
+    icon: <GiftOutlined />,
+    label: 'Marketing & Sự kiện',
+    children: [
+      { 
+        key: '/staff/campaigns', 
+        icon: <LuGoal />,
+        label: <Link to="/staff/campaigns">Chiến dịch khuyến mãi</Link> 
+      },
+      { 
+        key: '/staff/vouchers', 
+        icon: <BiSolidDiscount />,  
+        label: <Link to="/staff/vouchers">Mã giảm giá</Link> 
+      },
+      { 
+        key: '/staff/quests', 
+        icon: <TrophyOutlined />,
+        label: <Link to="/staff/quests">Nhiệm vụ</Link> 
+      },
+      { 
+        key: '/staff/news', 
+        icon: <ReadOutlined />,
+        label: <Link to="/staff/news">Tin tức</Link> 
+      },
+      { 
+        key: '/staff/tags', 
+        icon: <FaTags />,
+        label: <Link to="/staff/tags">Thẻ (Tags)</Link> 
+      },
+    ],
+  },
+
+  // 6. Nhóm CSKH (Hỗ trợ)
+  { 
+    key: '/staff/contacts', 
+    icon: <CustomerServiceOutlined />, 
+    label: <Link to="/staff/contacts">Liên hệ & Phản hồi</Link> 
+  },
 ];
 
 const StaffLayout: React.FC = () => {
