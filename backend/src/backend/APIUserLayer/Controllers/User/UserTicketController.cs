@@ -8,7 +8,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace APIUserLayer.Controllers.User
 {
-    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class UserTicketController : ControllerBase
@@ -19,9 +18,6 @@ namespace APIUserLayer.Controllers.User
         {
             _svc = svc;
         }
-        // MARKET: hiển thị các gói & giá theo loại xe
-        // GET /api/user-tickets/market?vehicleType=Bike
-        // hoặc yêu cầu login tùy bạn
         [HttpGet("market")]
         public async Task<IActionResult> Market([FromQuery] string? vehicleType, CancellationToken ct)
         {
@@ -47,7 +43,7 @@ namespace APIUserLayer.Controllers.User
                 "Fetched user ticket market successfully."
             ));
         }
-        // GET: api/UserTicket/123
+        [Authorize]
         [HttpGet("{id:long}")]
         public async Task<ActionResult<ApiResponse<UserTicketDTO>>> GetById(long id, CancellationToken ct = default)
         {
@@ -59,8 +55,7 @@ namespace APIUserLayer.Controllers.User
 
             return Ok(ApiResponse<UserTicketDTO>.SuccessResponse(item, "Fetched user ticket successfully."));
         }
-
-        // GET: api/UserTicket/users/45/active
+        [Authorize]
         [HttpGet("active")]
         public async Task<ActionResult<ApiResponse<List<UserTicketDTO>>>> GetMyActiveTickets(
             CancellationToken ct = default)
@@ -69,8 +64,7 @@ namespace APIUserLayer.Controllers.User
             var list = await _svc.GetMyActiveTicketsAsync(userId, ct);
             return Ok(ApiResponse<List<UserTicketDTO>>.SuccessResponse(list, "Fetched active tickets successfully."));
         }
-
-        // POST: api/UserTicket/purchase
+        [Authorize]
         [HttpPost("purchase")]
         public async Task<ActionResult<ApiResponse<UserTicketDTO>>> Purchase(
             [FromBody] PurchaseTicketRequestDTO request,
@@ -97,6 +91,32 @@ namespace APIUserLayer.Controllers.User
             catch (Exception)
             {
                 return StatusCode(500, ApiResponse<UserTicketDTO>.ErrorResponse("Internal server error."));
+            }
+        }
+        [Authorize]
+        [HttpPost("preview")]
+        public async Task<ActionResult<ApiResponse<PreviewTicketPriceDTO>>> Preview([FromBody] PreviewTicketRequestDTO request, CancellationToken ct = default)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ApiResponse<PreviewTicketPriceDTO>.ErrorResponse("Invalid data."));
+
+            try
+            {
+                var userId = User.GetUserIdAsLong();
+                var result = await _svc.PreviewTicketPriceAsync(userId, request, ct);
+                return Ok(ApiResponse<PreviewTicketPriceDTO>.SuccessResponse(result, "Preview ticket price successfully."));
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ApiResponse<PreviewTicketPriceDTO>.ErrorResponse(ex.Message));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ApiResponse<PreviewTicketPriceDTO>.ErrorResponse(ex.Message));
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, ApiResponse<PreviewTicketPriceDTO>.ErrorResponse("Internal server error."));
             }
         }
     }

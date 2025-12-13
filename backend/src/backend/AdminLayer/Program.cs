@@ -54,12 +54,17 @@ builder.Services.AddControllers()
     });
 
 // 5. CORS
-builder.Services.AddCors(o => o.AddPolicy("frontend", p =>
-    p.WithOrigins("http://localhost:5173")
-     .AllowAnyHeader()
-     .AllowAnyMethod()
-     .AllowCredentials()
-));
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("frontend", policy =>
+        policy
+            .SetIsOriginAllowed(origin => true)
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials()
+    );
+});
+
 
 // 6. Authentication + JWT  (có log events)
 builder.Services.AddAuthentication(options =>
@@ -200,8 +205,6 @@ if (app.Environment.IsDevelopment())
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseMiddleware<ValidationMiddleware>();
 
-
-app.UseHttpsRedirection();
 
 app.UseRouting();
 app.UseCors("frontend");

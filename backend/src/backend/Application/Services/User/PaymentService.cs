@@ -39,12 +39,10 @@ namespace Application.Services.User
         public async Task<PaymentUrlResponseDTO> CreateVnPayPaymentUrlAsync(CreatePaymentRequestDTO request, HttpContext httpContext, CancellationToken cancellationToken)
         {
             var userId = httpContext.User.GetUserIdAsLong();
-            if (userId is null)
-                throw new UnauthorizedAccessException("Invalid or missing user id in token.");
             var order = new Order
             {
-                UserId = userId.Value,
-                OrderNo = GenerateOrderNo(userId.Value),
+                UserId = userId,
+                OrderNo = GenerateOrderNo(userId),
                 OrderType = "WalletTopUp",
                 Status = OrderStatus.Pending,
                 Subtotal = request.Amount,
@@ -151,7 +149,7 @@ namespace Application.Services.User
                         promoTxn = await _walletService.CreditPromoAsync(
                             payment.Order.UserId,
                             promoBonus,
-                            "WalletTopupPromo",
+                            "Điểm khuyến mãi sau khi nạp điểm",
                             cancellationToken);
                     }
                     _paymentRepository.Update(payment);

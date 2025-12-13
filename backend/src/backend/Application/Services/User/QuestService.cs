@@ -36,25 +36,31 @@ namespace Application.Services.User
         }
         public async Task ProcessRideAsync(long userId, decimal distanceKm, int durationMinutes, DateTimeOffset rideTimeUtc, CancellationToken ct)
         {
-           if(userId < 0)
+            if (userId < 0)
                 throw new ArgumentException("Invalid userId");
-           if(distanceKm < 0)
+            if (distanceKm < 0)
                 throw new ArgumentException("Invalid distanceKm");
-           if (durationMinutes < 0)
+            if (durationMinutes < 0)
                 throw new ArgumentException("Invalid durationMinutes");
-           var activeQuests = await _questRepo.Query()
+
+            var activeQuests = await _questRepo.Query()
                 .Where(q =>
                     q.Status == "Active" &&
                     q.StartAt <= rideTimeUtc &&
                     q.EndAt >= rideTimeUtc
-                    ).ToListAsync(ct);
-            if(!activeQuests.Any())
+                ).ToListAsync(ct);
+
+            if (!activeQuests.Any())
                 return;
+
             foreach (var quest in activeQuests)
             {
                 var progress = await _progressRepo.Query()
                     .FirstOrDefaultAsync(p => p.UserId == userId && p.QuestId == quest.Id, ct);
-                if(progress == null)
+
+                bool isNew = false;
+
+                if (progress == null)
                 {
                     progress = new UserQuestProgress
                     {
@@ -66,80 +72,77 @@ namespace Application.Services.User
                         IsCompleted = false,
                         LastUpdatedAt = DateTimeOffset.UtcNow
                     };
+
                     await _progressRepo.AddAsync(progress, ct);
+                    isNew = true;
                 }
+
                 var questType = quest.QuestType?.Trim().ToLowerInvariant() ?? "distance";
 
-                switch(questType)
-                {
-                    case "distance":
-                        if(quest.TargetDistanceKm.HasValue && quest.TargetDistanceKm > 0)
-                        {
-                            progress.CurrentDistanceKm += distanceKm;
-                        }
-                        break;
-                    case "trips":
-                        if(quest.TargetTrips.HasValue && quest.TargetTrips > 0)
-                        {
-                            progress.CurrentTrips += 1;
-                        }
-                        break;
-                    case "duration":
-                        if(quest.TargetDurationMinutes.HasValue && quest.TargetDurationMinutes > 0)
-                        {
-                            progress.CurrentDurationMinutes += durationMinutes;
-                        }
-                        break;
-                    default:
-                        break;
-                }
-                progress.LastUpdatedAt = DateTimeOffset.UtcNow;
-                decimal progressPercent = 0;
                 switch (questType)
                 {
                     case "distance":
-                        if (quest.TargetDistanceKm.HasValue && quest.TargetDistanceKm > 0)
-                        {
-                            progressPercent = Math.Min(100, (progress.CurrentDistanceKm / quest.TargetDistanceKm.Value) * 100);
-                        }
+                        if (quest.TargetDistanceKm > 0)
+                            progress.CurrentDistanceKm += distanceKm;
                         break;
+
                     case "trips":
-                        if (quest.TargetTrips.HasValue && quest.TargetTrips > 0)
-                        {
-                            progressPercent = Math.Min(100, ((decimal)progress.CurrentTrips / quest.TargetTrips.Value) * 100);
-                        }
+                        if (quest.TargetTrips > 0)
+                            progress.CurrentTrips += 1;
                         break;
+
                     case "duration":
-                        if (quest.TargetDurationMinutes.HasValue && quest.TargetDurationMinutes > 0)
-                        {
-                            progressPercent = Math.Min(100, ((decimal)progress.CurrentDurationMinutes / quest.TargetDurationMinutes.Value) * 100);
-                        }
+                        if (quest.TargetDurationMinutes > 0)
+                            progress.CurrentDurationMinutes += durationMinutes;
                         break;
                 }
 
-                if(progressPercent < 0) progressPercent = 0;
-                if(progressPercent > 100) progressPercent = 100;
+                progress.LastUpdatedAt = DateTimeOffset.UtcNow;
 
+                // Tính %
+                decimal progressPercent = questType switch
+                {
+                    "distance" => quest.TargetDistanceKm > 0
+                        ? Math.Min(100, (progress.CurrentDistanceKm / quest.TargetDistanceKm.Value) * 100)
+                        : 0,
+
+                    "trips" => quest.TargetTrips > 0
+                        ? Math.Min(100, ((decimal)progress.CurrentTrips / quest.TargetTrips.Value) * 100)
+                        : 0,
+
+                    "duration" => quest.TargetDurationMinutes > 0
+                        ? Math.Min(100, ((decimal)progress.CurrentDurationMinutes / quest.TargetDurationMinutes.Value) * 100)
+                        : 0,
+
+                    _ => 0
+                };
+
+                // Hoàn thành
                 if (!progress.IsCompleted && progressPercent >= 100)
                 {
                     progress.IsCompleted = true;
                     progress.CompletedAt = DateTimeOffset.UtcNow;
 
-                    if(progress.RewardClaimedAt == null && quest.PromoReward > 0)
+                    if (progress.RewardClaimedAt == null && quest.PromoReward > 0)
                     {
                         await _walletService.CreditPromoAsync(
                             userId,
                             quest.PromoReward,
-                            $"Quest Completion Reward." +
                             $"Reward for completing quest {quest.Code}",
-                            ct);
+                            ct
+                        );
+
                         progress.RewardClaimedAt = DateTimeOffset.UtcNow;
                     }
                 }
-                _progressRepo.Update(progress);
+
+                if (!isNew)
+                    _progressRepo.Update(progress);
             }
+
             await _uow.SaveChangesAsync(ct);
         }
+
         public async Task<IReadOnlyList<QuestDTO>> GetMyActiveQuestsAsync(long? userId, CancellationToken ct)
         {
            if(userId < 0)

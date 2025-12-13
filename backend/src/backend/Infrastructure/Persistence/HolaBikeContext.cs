@@ -50,6 +50,10 @@ public partial class HolaBikeContext : IdentityDbContext<AspNetUser, IdentityRol
     // --- Quest ---
     public DbSet<Quest> Quests { get; set; }
     public DbSet<UserQuestProgress> UserQuests { get; set; }
+
+    // --- Voucher ---
+    public DbSet<Voucher> Vouchers { get; set; }
+    public DbSet<VoucherUsage> voucherUsages { get; set; }
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);

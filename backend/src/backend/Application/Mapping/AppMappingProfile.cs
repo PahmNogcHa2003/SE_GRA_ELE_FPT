@@ -1,5 +1,6 @@
 ﻿using Application.DTOs;
 using Application.DTOs.CategoriesVehicle;
+using Application.DTOs.Contact;
 using Application.DTOs.Kyc;
 using Application.DTOs.New;
 using Application.DTOs.Promotion;
@@ -9,6 +10,7 @@ using Application.DTOs.Tag;
 using Application.DTOs.TagNew;
 using Application.DTOs.Tickets;
 using Application.DTOs.User;
+using Application.DTOs.Voucher;
 using Application.DTOs.Wallet;
 using Application.DTOs.WalletTransaction;
 using AutoMapper;
@@ -63,15 +65,35 @@ namespace Application.Mapping
             CreateMap<TicketPlanPrice, UserTicketPlanPriceDTO>()
                 .ForMember(d => d.ActivationMode, m => m.MapFrom(s => (ActivationModeDTO)(int)s.ActivationMode));
             CreateMap<TicketPlan, UserTicketPlanDTO>();
-            CreateMap<Domain.Entities.Contact, DTOs.Contact.CreateContactDTO>().ReverseMap();
-            CreateMap<Domain.Entities.Contact, DTOs.Contact.ReplyContactDTO>().ReverseMap();
-            CreateMap<Domain.Entities.Contact, DTOs.Contact.ManageContactDTO>().ReverseMap();
-            CreateMap<Domain.Entities.KycForm, DTOs.Kyc.CreateKycRequestDTO>().ReverseMap();
+            CreateMap<Contact, CreateContactDTO>().ReverseMap();
+            CreateMap<Contact, ReplyContactDTO>().ReverseMap();
+            CreateMap<Contact, ManageContactDTO>().ReverseMap();
+            CreateMap<KycForm, CreateKycRequestDTO>().ReverseMap();
             CreateMap<PromotionCampaign, PromotionDTO>().ReverseMap();
             CreateMap<PromotionCreateDTO, PromotionCampaign>();
             CreateMap<Quest, QuestDTO>();
             CreateMap<QuestCreateDTO, Quest>();
             CreateMap<QuestUpdateDTO, Quest>();
+            CreateMap<Voucher, VoucherDTO>();
+            CreateMap<createVoucherDto, Voucher>();
+            CreateMap<UpdateVoucherDTO, Voucher>();
+
+            ConfigureNewsMapping();
+
+        }
+
+        private void ConfigureNewsMapping()
+        {
+            // Chiều từ Entity -> DTO (Khi lấy dữ liệu ra)
+            CreateMap<News, NewsDTO>()
+                .ForMember(dest => dest.TagIds,
+                    opt => opt.MapFrom(src => src.TagNews.Select(tn => tn.TagId)));
+
+            // === DÒNG QUAN TRỌNG NHẤT ĐỂ SỬA LỖI ===
+            // Chiều từ DTO -> Entity (Khi tạo mới/cập nhật)
+            // BẮT BUỘC Bỏ qua (Ignore) việc map thuộc tính Tags.
+            CreateMap<NewsDTO, Domain.Entities.News>()
+                .ForMember(dest => dest.TagNews, opt => opt.Ignore());
             CreateMap<TagNewDTO, TagNew>().ReverseMap();
         }
     }

@@ -1,4 +1,5 @@
-﻿using Application.Interfaces.Base;
+﻿using Application.DTOs.Kyc;
+using Application.Interfaces.Base;
 using Domain.Entities;
 using System;
 using System.Collections.Generic;
@@ -10,5 +11,6 @@ namespace Application.Interfaces.User.Repository
 {
     public interface IKycRepository : IRepository<KycForm, long>
     {
+        Task<bool> IsVerifiedAsync(long userId, CancellationToken ct);
     }
 }

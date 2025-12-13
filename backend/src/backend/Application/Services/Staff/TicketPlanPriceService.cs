@@ -38,25 +38,18 @@ namespace Application.Services.Staff
             if (string.IsNullOrWhiteSpace(filterField) || string.IsNullOrWhiteSpace(filterValue))
                 return query;
 
-            // ✅ Lọc theo VehicleType: chỉ nhận "bike" hoặc "ebike"
             if (filterField.Equals("vehicletype", StringComparison.OrdinalIgnoreCase))
             {
-                var lower = filterValue.Trim().ToLower();
+                // chuẩn hóa đầu vào về lowercase
+                var type = filterValue.Trim().ToLower();
 
-                if (lower == "bike")
-                {
-                    return query.Where(p => p.VehicleType.ToLower() == "bike");
-                }
-                else if (lower == "ebike")
-                {
-                    return query.Where(p => p.VehicleType.ToLower() == "ebike");
-                }
-                else
-                {
-                    return query;
-                }
+                // lọc theo lowercase luôn (an toàn)
+                return query.Where(p => p.VehicleType.ToLower() == type);
             }
+
             return base.ApplyFilter(query, filterField, filterValue);
         }
+
+
     }
 }

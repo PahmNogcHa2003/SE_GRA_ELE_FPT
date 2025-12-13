@@ -14,6 +14,7 @@ namespace Application.DTOs.WalletTransaction
         public decimal Amount { get; set; }
         public string Source { get; set; } = string.Empty; 
         public decimal BalanceAfter { get; set; } 
+        public decimal PromoAfter { get; set; }
         public DateTimeOffset CreatedAt { get; set; }
     }
 }

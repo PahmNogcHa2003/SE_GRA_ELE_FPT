@@ -28,7 +28,8 @@ namespace Application.Services.Identity
         private readonly IUnitOfWork _unitOfWork;
         private readonly IWalletService _walletService;
         private readonly IUserWalletService _userWalletService;
-        private  readonly IEmailRepository _emailService;
+        private readonly IEmailRepository _emailService;
+        private readonly IKycService _kycService;
 
         public AuthService(
             UserManager<AspNetUser> userManager,
@@ -38,6 +39,7 @@ namespace Application.Services.Identity
             IUserDevicesService userDevicesService,
             IWalletService walletService,
             IUnitOfWork unitOfWork,
+            IKycService kycService,
             IUserWalletService userWalletService,
             IEmailRepository emailService)
         {
@@ -47,6 +49,7 @@ namespace Application.Services.Identity
             _profileService = userProfilesService;
             _userDevicesService = userDevicesService;
             _unitOfWork = unitOfWork;
+            _kycService = kycService;
             _walletService = walletService;
             _userWalletService = userWalletService;
             _emailService = emailService;

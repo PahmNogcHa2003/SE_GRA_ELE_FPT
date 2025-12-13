@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(HolaBikeContext))]
-    [Migration("20251205160829_UpdateModel")]
+    [Migration("20251205120536_UpdateModel")]
     partial class UpdateModel
     {
         /// <inheritdoc />

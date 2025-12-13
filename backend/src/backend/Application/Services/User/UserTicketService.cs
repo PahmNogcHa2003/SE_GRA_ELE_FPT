@@ -14,9 +14,6 @@ using System.Runtime.InteropServices;
 public class UserTicketService
     : GenericService<UserTicket, UserTicketDTO, long>, IUserTicketService
 {
-    private readonly IUnitOfWork _uow;
-    private readonly IMapper _mapper;
-
     private readonly IRepository<TicketPlanPrice, long> _planPriceRepo;
     private readonly IRepository<Order, long> _orderRepo;
     private readonly IRepository<Wallet, long> _walletRepo;
@@ -45,8 +42,6 @@ public class UserTicketService
         IVoucherUsageRepository voucherUsageRepository
     ) : base(userTicketRepo, mapper, uow)
     {
-        _uow = uow;
-        _mapper = mapper;
         _userTicketRepository = userTicketRepository;
         _planPriceRepo = planPriceRepo;
         _orderRepo = orderRepo;
@@ -243,7 +238,7 @@ public class UserTicketService
             {
                 UserId = userId.Value,
                 OrderNo = GenerateOrderNo(userId.Value),
-                OrderType = "TicketPurchase",
+                OrderType = "Mua vé",
                 Status = "Pending",
                 Subtotal = subtotal,
                 Discount = discount,
@@ -262,7 +257,7 @@ public class UserTicketService
             {
                 WalletId = wallet.Id,
                 Direction = "Out",
-                Source = "TicketPurchase",
+                Source = "Mua vé",
                 Amount = total,
                 BalanceAfter = wallet.Balance,
                 CreatedAt = nowUtc
@@ -419,7 +414,116 @@ public class UserTicketService
 
         return dto;
     }
+    public async Task<PreviewTicketPriceDTO> PreviewTicketPriceAsync(long? userId,PreviewTicketRequestDTO request,CancellationToken ct)
+    {
+        if (userId is null || userId <= 0)
+            throw new InvalidOperationException("User không hợp lệ.");
+        if (request is null)
+            throw new ArgumentNullException(nameof(request));
 
+        var planPrice = await _planPriceRepo.Query()
+            .Include(x => x.Plan)
+            .FirstOrDefaultAsync(p => p.Id == request.PlanPriceId && p.IsActive, ct);
+
+        if (planPrice is null)
+            throw new KeyNotFoundException("Loại vé không hợp lệ hoặc đã ngừng bán.");
+
+        var nowUtc = DateTimeOffset.UtcNow;
+
+        var isOnFirstUse = planPrice.ActivationMode == PlanActivationMode.ON_FIRST_USE;
+        var isSubscription = planPrice.ValidityDays.GetValueOrDefault() > 0;
+
+        // (Tuỳ bạn: nếu muốn, có thể reuse luôn logic check subscription tại đây,
+        // hoặc bỏ qua vì chỉ là preview. Ở đây mình vẫn check để báo lỗi sớm.)
+        if (isSubscription)
+        {
+            var hasAnyActiveSubscription = await _userTicketRepository.Query()
+                .Include(t => t.PlanPrice)
+                .Where(t => t.UserId == userId.Value)
+                .Where(t => t.PlanPrice.ValidityDays > 0)
+                .Where(t => (t.ValidTo ?? t.ExpiresAt) != null && (t.ValidTo ?? t.ExpiresAt) > nowUtc)
+                .Where(t => t.Status == "Active" || t.Status == "Ready")
+                .AnyAsync(ct);
+
+            if (hasAnyActiveSubscription)
+                throw new InvalidOperationException("Bạn đang có gói theo thời gian còn hiệu lực.");
+        }
+
+        // ==================== VOUCHER ====================
+        Voucher? voucher = null;
+        decimal discount = 0m;
+        var subtotal = planPrice.Price;
+
+        if (!string.IsNullOrWhiteSpace(request.VoucherCode))
+        {
+            voucher = await _voucherRepository.Query()
+                .FirstOrDefaultAsync(v => v.Code == request.VoucherCode, ct);
+
+            if (voucher == null)
+                throw new InvalidOperationException("Voucher không tồn tại.");
+
+            var now = DateTimeOffset.UtcNow;
+
+            if (voucher.Status != VoucherStatus.Active)
+                throw new InvalidOperationException("Voucher không hoạt động.");
+
+            if (voucher.StartDate > now)
+                throw new InvalidOperationException("Voucher chưa tới thời gian sử dụng.");
+            if (voucher.EndDate < now)
+                throw new InvalidOperationException("Voucher đã hết hạn.");
+
+            if (voucher.UsageLimit.HasValue)
+            {
+                var totalUsed = await _voucherUsageRepository.Query()
+                    .CountAsync(x => x.VoucherId == voucher.Id, ct);
+
+                if (totalUsed >= voucher.UsageLimit.Value)
+                    throw new InvalidOperationException("Voucher đã hết lượt sử dụng.");
+            }
+
+            if (voucher.UsagePerUser.HasValue)
+            {
+                var usedByUser = await _voucherUsageRepository.Query()
+                    .CountAsync(x => x.UserId == userId.Value && x.VoucherId == voucher.Id, ct);
+
+                if (usedByUser >= voucher.UsagePerUser.Value)
+                    throw new InvalidOperationException("Bạn đã dùng hết số lượt cho voucher này.");
+            }
+
+            if (voucher.MinOrderAmount.HasValue && planPrice.Price < voucher.MinOrderAmount.Value)
+                throw new InvalidOperationException(
+                    $"Đơn tối thiểu để dùng voucher là {voucher.MinOrderAmount:N0}.");
+
+            // Tính discount
+            if (voucher.IsPercentage)
+            {
+                discount = subtotal * (voucher.Value / 100m);
+                if (voucher.MaxDiscountAmount.HasValue)
+                    discount = Math.Min(discount, voucher.MaxDiscountAmount.Value);
+            }
+            else
+            {
+                discount = voucher.Value;
+                if (voucher.MaxDiscountAmount.HasValue)
+                    discount = Math.Min(discount, voucher.MaxDiscountAmount.Value);
+            }
+
+            discount = Math.Min(discount, subtotal);
+        }
+
+        var total = subtotal - discount;
+
+        // Trả kết quả preview
+        return new PreviewTicketPriceDTO
+        {
+            Subtotal = subtotal,
+            Discount = discount,
+            Total = total,
+            VoucherMessage = voucher != null
+                ? $"Đã áp dụng voucher {voucher.Code}, giảm {discount:N0}."
+                : "Không áp dụng voucher."
+        };
+    }
     private static string GenerateOrderNo(long userId)
         => $"ORD-{userId}-{DateTime.UtcNow:yyyyMMddHHmmss}";
 

@@ -10,8 +10,7 @@ using System.Threading.Tasks;
 
 namespace Application.Interfaces.Staff.Service
 {
-    public interface IVoucherService : IService<Voucher, createVoucherDto, long>,
-          IService3DTO<Voucher, createVoucherDto, long>
+    public interface IVoucherService : IService<Voucher, VoucherDTO, long>, IService3DTO<Voucher, VoucherDTO, long>
     {
     }
 }

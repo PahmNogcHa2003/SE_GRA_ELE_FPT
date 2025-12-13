@@ -41,6 +41,67 @@ namespace Application.Services.Staff
                         .Include(ut => ut.PlanPrice)
                             .ThenInclude(pp => pp.Plan);
         }
+        protected override IQueryable<UserTicket> ApplyFilter(IQueryable<UserTicket> query,string filterField,string filterValue)
+        {
+            // nếu không có filter, trả về query gốc
+            if (string.IsNullOrWhiteSpace(filterField) || string.IsNullOrWhiteSpace(filterValue))
+                return base.ApplyFilter(query, filterField, filterValue);
+
+            var val = filterValue.Trim();
+
+            switch (filterField.Trim().ToLower())
+            {
+                case "planname":
+                case "plan_name":
+                case "plan":
+                    // đảm bảo join PlanPrice -> Plan đã có trong GetQueryWithIncludes()
+                    query = query.Where(ut =>
+                        ut.PlanPrice != null &&
+                        ut.PlanPrice.Plan != null &&
+                        ut.PlanPrice.Plan.Name != null &&
+                        EF.Functions.Like(ut.PlanPrice.Plan.Name.ToLower(), $"%{val.ToLower()}%")
+                    );
+                    break;
+
+                case "useremail":
+                case "email":
+                    query = query.Where(ut =>
+                        ut.User != null &&
+                        ut.User.Email != null &&
+                        EF.Functions.Like(ut.User.Email.ToLower(), $"%{val.ToLower()}%")
+                    );
+                    break;
+
+                case "serialcode":
+                    query = query.Where(ut => ut.SerialCode != null && EF.Functions.Like(ut.SerialCode.ToLower(), $"%{val.ToLower()}%"));
+                    break;
+
+                default:
+                    // fallback: gọi base để xử lý (nếu có implementation chung)
+                    query = base.ApplyFilter(query, filterField, filterValue);
+                    break;
+            }
+
+            return query;
+        }
+
+        protected override IQueryable<UserTicket> ApplySort(IQueryable<UserTicket> query,string? sortOrder)
+        {
+            if (string.IsNullOrEmpty(sortOrder))
+            {
+                // Mặc định: sort mới nhất trước
+                return query.OrderByDescending(x => x.CreatedAt);
+            }
+
+            return sortOrder.ToLower() switch
+            {
+                "createdat_asc" => query.OrderBy(x => x.CreatedAt),
+                "createdat_desc" => query.OrderByDescending(x => x.CreatedAt),
+
+                // fallback nếu FE gửi sort lạ
+                _ => query.OrderByDescending(x => x.CreatedAt)
+            };
+        }
 
         // Triển khai nghiệp vụ hủy vé
         public async Task<ManageUserTicketDTO> VoidTicketAsync(long ticketId, string reason, CancellationToken ct = default)
