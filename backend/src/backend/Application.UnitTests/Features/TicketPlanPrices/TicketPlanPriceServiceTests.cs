@@ -2,6 +2,7 @@
 using Application.Services.Staff;
 using AutoMapper;
 using Domain.Entities;
+using FluentAssertions;
 using Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using System;

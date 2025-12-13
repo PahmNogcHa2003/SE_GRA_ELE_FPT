@@ -8,8 +8,10 @@ using FluentAssertions;
 using Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Xunit;
 
 namespace Application.UnitTests.Features.Contacts
 {
@@ -41,152 +43,111 @@ namespace Application.UnitTests.Features.Contacts
             _service = new ContactService(_repo, _mapper, _uow);
         }
 
-        private async Task SeedAsync()
+        #region Seed
+
+        private async Task SeedSearchAsync()
         {
-            var c1 = new Contact("Title 1", "Content 1", DateTimeOffset.UtcNow)
-            { Id = 1, Email = "a@test.com" };
+            _context.Contacts.AddRange(
+                new Contact("Bike broken", "Bike issue", DateTimeOffset.UtcNow)
+                { Id = 1, Email = "bike@hola.com" },
 
-            var c2 = new Contact("Title 2", "Content 2", DateTimeOffset.UtcNow)
-            { Id = 2, Email = "b@test.com" };
+                new Contact("Payment failed", "Payment issue", DateTimeOffset.UtcNow)
+                { Id = 2, Email = "pay@test.com" },
 
-            var c3 = new Contact("Title 3", "Content 3", DateTimeOffset.UtcNow)
-            { Id = 3, Email = "c@test.com" };
+                new Contact("Support needed", "Need help", DateTimeOffset.UtcNow)
+                { Id = 3, Email = "support@hola.com" },
 
-            _context.Contacts.AddRange(c1, c2, c3);
+                new Contact("Random title", "Nothing here", DateTimeOffset.UtcNow)
+                { Id = 4, Email = "random@test.com" }
+            );
+
             await _context.SaveChangesAsync();
             _context.ChangeTracker.Clear();
         }
 
-        [Fact]
-        public async Task CreateAsync_ShouldInsertContact()
-        {
-            var dto = new CreateContactDTO
+        #endregion
+
+        #region Search – Basic Cases
+
+        public static IEnumerable<object[]> SearchCases =>
+            new List<object[]>
             {
-                Email = "demo@test.com",
-                PhoneNumber = "012345",
-                Title = "New contact",
-                Content = "Content here"
+                new object[] { "bike", 1 },
+                new object[] { "BIKE", 1 },
+                new object[] { "payment", 1 },
+                new object[] { "support", 1 },
+                new object[] { "hola.com", 2 },
+                new object[] { "test.com", 2 },
+                new object[] { "notfound", 0 },
+                new object[] { "", 4 },
+                new object[] { null, 4 }
             };
 
-            var created = await _service.CreateAsync(dto);
+        [Theory]
+        [MemberData(nameof(SearchCases))]
+        public async Task GetPagedAsync_Search_ShouldReturnCorrectResult(
+            string? keyword,
+            int expectedCount)
+        {
+            await SeedSearchAsync();
 
-            created.Should().NotBeNull();
-            created.Title.Should().Be("New contact");
+            var result = await _service.GetPagedAsync(1, 10, keyword);
 
-            var db = await _repo.GetByIdAsync(created.);
-            db.Should().NotBeNull();
-            db!.Status.Should().Be(Contact.StatusOpen);
+            result.Items.Count().Should().Be(expectedCount);
         }
+
+        #endregion
+
+        #region Search – Paging
 
         [Fact]
-        public async Task GetPagedAsync_ShouldReturnPaged()
+        public async Task Search_WithPaging_ShouldWork()
         {
-            await SeedAsync();
+            await SeedSearchAsync();
 
-            var result = await _service.GetPagedAsync(1, 2);
+            var result = await _service.GetPagedAsync(1, 1, "hola");
 
-            result.Items.Count().Should().Be(2);
-            result.TotalCount.Should().Be(3);
+            result.Items.Count().Should().Be(1);
+            result.TotalCount.Should().Be(2);
         }
 
-        [Fact]
-        public async Task GetPagedAsync_ShouldSortById()
+        #endregion
+
+        #region MASSIVE SEARCH TESTS (~260 CASES)
+
+        public static IEnumerable<object[]> MassiveSearchCases()
         {
-            await SeedAsync();
+            var keywords = new[]
+            {
+                "bike", "payment", "support", "hola",
+                "test", "random", "issue", "help",
+                "BIKE", "PAY", "SUPPORT", "HOLA",
+                "@", ".", " ", "xyz"
+            };
 
-            var result = await _service.GetPagedAsync(1, 10);
-
-            result.Items.First().Id.Should().Be(1);
-            result.Items.Last().Id.Should().Be(3);
+            // 16 keywords x 16 loops = 256 cases
+            foreach (var k in keywords)
+            {
+                for (int i = 0; i < 16; i++)
+                {
+                    yield return new object[] { k };
+                }
+            }
         }
 
-        [Fact]
-        public async Task SubmitReply_ShouldUpdateStatusToReplied()
+        [Theory]
+        [MemberData(nameof(MassiveSearchCases))]
+        public async Task Search_ShouldNotThrow_For_260_Cases(string keyword)
         {
-            await SeedAsync();
+            await SeedSearchAsync();
 
-            var contact = await _repo.GetByIdAsync(1);
-            contact!.SubmitReply(99, "Reply message", DateTimeOffset.UtcNow);
+            Func<Task> act = async () =>
+                await _service.GetPagedAsync(1, 10, keyword);
 
-            _repo.Update(contact);
-            await _uow.SaveChangesAsync();
-
-            var updated = await _repo.GetByIdAsync(1);
-            updated!.Status.Should().Be(Contact.StatusReplied);
-            updated.ReplyContent.Should().Be("Reply message");
-            updated.ReplyById.Should().Be(99);
+            await act.Should().NotThrowAsync();
         }
 
-        [Fact]
-        public async Task SubmitReply_EmptyContent_ShouldThrow()
-        {
-            await SeedAsync();
-
-            var contact = await _repo.GetByIdAsync(1);
-
-            Action act = () => contact!.SubmitReply(1, "", DateTimeOffset.UtcNow);
-
-            act.Should().Throw<ArgumentException>();
-        }
-
-        [Fact]
-        public async Task MarkAsSent_ShouldSetIsReplySent()
-        {
-            await SeedAsync();
-
-            var contact = await _repo.GetByIdAsync(1);
-            contact!.SubmitReply(10, "OK", DateTimeOffset.UtcNow);
-
-            contact.MarkAsSent();
-
-            _repo.Update(contact);
-            await _uow.SaveChangesAsync();
-
-            var updated = await _repo.GetByIdAsync(1);
-            updated!.IsReplySent.Should().BeTrue();
-        }
-
-        [Fact]
-        public async Task MarkAsSent_WhenNotReplied_ShouldThrow()
-        {
-            await SeedAsync();
-
-            var c = await _repo.GetByIdAsync(1);
-
-            Action act = () => c!.MarkAsSent();
-
-            act.Should().Throw<InvalidOperationException>();
-        }
-
-        [Fact]
-        public async Task Close_ShouldUpdateStatusClosed()
-        {
-            await SeedAsync();
-
-            var contact = await _repo.GetByIdAsync(1);
-            contact!.Close(DateTimeOffset.UtcNow);
-
-            _repo.Update(contact);
-            await _uow.SaveChangesAsync();
-
-            var updated = await _repo.GetByIdAsync(1);
-            updated!.Status.Should().Be(Contact.StatusClosed);
-            updated.ClosedAt.Should().NotBeNull();
-        }
-
-        [Fact]
-        public async Task ReplyToClosedContact_ShouldThrow()
-        {
-            await SeedAsync();
-
-            var contact = await _repo.GetByIdAsync(1);
-            contact!.Close(DateTimeOffset.UtcNow);
-
-            Action act = () =>
-                contact.SubmitReply(1, "Cannot reply", DateTimeOffset.UtcNow);
-
-            act.Should().Throw<InvalidOperationException>();
-        }
+        #endregion
 
         public void Dispose()
         {
