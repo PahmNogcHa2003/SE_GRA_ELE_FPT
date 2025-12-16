@@ -52,7 +52,8 @@ const AppRoutes = () => (
             <Route path="audit-logs" element={<div>Audit Logs</div>} />
         </Route>
         <Route path="/staff" element={<StaffLayout />}>
-            <Route index element={<Navigate to="stations" replace />} />
+            <Route index element={<Navigate to="dashboard" replace />} />
+            <Route path="dashboard" element={<div>Dashboard</div>} />
             <Route path="stations" element={<ManageStationsPage />} />
             <Route path="vehicles" element={<ManageVehiclesPage />} />
             <Route path="categories-vehicle" element={<ManageCategoriesVehiclePage />} />
