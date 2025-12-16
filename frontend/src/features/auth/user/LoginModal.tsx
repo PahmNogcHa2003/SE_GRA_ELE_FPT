@@ -1,19 +1,15 @@
 import React from 'react';
-import { Modal, Form, Input, Button, App } from 'antd';
+import { Modal, Form, Input, Button } from 'antd';
 import { MailOutlined, LockOutlined } from '@ant-design/icons';
-import { useMutation } from '@tanstack/react-query';
 import { v4 as uuidv4 } from 'uuid';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/authContext';
-import { loginApi } from '../../../services/auth.service';
-import type { LoginPayload } from '../../../types/auth';
+import { useUserLogin } from '../hooks/useUserLogin'; // Import Hook
 
-// 🖼️ Thêm ảnh logo và Google Play
 import EcoLogo from '../../../assets/images/logo_circle_green.png';
 import GooglePlayBadge from '../../../assets/images/google-play.webp';
 import AppQR from '../../../assets/images/app-qr.png';
 
-// Lấy hoặc tạo DeviceId
 const getDeviceId = (): string => {
   let deviceId = localStorage.getItem('deviceId');
   if (!deviceId) {
@@ -24,62 +20,22 @@ const getDeviceId = (): string => {
 };
 
 const LoginModal: React.FC = () => {
-  const { isLoginModalOpen, closeLoginModal, login } = useAuth();
+  const { isLoginModalOpen, closeLoginModal } = useAuth();
   const [form] = Form.useForm();
-  const { notification } = App.useApp();
   const navigate = useNavigate();
   
-  const mutation = useMutation({
-  mutationFn: loginApi, // loginApi trả AuthResponseDTO trực tiếp
-  onSuccess: async (response) => {
-    if (response.isSuccess && response.token) {
-      await login({
-        token: response.token,
-        roles: response.roles ?? [],
-        isSuccess: response.isSuccess,
-        message: response.message,
-      });
+  // 👉 SỬ DỤNG HOOK
+  const { mutate, isPending } = useUserLogin(form, closeLoginModal, navigate);
 
-      notification.success({
-        message: "Đăng nhập thành công!",
-        description: "Chào mừng bạn trở lại Eco Journey!",
-      });
-      form.resetFields();
-      closeLoginModal();
-      const userRoles = response.roles ?? [];
-      if (userRoles.includes("Admin") || userRoles.includes("Staff")) {
-        navigate("/staff", { replace: true });
-      } else {
-        navigate("/", { replace: true });
-      }
-      return;
-    }
-    form.setFields([
-      {
-        name: "password",
-        errors: [response.message || "Email hoặc mật khẩu không đúng."],
-      },
-    ]);
-  },
-
-  onError: (error : any) => {
-    const msg =
-      error?.response?.data?.message ||
-      "Email hoặc mật khẩu không đúng.";
-    form.setFields([
-      { name: "password", errors: [msg] },
-    ]);
-  },
-});
   const onFinish = (values: any) => {
-    const payload: LoginPayload = {
+    const payload = {
       email: values.email,
       password: values.password,
       deviceId: getDeviceId(),
       pushToken: 'web-push-token-placeholder',
       platform: 'Web',
     };
-    mutation.mutate(payload);
+    mutate(payload);
   };
 
   return (
@@ -92,10 +48,9 @@ const LoginModal: React.FC = () => {
       }
       open={isLoginModalOpen}
       onCancel={() => {
-        if (!mutation.isPending) {
+        if (!isPending) {
           closeLoginModal();
           form.resetFields();
-          mutation.reset();
         }
       }}
       footer={null}
@@ -137,39 +92,23 @@ const LoginModal: React.FC = () => {
             type="primary"
             htmlType="submit"
             className="w-full bg-eco-green hover:bg-eco-green-dark"
-            loading={mutation.isPending}
+            loading={isPending}
           >
             Đăng nhập
           </Button>
         </Form.Item>
       </Form>
 
-      {/* --- Khu vực tải app --- */}
+      {/* --- Footer giữ nguyên --- */}
       <div className="mt-8 text-center border-t pt-6">
         <p className="text-gray-600 mb-3 text-base">
           Chưa có tài khoản? <br />
           Hãy tải ứng dụng <span className="font-semibold text-eco-green">Eco Journey</span> để đăng ký!
         </p>
-
         <div className="flex flex-row justify-center items-center gap-x-6 mt-4">
-          {/* QR Code */}
-          <img
-            src={AppQR}
-            alt="Eco Journey QR"
-            className="h-32 w-32 rounded-lg border-2 border-gray-300"
-          />
-
-          {/* Google Play Badge */}
-          <a
-            href="https://play.google.com/store/apps/details?id=com.ecojourney.app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <img
-              src={GooglePlayBadge}
-              alt="Tải trên Google Play"
-              className="h-16 w-auto object-contain"
-            />
+          <img src={AppQR} alt="QR" className="h-32 w-32 rounded-lg border-2 border-gray-300" />
+          <a href="#" target="_blank" rel="noopener noreferrer">
+             <img src={GooglePlayBadge} alt="Google Play" className="h-16 w-auto object-contain" />
           </a>
         </div>
       </div>

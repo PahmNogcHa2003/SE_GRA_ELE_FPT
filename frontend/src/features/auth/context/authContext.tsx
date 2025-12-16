@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import type { ReactNode } from 'react'; 
 import type { AuthResponseData, User } from '../../../types/auth';
-import { getMeApi } from '../../../services/auth.service'; 
+import { getMeApi, getMeApiAdmin } from '../../../services/auth.service';
 import type { ApiResponse } from '../../../types/api';
 
 interface AuthContextType {
@@ -29,28 +29,35 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   /**
    * Hàm logout (bọc trong useCallback)
    */
-  const logout = useCallback(() => {
+const logout = useCallback(() => {
     setToken(null);
     setUser(null);
     localStorage.removeItem('authToken');
+    localStorage.removeItem('loginType'); 
     window.location.replace('/');
-  }, []); // Không có dependency
+  }, []);
 
   /**
-   * Hàm lấy thông tin user
-   * (KHÔNG CẦN 'currentToken' param nữa)
+   * Hàm lấy thông tin user từ token (bọc trong useCallback)
    */
 const fetchUserByToken = useCallback(async () => {
     try {
-      const response: ApiResponse<User> = await getMeApi();
+      // Lấy cờ đã lưu lúc login
+      const loginType = localStorage.getItem('loginType'); 
+      let response: ApiResponse<User>;
+      if (loginType === 'admin') {
+         response = await getMeApiAdmin(); 
+      } else {
+         response = await getMeApi();
+      }
+
       if (response.success && response.data) {
         setUser(response.data);
       } else {
-        // Token không hợp lệ về mặt logic server
         throw new Error(response.message);
       }
     } catch (error) {
-      console.log("Không lấy được thông tin user (có thể chưa đăng nhập hoặc token lỗi).");
+      console.log("Lỗi lấy thông tin user:", error);
       setUser(null);
       setToken(null); 
       localStorage.removeItem('authToken'); 
