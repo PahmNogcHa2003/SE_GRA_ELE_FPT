@@ -4,7 +4,7 @@ import { Link, Outlet, useLocation } from 'react-router-dom';
 import { Layout, Menu, Dropdown, Avatar, Tag, App as AntdApp } from 'antd';
 import { useAuth } from '../features/auth/context/authContext';
 import { FaTicketAlt , FaMoneyBillAlt, FaChargingStation  } from 'react-icons/fa';
-import { FaTags , FaFileInvoiceDollar } from "react-icons/fa6";
+import { FaTags } from "react-icons/fa6";
 import { BiSolidDiscount } from "react-icons/bi";
 import { MdElectricBike, MdDirectionsBike  } from 'react-icons/md';
 import { LuGoal, LuTicketsPlane ,LuBike  } from "react-icons/lu";
