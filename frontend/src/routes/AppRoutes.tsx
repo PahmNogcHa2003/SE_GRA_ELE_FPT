@@ -79,6 +79,7 @@ const AppRoutes = () => (
         <Route path="news" element={<NewsListPage />} />
         <Route path="news/:id" element={<NewsDetailPage />} />
         <Route path="pricing" element={<BuyTicketsPage />} />
+        <Route path="leaderboard" element={<LeaderboardPage />} />
         <Route path="auth/forgot-password" element={<ForgotPassword />} />
         <Route path="auth/reset-password" element={<ResetPasswordPage />} />
         <Route element={<ProtectedRoute allowRoles={['User']} />}> 
@@ -88,7 +89,7 @@ const AppRoutes = () => (
              <Route path="my-tickets" element={<MyTicketsPage />} />
              <Route path="profile" element={<ProfilePage />} />
              <Route path="change-password" element={<ChangePasswordPage />} />
-             <Route path="leaderboard" element={<LeaderboardPage />} />
+
         </Route>
       </Route>
       <Route path="/unauthorized" element={
