@@ -2,9 +2,10 @@ import React from 'react';
 import { App, Card, Form, Input, Button, Typography, Space } from 'antd';
 import type { FormProps } from 'antd';
 import { useMutation } from '@tanstack/react-query';
-import { changePassword} from '../../services/auth.service.ts';
-import type {ChangePasswordPayload } from '../../types/auth.ts';
-import { useAuth } from "../../features/auth/context/authContext";
+import { changePassword } from '../../../services/auth.service';
+import type {ChangePasswordPayload } from '../../../types/auth.ts';
+import { useAuth } from "../../../features/auth/context/authContext";
+import { strongPasswordRules } from '../../../utils/passwordRules';
 
 const { Title, Text } = Typography;
 
@@ -71,33 +72,6 @@ const { Title, Text } = Typography;
     const onFinish: FormProps<ChangePasswordPayload>['onFinish'] = (values) => {
         changeMut.mutate(values);
     };
-    const passwordRules = [
-        { required: true, message: 'Vui lòng nhập mật khẩu mới.' },
-        {
-        min: 8,
-        message: 'Mật khẩu phải có ít nhất 8 ký tự.',
-        },
-        {
-        validator: (_: any, value: string) => {
-            if (!value) return Promise.resolve();
-
-            if (!/[A-Z]/.test(value)) {
-            return Promise.reject('Mật khẩu phải chứa ít nhất 1 chữ cái viết hoa (A–Z).');
-            }
-            if (!/[a-z]/.test(value)) {
-            return Promise.reject('Mật khẩu phải chứa ít nhất 1 chữ cái viết thường (a–z).');
-            }
-            if (!/[0-9]/.test(value)) {
-            return Promise.reject('Mật khẩu phải chứa ít nhất 1 chữ số (0–9).');
-            }
-            if (!/[!@#$%^&*()_\-+=\[\]{};:'",.<>/?\\|`~]/.test(value)) {
-            return Promise.reject('Mật khẩu phải chứa ít nhất 1 ký tự đặc biệt.');
-            }
-
-            return Promise.resolve();
-        },
-        },
-    ];
 
     return (
         <div className="min-h-screen bg-emerald-50 flex items-center justify-center px-4 py-8">
@@ -136,7 +110,7 @@ const { Title, Text } = Typography;
                 <Form.Item
                     label="Mật khẩu mới"
                     name="newPassword"
-                    rules={passwordRules}
+                    rules={strongPasswordRules}
                     hasFeedback
                 >
                     <Input.Password placeholder="Nhập mật khẩu mới" />
@@ -167,11 +141,15 @@ const { Title, Text } = Typography;
                     type="primary"
                     htmlType="submit"
                     block
-                    loading={changeMut.isPending}
                     style={{
                         backgroundColor: '#047857',
                         borderColor: '#047857',
                     }}
+                    disabled={
+                        !form.isFieldsTouched(['newPassword', 'confirmNewPassword'], true) ||
+                        !!form.getFieldsError().filter(({ errors }) => errors.length).length
+                    }
+                    loading={changeMut.isPending}
                     >
                     Đổi mật khẩu
                     </Button>

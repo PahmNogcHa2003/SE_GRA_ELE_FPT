@@ -1,42 +1,39 @@
-// src/services/manage.voucher.service.ts
-import { httpAdmin } from './http'; // Sử dụng instance axios của bạn
+import { httpAdmin } from './http';
 import type { ApiResponse, PagedResult } from '../types/api';
-import type { VoucherDTO, CreateVoucherDTO, UpdateVoucherDTO, VoucherFilterDTO } from '../types/manage.voucher';
+import type {
+  VoucherDTO,
+  VoucherCreateDTO,
+  VoucherUpdateDTO,
+  VoucherFilterDTO
+} from '../types/manage.voucher';
 
-const BASE_URL = '/Voucher';
+const BASE_URL = '/Staff/Vouchers';
 
-export const getPagedVouchers = async (params: VoucherFilterDTO): Promise<ApiResponse<PagedResult<VoucherDTO>>> => {
-  try {
-    const response = await httpAdmin.get<ApiResponse<PagedResult<VoucherDTO>>>(BASE_URL, { params });
-    return response.data;
-  } catch (error: any) {
-    throw error as ApiResponse<null>;
-  }
+export const getPagedVouchers = async (
+  params: VoucherFilterDTO
+): Promise<ApiResponse<PagedResult<VoucherDTO>>> => {
+  const res = await httpAdmin.get(BASE_URL, { params });
+  return res.data;
 };
 
-export const createVoucher = async (data: CreateVoucherDTO): Promise<ApiResponse<VoucherDTO>> => {
-  try {
-    const response = await httpAdmin.post<ApiResponse<VoucherDTO>>(BASE_URL, data);
-    return response.data;
-  } catch (error: any) {
-    throw error as ApiResponse<null>;
-  }
+export const createVoucher = async (
+  data: VoucherCreateDTO
+): Promise<ApiResponse<VoucherDTO>> => {
+  const res = await httpAdmin.post(BASE_URL, data);
+  return res.data;
 };
 
-export const updateVoucher = async (id: number, data: UpdateVoucherDTO): Promise<ApiResponse<VoucherDTO>> => {
-  try {
-    const response = await httpAdmin.put<ApiResponse<VoucherDTO>>(`${BASE_URL}/${id}`, data);
-    return response.data;
-  } catch (error: any) {
-    throw error as ApiResponse<null>;
-  }
+export const updateVoucher = async (
+  id: number,
+  data: VoucherUpdateDTO
+): Promise<ApiResponse<VoucherDTO>> => {
+  const res = await httpAdmin.put(`${BASE_URL}/${id}`, data);
+  return res.data;
 };
 
-export const deleteVoucher = async (id: number): Promise<ApiResponse<object>> => {
-  try {
-    const response = await httpAdmin.delete<ApiResponse<object>>(`${BASE_URL}/${id}`);
-    return response.data;
-  } catch (error: any) {
-    throw error as ApiResponse<null>;
-  }
+export const toggleVoucherStatus = async (
+  id: number
+): Promise<ApiResponse<null>> => {
+  const res = await httpAdmin.patch(`${BASE_URL}/${id}/toggle-status`);
+  return res.data;
 };

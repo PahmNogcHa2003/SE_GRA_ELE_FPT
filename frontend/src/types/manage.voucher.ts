@@ -1,3 +1,5 @@
+export type VoucherStatus = 'Active' | 'Inactive' | 'Expired' | 'Disabled';
+
 export interface VoucherDTO {
   id: number;
   code: string;
@@ -9,10 +11,11 @@ export interface VoucherDTO {
   endDate: string;
   usageLimit?: number;
   usagePerUser?: number;
-  status: string; 
+  status: VoucherStatus;
+  usageCount: number;
 }
 
-export interface CreateVoucherDTO {
+export interface VoucherCreateDTO {
   code: string;
   isPercentage: boolean;
   value: number;
@@ -22,10 +25,10 @@ export interface CreateVoucherDTO {
   endDate: string;
   usageLimit?: number;
   usagePerUser?: number;
-  status?: string;
+  status?: VoucherStatus;
 }
 
-export interface UpdateVoucherDTO extends CreateVoucherDTO {}
+export interface VoucherUpdateDTO extends VoucherCreateDTO {}
 
 export interface VoucherFilterDTO {
   page: number;

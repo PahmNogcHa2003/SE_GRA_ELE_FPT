@@ -82,7 +82,7 @@ const LoginModal: React.FC = () => {
         </Form.Item>
 
         <Form.Item>
-          <a className="float-right text-eco-green hover:text-eco-green-dark" href="/forgot-password">
+          <a className="float-right text-eco-green hover:text-eco-green-dark" href="/auth/forgot-password">
             Quên mật khẩu?
           </a>
         </Form.Item>

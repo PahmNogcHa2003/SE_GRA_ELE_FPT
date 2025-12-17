@@ -3,7 +3,7 @@ import type {ChangePasswordPayload, LoginPayload, AuthResponseData, User } from 
 import type { ApiResponse } from '../types/api';
 
 /**
- * Gọi API đăng nhập
+ * Hàm đăng nhập cho Admin
  */
 export const loginApiAdmin = async (payload: LoginPayload): Promise<AuthResponseData> => {
   try {
@@ -31,7 +31,9 @@ export const getMeApiAdmin = async (): Promise<ApiResponse<User>> => {
     throw error as ApiResponse<null>; 
   }
 };
-
+/**
+ * Hàm đăng nhập cho User
+ */
 export const getMeApi = async (): Promise<ApiResponse<User>> => {
   try {
     const response = await httpUser.get<ApiResponse<User>>('/Auth/me');
@@ -53,6 +55,29 @@ export const loginApi = async (payload: LoginPayload): Promise<AuthResponseData>
 export const changePassword = async (payload: ChangePasswordPayload): Promise<AuthResponseData> => {
   try {
     const response = await httpUser.post<AuthResponseData>('/Auth/change-password', payload);
+    return response.data;
+  } catch (error: any) {
+    throw error as ApiResponse<null>;
+  }
+};
+
+export const sendPasswordResetEmail = async (email: string): Promise<AuthResponseData> => {
+  try {
+    const response = await httpUser.post<AuthResponseData>('/Auth/enter-email-forgot-password', { emailForForgotPassword: email });  
+    return response.data;
+  } catch (error: any) {
+    throw error as ApiResponse<null>;
+  }
+};
+
+export const resetPassword = async (payload: {
+  email: string;
+  token: string;
+  newPassword: string;
+  confirmPassword: string;
+}): Promise<AuthResponseData> => {
+  try {
+    const response = await httpUser.post<AuthResponseData>('/Auth/reset-password', payload);
     return response.data;
   } catch (error: any) {
     throw error as ApiResponse<null>;

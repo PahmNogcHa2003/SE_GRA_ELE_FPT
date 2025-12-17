@@ -64,11 +64,6 @@ const menuItems = [
         label: <Link to="/staff/rentals">Lịch sử Thuê xe</Link> 
       },
       { 
-        key: '/staff/orders', 
-        icon: <FaFileInvoiceDollar />,
-        label: <Link to="/staff/orders">Đơn hàng </Link> 
-      },
-      { 
         key: '/staff/user-tickets', 
         icon: <LuTicketsPlane />,
         label: <Link to="/staff/user-tickets">Vé người dùng</Link> 
@@ -76,7 +71,7 @@ const menuItems = [
       { 
         key: '/staff/wallet-transactions', 
         icon: <WalletOutlined />,
-        label: <Link to="/staff/transactions">Giao dịch Ví</Link> 
+        label: <Link to="/staff/transactions">Giao dịch</Link> 
       },
     ],
   },

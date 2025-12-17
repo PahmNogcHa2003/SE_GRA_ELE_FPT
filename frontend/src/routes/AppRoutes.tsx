@@ -17,7 +17,9 @@ import ContactPage  from '../pages/user/ContactPage';
 import NewsListPage from '../pages/user/NewsListPage';
 import NewsDetailPage from '../pages/user/NewsDetailPage';
 import ProfilePage from '../pages/user/Profile/ProfilePage';
-import ChangePasswordPage from '../pages/user/ChangePasswordPage';
+import ChangePasswordPage from '../pages/user/Auth/ChangePasswordPage';
+import ForgotPassword from '../pages/user/Auth/ForgotPassword';
+import ResetPasswordPage from '../pages/user/Auth/ResetPassword';
 import LeaderboardPage from '../pages/user/Leaderboard/LeaderboardPage';
 
 // Staff pages
@@ -32,6 +34,7 @@ import UserTicketManagementPage from '../pages/staff/UserTicketManagementPage';
 import ManageRentalsPage from '../pages/staff/ManageRentalsPage';
 import ManageQuestsPage from '../pages/staff/ManageQuestsPage';
 import ManageTransactionsPage from '../pages/staff/ManageTransactionsPage';
+import ManageVouchersPage from '../pages/staff/ManageVouchersPage';
 // Auth
 import AdminLogin from '../features/auth/admin/AdminLogin';
 import LoginModal from '../features/auth/user/LoginModal'; 
@@ -65,6 +68,7 @@ const AppRoutes = () => (
             <Route path="rentals" element={<ManageRentalsPage />} />
             <Route path="quests" element={<ManageQuestsPage />} />
             <Route path="transactions" element={<ManageTransactionsPage />} />
+            <Route path="vouchers" element={<ManageVouchersPage />} />
         </Route>
       </Route>
       
@@ -75,7 +79,8 @@ const AppRoutes = () => (
         <Route path="news" element={<NewsListPage />} />
         <Route path="news/:id" element={<NewsDetailPage />} />
         <Route path="pricing" element={<BuyTicketsPage />} />
-
+        <Route path="auth/forgot-password" element={<ForgotPassword />} />
+        <Route path="auth/reset-password" element={<ResetPasswordPage />} />
         <Route element={<ProtectedRoute allowRoles={['User']} />}> 
              <Route path="wallet" element={<WalletPage />} />
              <Route path="top-up" element={<TopUpPage />} />
