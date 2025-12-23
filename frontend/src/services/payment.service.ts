@@ -1,11 +1,9 @@
-import { httpUser } from './http'; // <-- Import 'http' chung
+import { httpUser } from './http'; 
 import type { 
   CreatePaymentPayload, 
   PaymentUrlResponse, 
   PaymentResult 
 } from '../types/payment';
-
-// KHÔNG CẦN 'getAuthHeaders' nữa
 
 /**
  * Tạo URL thanh toán VNPay

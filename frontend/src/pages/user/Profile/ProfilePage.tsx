@@ -510,7 +510,7 @@ const ProfilePage: React.FC = () => {
                                 label="Số CCCD/CMND"
                                 value={profile?.numberCard}
                                 />
-                                <InfoRow
+                                {/* <InfoRow
                                 label="Cơ quan cấp"
                                 value={profile?.issuedBy}
                                 />
@@ -541,7 +541,7 @@ const ProfilePage: React.FC = () => {
                                 <InfoRow
                                 label="Nơi cư trú"
                                 value={profile?.placeOfResidence}
-                                />
+                                /> */}
                             </div>
 
                             <div className="mt-4">

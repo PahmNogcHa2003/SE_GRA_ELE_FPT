@@ -8,7 +8,6 @@ import {
   previewTicketPrice,
 } from "../../services/user.ticket.service";
 import { getWallet } from "../../services/wallet.service";
-
 import {
   App,
   Alert,
@@ -24,72 +23,37 @@ import {
   Tabs,
   Tag,
   Modal,
+  Input,
+  Row,
+  Col,
+  Typography,
+  Grid,
 } from "antd";
 import { currencyVN } from "../../utils/datetime";
 import type { PreviewTicketPriceDTO } from "../../types/user.ticket";
+import type { AvailableVoucherDTO } from "../../types/voucher";
+import { getAvailableVouchers } from "../../services/voucher.service";
+import {
+  ShoppingCartOutlined,
+  ThunderboltOutlined,
+  EnvironmentOutlined,
+  WalletOutlined,
+  TagOutlined,
+  ClockCircleOutlined,
+  CheckCircleOutlined,
+  InfoCircleOutlined,
+  GiftOutlined,
+  CopyOutlined,
+  SafetyOutlined,
+  StarOutlined,
+  CreditCardOutlined,
+  PercentageOutlined,
+  CalendarOutlined,
+  LockOutlined,
+} from "@ant-design/icons";
 
-const IconBase: React.FC<{
-  className?: string;
-  label?: string;
-  children?: React.ReactNode;
-}> = ({ className, label, children }) => (
-  <span
-    role="img"
-    aria-label={label}
-    className={className}
-    style={{ display: "inline-flex", alignItems: "center" }}
-  >
-    {children}
-  </span>
-);
-
-const Bike: React.FC<{ className?: string }> = ({ className }) => (
-  <IconBase label="bike" className={className}>
-    🚲
-  </IconBase>
-);
-
-const BikeElectric: React.FC<{ className?: string }> = ({ className }) => (
-  <IconBase label="ebike" className={className}>
-    🚲⚡
-  </IconBase>
-);
-
-const Clock3: React.FC<{ className?: string }> = ({ className }) => (
-  <IconBase label="clock" className={className}>
-    🕒
-  </IconBase>
-);
-
-const Info: React.FC<{ className?: string }> = ({ className }) => (
-  <IconBase label="info" className={className}>
-    ℹ️
-  </IconBase>
-);
-
-const ShieldCheck: React.FC<{ className?: string }> = ({ className }) => (
-  <IconBase label="shield" className={className}>
-    🛡️
-  </IconBase>
-);
-
-const Ticket: React.FC<{ className?: string }> = ({ className }) => (
-  <IconBase label="ticket" className={className}>
-    🎫
-  </IconBase>
-);
-
-const Timer: React.FC<{ className?: string }> = ({ className }) => (
-  <IconBase label="timer" className={className}>
-    ⏱️
-  </IconBase>
-);
-
-const WalletIcon: React.FC<{ className?: string }> = ({ className }) => (
-  <IconBase label="wallet" className={className}>
-    👛
-  </IconBase>
-);
+const { Title, Text } = Typography;
+const { useBreakpoint } = Grid;
 
 const toVehicleLabel = (v: string | undefined) =>
   v?.toLowerCase() === "ebike" ? "Xe điện" : "Xe đạp";
@@ -122,26 +86,49 @@ const isSubscription = (price: any) =>
   typeof price?.validityDays === "number" && price.validityDays > 0;
 
 const ecoGreen = {
-  main: "#2E7D32",
-  light: "#A5D6A7",
-  dark: "#1B5E20",
-  gradient: "from-emerald-100 via-emerald-50 to-white", // tailwind
-};
-
-const ecoBtnStyle: React.CSSProperties = {
-  backgroundColor: ecoGreen.main,
-  borderColor: ecoGreen.main,
-  color: "#fff",
+  main: "#10B981",
+  light: "#D1FAE5",
+  lighter: "#ECFDF5",
+  dark: "#059669",
+  gradient: "from-emerald-50 via-white to-emerald-25",
+  gradientCard: "from-white to-emerald-50",
 };
 
 const PlanRibbon: React.FC<{ code?: string | null; type?: string | null }> = ({
   code,
   type,
 }) => {
-  if (code === "RIDE" || type === "Ride") return <Tag color="purple">Vé lượt</Tag>;
-  if (code === "DAY" || type === "Day") return <Tag color="green">Vé ngày</Tag>;
-  if (type === "Month") return <Tag color="blue">Vé tháng</Tag>;
-  return <Tag>Vé</Tag>;
+  if (code === "RIDE" || type === "Ride")
+    return (
+      <Tag
+        color="purple"
+        icon={<TagOutlined />}
+        className="font-semibold"
+      >
+        Vé lượt
+      </Tag>
+    );
+  if (code === "DAY" || type === "Day")
+    return (
+      <Tag
+        color="green"
+        icon={<CalendarOutlined />}
+        className="font-semibold"
+      >
+        Vé ngày
+      </Tag>
+    );
+  if (type === "Month")
+    return (
+      <Tag
+        color="blue"
+        icon={<CalendarOutlined />}
+        className="font-semibold"
+      >
+        Vé tháng
+      </Tag>
+    );
+  return <Tag icon={<TagOutlined />}>Vé</Tag>;
 };
 
 const ModeBadge: React.FC<{ mode: "IMMEDIATE" | "ON_FIRST_USE" }> = ({
@@ -149,49 +136,34 @@ const ModeBadge: React.FC<{ mode: "IMMEDIATE" | "ON_FIRST_USE" }> = ({
 }) => (
   <Badge
     color={mode === "ON_FIRST_USE" ? "purple" : ecoGreen.main}
-    text={mode === "ON_FIRST_USE" ? "Kích hoạt khi dùng" : "Kích hoạt ngay"}
+    text={
+      <span className="font-medium text-xs">
+        {mode === "ON_FIRST_USE" ? "Kích hoạt khi dùng" : "Kích hoạt ngay"}
+      </span>
+    }
   />
 );
 
-const VIcon: React.FC<{ type?: string | null; className?: string }> = ({
+const VehicleIcon: React.FC<{ type?: string | null; className?: string }> = ({
   type,
-  className,
+  className = "",
 }) =>
   type?.toLowerCase() === "ebike" ? (
-    <BikeElectric className={className} />
+    <ThunderboltOutlined className={`text-purple-600 ${className}`} />
   ) : (
-    <Bike className={className} />
+    <EnvironmentOutlined className={`text-emerald-600 ${className}`} />
   );
 
-// ========================= MAIN PAGE =========================
 const BuyTicketsPage: React.FC = () => {
   const [vehicleTab, setVehicleTab] = useState<"bike" | "ebike">("bike");
+  const [voucherApplied, setVoucherApplied] = useState(false);
 
   const { isLoggedIn, isLoadingUser } = useAuth();
   const { notification } = App.useApp();
   const qc = useQueryClient();
+  const screens = useBreakpoint();
 
   const vehicleParam = vehicleTab === "bike" ? "bike" : "ebike";
-
-  // ===== Query: Market tickets (LUÔN load, kể cả chưa login) =====
-  const marketQ = useQuery({
-    queryKey: ["ticketMarket", vehicleParam],
-    queryFn: () => getTicketMarket(vehicleParam),
-    enabled: !isLoadingUser,
-    select: (res: any) => {
-      const api = res?.data ?? res;
-      return api?.data ?? api ?? [];
-    },
-  });
-
-  // ===== Query: Wallet (chỉ load khi đã login) =====
-  const walletQ = useQuery({
-    queryKey: ["wallet", isLoggedIn],
-    queryFn: getWallet,
-    enabled: isLoggedIn && !isLoadingUser,
-    select: (res) => res.data,
-    staleTime: 5 * 60 * 1000,
-  });
 
   // ===== State: Modal mua vé + voucher =====
   const [buyModal, setBuyModal] = useState<{
@@ -208,31 +180,58 @@ const BuyTicketsPage: React.FC = () => {
     preview: null,
   });
 
+  const marketQ = useQuery({
+    queryKey: ["ticketMarket", vehicleParam],
+    queryFn: () => getTicketMarket(vehicleParam),
+    enabled: !isLoadingUser,
+    select: (res: any) => {
+      const api = res?.data ?? res;
+      return api?.data ?? api ?? [];
+    },
+  });
+
+  const walletQ = useQuery({
+    queryKey: ["wallet", isLoggedIn],
+    queryFn: getWallet,
+    enabled: isLoggedIn && !isLoadingUser,
+    select: (res) => res.data,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const vouchersQ = useQuery({
+    queryKey: ["availableVouchers", buyModal.price?.price],
+    queryFn: () => getAvailableVouchers(buyModal.price.price),
+    enabled: !!buyModal.price && isLoggedIn,
+  });
+
   // ===== Mutation: Mua vé =====
   const purchaseMut = useMutation({
-    mutationFn: purchaseTicket, // (payload) => Promise<ApiResponse<UserTicket>>
+    mutationFn: purchaseTicket,
     onSuccess: (res) => {
       const data = (res as any)?.data ?? res;
       notification.success({
-        message: "Mua vé thành công",
-        description: `Đã thêm vé: ${data?.planName ?? "Gói vé"}`,
+        message: "🎉 Mua vé thành công!",
+        description: `Đã thêm vé "${data?.planName || "Gói vé"}" vào tài khoản của bạn.`,
+        placement: "topRight",
       });
       qc.invalidateQueries({ queryKey: ["wallet"] });
       qc.invalidateQueries({ queryKey: ["walletTransactions"] });
       qc.invalidateQueries({ queryKey: ["myActiveTickets"] });
       setBuyModal((prev) => ({ ...prev, open: false, preview: null }));
+      setVoucherApplied(false);
     },
     onError: (e: any) =>
       notification.error({
         message: "Mua vé thất bại",
         description: prettyErr(e),
+        placement: "topRight",
       }),
   });
 
   // ===== Mutation: Preview voucher =====
   const previewMut = useMutation({
     mutationFn: (payload: { planPriceId: number; voucherCode?: string }) =>
-      previewTicketPrice(payload), // Promise<ApiResponse<PreviewTicketPriceDTO>>
+      previewTicketPrice(payload),
     onSuccess: (res) => {
       const api = (res as any) ?? res;
       const data: PreviewTicketPriceDTO = api.data ?? api;
@@ -241,8 +240,9 @@ const BuyTicketsPage: React.FC = () => {
     onError: (e: any) => {
       setBuyModal((prev) => ({ ...prev, preview: null }));
       notification.error({
-        message: "Áp dụng voucher thất bại",
+        message: "Voucher không hợp lệ",
         description: prettyErr(e),
+        placement: "topRight",
       });
     },
   });
@@ -265,13 +265,13 @@ const BuyTicketsPage: React.FC = () => {
   // ===== Khi bấm mua =====
   const handleRequireLogin = () => {
     notification.info({
-      message: "Bạn cần đăng nhập",
-      description: "Vui lòng đăng nhập để có thể mua vé và sử dụng ví.",
+      message: "🔐 Bạn cần đăng nhập",
+      description: "Vui lòng đăng nhập để mua vé và sử dụng ví.",
+      placement: "topRight",
     });
   };
 
   const openBuyModal = (plan: any, price: any) => {
-    // nếu chưa login thì redirect login, không mở modal
     if (!isLoggedIn) {
       handleRequireLogin();
       return;
@@ -283,16 +283,19 @@ const BuyTicketsPage: React.FC = () => {
       voucherCode: "",
       preview: null,
     });
+    setVoucherApplied(false);
   };
 
-  // ===== Apply voucher -> gọi preview API =====
+  // ===== Apply voucher =====
   const handleApplyVoucher = () => {
-    if (!buyModal.price) return;
+    if (!buyModal.price || !buyModal.voucherCode) return;
 
     previewMut.mutate({
       planPriceId: buyModal.price.id,
-      voucherCode: buyModal.voucherCode || undefined,
+      voucherCode: buyModal.voucherCode,
     });
+
+    setVoucherApplied(true);
   };
 
   // ===== Xác nhận mua =====
@@ -312,10 +315,11 @@ const BuyTicketsPage: React.FC = () => {
 
     if (wallet.balance < expectedTotal) {
       notification.error({
-        message: "Số dư không đủ",
+        message: "💰 Số dư không đủ",
         description: `Cần ${currencyVN(
           expectedTotal
         )} nhưng ví chỉ có ${currencyVN(wallet.balance)}.`,
+        placement: "topRight",
       });
       return;
     }
@@ -328,97 +332,142 @@ const BuyTicketsPage: React.FC = () => {
 
   // ======================= RENDER =======================
   return (
-    <div className={`min-h-screen bg-linear-to-b ${ecoGreen.gradient}`}>
-      {/* hero */}
+    <div className={`min-h-screen bg-linear-to-r ${ecoGreen.gradient}`}>
+      {/* Header Section */}
       <div className="container mx-auto px-4 pt-8 pb-4">
-        <div className="rounded-3xl bg-white shadow-sm border border-emerald-100 p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <div className="text-2xl md:text-3xl font-bold tracking-tight text-emerald-800">
-              Mua gói vé EcoJourney
-            </div>
-            <div className="text-gray-600 mt-1">
-              Chọn gói phù hợp – thanh toán bằng ví – dùng ngay.
-            </div>
-            <div className="mt-3 flex items-center gap-3 text-gray-700 text-sm">
-              <ShieldCheck className="w-4 h-4" /> An toàn • Nhanh chóng •
-              Tiện lợi
+        <Card 
+          className="rounded-2xl border-0 shadow-lg overflow-hidden"
+          bodyStyle={{ padding: 0 }}
+        >
+          <div className="p-6 md:p-8 bg-linear-to-r from-emerald-600 to-emerald-700 text-white">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
+                    <TagOutlined className="text-xl" />
+                  </div>
+                  <div>
+                    <Title level={2} className="mb-0! text-white!">
+                      Mua Vé EcoJourney
+                    </Title>
+                    <Text className="text-emerald-100">
+                      Chọn gói phù hợp – thanh toán bằng ví – dùng ngay
+                    </Text>
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-3">
+                  <div className="flex items-center gap-2 text-sm">
+                    <SafetyOutlined />
+                    <span>An toàn</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <CheckCircleOutlined />
+                    <span>Nhanh chóng</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <StarOutlined />
+                    <span>Tiện lợi</span>
+                  </div>
+                </div>
+              </div>
+              <div className="flex flex-col gap-2">
+                <Text className="text-emerald-100">Loại xe</Text>
+                <Segmented
+                  sizes={screens.xs ? "small" : "default"}
+                  options={[
+                    {
+                      label: (
+                        <div className="flex items-center gap-2 px-2">
+                          <EnvironmentOutlined />
+                          <span>Xe đạp</span>
+                        </div>
+                      ),
+                      value: "bike",
+                    },
+                    {
+                      label: (
+                        <div className="flex items-center gap-2 px-2">
+                          <ThunderboltOutlined />
+                          <span>Xe điện</span>
+                        </div>
+                      ),
+                      value: "ebike",
+                    },
+                  ]}
+                  value={vehicleTab}
+                  onChange={(v) => setVehicleTab(v as any)}
+                  className="bg-white/10"
+                />
+              </div>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-gray-600">Loại xe</span>
-            <Segmented
-              options={[
-                {
-                  label: (
-                    <span className="flex items-center gap-2 text-emerald-700">
-                      <Bike className="w-4 h-4" />
-                      Xe đạp
-                    </span>
-                  ),
-                  value: "bike",
-                },
-                {
-                  label: (
-                    <span className="flex items-center gap-2 text-emerald-700">
-                      <BikeElectric className="w-7 h-4" />
-                      Xe điện
-                    </span>
-                  ),
-                  value: "ebike",
-                },
-              ]}
-              value={vehicleTab}
-              onChange={(v) => setVehicleTab(v as any)}
-            />
-          </div>
-        </div>
+        </Card>
       </div>
 
-      {/* wallet bar */}
+      {/* Wallet Info */}
       <div className="container mx-auto px-4 mb-6">
-        <Card className="rounded-2xl border border-emerald-100 shadow-md">
+        <Card className="rounded-2xl border-0 shadow-md">
           {!isLoggedIn ? (
             <Alert
               type="info"
               showIcon
               message="Bạn cần đăng nhập để xem số dư ví và mua vé."
+              className="rounded-lg"
             />
           ) : (
-            <div className="flex items-center justify-between flex-wrap gap-4">
-              <Space size={8} className="text-gray-700">
-                <WalletIcon className="w-5 h-5" />
-                <span className="font-medium">Số dư ví</span>
-              </Space>
-              {walletQ.isLoading ? (
-                <Skeleton active paragraph={false} />
-              ) : walletQ.data ? (
-                <Space size={32}>
-                  <Statistic
-                    title="Số dư hiện tại"
-                    value={walletQ.data.balance}
-                    groupSeparator=","
-                    suffix=" đ"
-                    valueStyle={{ fontSize: 18, color: ecoGreen.main }}
-                  />
-                  <Tag
-                    color={walletQ.data.status === "Active" ? "green" : "red"}
-                  >
-                    {walletQ.data.status}
-                  </Tag>
-                </Space>
-              ) : (
-                <Alert
-                  type="warning"
-                  showIcon
-                  message="Bạn chưa có ví hoặc không lấy được thông tin ví."
-                />
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-emerald-100 rounded-lg">
+                  <WalletOutlined className="text-emerald-600 text-lg" />
+                </div>
+                <div>
+                  <Text className="text-gray-600 block text-sm">Số dư ví</Text>
+                  {walletQ.isLoading ? (
+                    <Skeleton active paragraph={false} style={{ width: 200 }} />
+                  ) : walletQ.data ? (
+                    <Space size="small">
+                      <Statistic
+                        value={walletQ.data.balance}
+                        prefix="₫"
+                        valueStyle={{
+                          fontSize: "20px",
+                          fontWeight: "bold",
+                          color: ecoGreen.dark,
+                        }}
+                      />
+                      <Tag
+                        color={walletQ.data.status === "Active" ? "green" : "red"}
+                        className="font-medium"
+                      >
+                        {walletQ.data.status}
+                      </Tag>
+                    </Space>
+                  ) : (
+                    <Alert
+                      type="warning"
+                      showIcon
+                      message="Bạn chưa có ví hoặc không lấy được thông tin ví."
+                      className="mt-2"
+                    />
+                  )}
+                </div>
+              </div>
+              {isLoggedIn && walletQ.data && (
+                <Button
+                  type="default"
+                  href="/top-up"
+                  icon={<CreditCardOutlined />}
+                  className="border-emerald-200 text-emerald-600 hover:border-emerald-300 hover:text-emerald-700"
+                >
+                  Nạp thêm tiền
+                </Button>
               )}
             </div>
           )}
         </Card>
       </div>
 
-      {/* content */}
+      {/* Main Content */}
       <div className="container mx-auto px-4 pb-12">
         <Tabs
           defaultActiveKey="market"
@@ -426,17 +475,18 @@ const BuyTicketsPage: React.FC = () => {
             {
               key: "market",
               label: (
-                <span className="text-emerald-700 font-medium">
+                <span className="font-medium text-emerald-700 flex items-center gap-2">
+                  <ShoppingCartOutlined />
                   Gói khả dụng
                 </span>
               ),
               children: (
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                   {marketQ.isLoading &&
                     Array.from({ length: 6 }).map((_, i) => (
                       <Card
                         key={i}
-                        className="rounded-2xl border-emerald-50"
+                        className="rounded-2xl border-0 shadow-sm"
                       >
                         <Skeleton active paragraph={{ rows: 4 }} />
                       </Card>
@@ -444,7 +494,11 @@ const BuyTicketsPage: React.FC = () => {
 
                   {!marketQ.isLoading && plansFiltered.length === 0 && (
                     <div className="col-span-full">
-                      <Empty description="Không có gói cho loại xe này" />
+                      <Empty 
+                        description="Không có gói cho loại xe này" 
+                        image={Empty.PRESENTED_IMAGE_SIMPLE}
+                        className="py-12"
+                      />
                     </div>
                   )}
 
@@ -452,114 +506,102 @@ const BuyTicketsPage: React.FC = () => {
                     plan.prices.map((price: any) => (
                       <Card
                         key={`${plan.id}-${price.id}`}
-                        className="rounded-2xl shadow-md hover:shadow-lg transition-all border border-emerald-100 hover:border-emerald-400"
+                        className="rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 border border-emerald-100 hover:border-emerald-300"
                       >
-                        {/* Header 2 dòng */}
-                        <div className="mb-3 flex flex-col gap-1">
-                          {/* Dòng 1 */}
-                          <div className="flex items-center justify-between gap-2 flex-wrap">
-                            <Space
-                              align="center"
-                              size={8}
-                              className="min-w-0 flex-1 flex-wrap"
-                            >
-                              <Ticket className="w-4 h-4" />
-                              <span className="font-semibold text-emerald-800 truncate">
+                        {/* Card Header */}
+                        <div className="mb-4">
+                          <div className="flex justify-between items-start mb-2">
+                            <div className="flex items-center gap-2">
+                              <div className="p-1 bg-emerald-100 rounded">
+                                <TagOutlined className="text-emerald-600" />
+                              </div>
+                              <Text strong className="text-emerald-800 text-lg">
                                 {plan.name}
-                              </span>
-                              <PlanRibbon
-                                code={plan.code}
-                                type={plan.type}
-                              />
-                              {isSubscription(price) ? (
-                                <Tag color="blue">Gói theo thời gian</Tag>
-                              ) : (
-                                <Tag color="purple">Vé lượt</Tag>
-                              )}
-                            </Space>
-                            <VIcon
-                              type={price.vehicleType}
-                              className="w-10 h-5"
-                            />
+                              </Text>
+                            </div>
+                            <VehicleIcon type={price.vehicleType} />
                           </div>
-
-                          {/* Dòng 2 */}
-                          <div className="flex items-center justify-start mt-1">
+                          <div className="flex flex-wrap gap-2">
+                            <PlanRibbon code={plan.code} type={plan.type} />
+                            {isSubscription(price) ? (
+                              <Tag color="blue" className="text-xs">
+                                Gói thời gian
+                              </Tag>
+                            ) : (
+                              <Tag color="purple" className="text-xs">
+                                Gói lượt
+                              </Tag>
+                            )}
+                          </div>
+                          <div className="mt-2">
                             <ModeBadge mode={mapMode(price.activationMode)} />
                           </div>
                         </div>
 
-                        <div className="space-y-3">
-                          <div className="flex items-end gap-2">
-                            <div className="text-3xl font-bold leading-none text-emerald-700">
+                        {/* Price Section */}
+                        <div className="mb-4">
+                          <div className="flex items-baseline gap-1">
+                            <div className="text-2xl font-bold text-emerald-700">
                               {currencyVN(price.price)}
                             </div>
-                            <span className="text-gray-500 mb-1">
+                            <div className="text-gray-500 text-sm">
                               /{toVehicleLabel(price.vehicleType)}
-                            </span>
+                            </div>
                           </div>
+                        </div>
 
-                          <div className="grid grid-cols-2 gap-2 text-sm text-gray-700">
-                            {typeof price.durationLimitMinutes === "number" && (
-                              <div className="flex items-center gap-2">
-                                <Timer className="w-4 h-4" /> Giới hạn:{" "}
-                                {price.durationLimitMinutes} phút / ngày
-                              </div>
-                            )}
-                            {typeof price.overageFeePer15Min === "number" && (
-                              <div className="flex items-center gap-2">
-                                <Clock3 className="w-4 h-4" /> Phí vượt/15p:{" "}
-                                {currencyVN(price.overageFeePer15Min)}
-                              </div>
-                            )}
-                            {plan.type === "Day" && (
-                              <div className="col-span-2 text-gray-600">
-                                Hiệu lực trong ngày theo giờ địa phương
-                              </div>
-                            )}
-                            {plan.type === "Month" && (
-                              <div className="col-span-2 text-gray-600">
-                                Hiệu lực {price.validityDays ?? 30} ngày từ
-                                thời điểm mua
-                              </div>
-                            )}
-                            {mapMode(price.activationMode) ===
-                              "ON_FIRST_USE" && (
-                              <div className="col-span-2 flex items-center gap-2 text-gray-700">
-                                <Info className="w-4 h-4" /> Kích hoạt khi mở
-                                khoá lần đầu (hạn kích hoạt:{" "}
-                                {price.activationWindowDays ?? 30} ngày)
-                              </div>
-                            )}
-                          </div>
-
-                          <Divider className="my-2 border-emerald-100" />
-
-                          <div className="flex items-center justify-between flex-wrap gap-3">
-                            <Space size={8}>
-                              <WalletIcon className="w-4 h-4" />
-                              <span className="text-gray-600">
-                                Thanh toán bằng ví
+                        {/* Features */}
+                        <div className="space-y-2 mb-4">
+                          {typeof price.durationLimitMinutes === "number" && (
+                            <div className="flex items-center gap-2 text-sm text-gray-600">
+                              <ClockCircleOutlined className="text-blue-500" />
+                              <span>Giới hạn: {price.durationLimitMinutes} phút/ngày</span>
+                            </div>
+                          )}
+                          {typeof price.overageFeePer15Min === "number" && (
+                            <div className="flex items-center gap-2 text-sm text-gray-600">
+                              <InfoCircleOutlined className="text-orange-500" />
+                              <span>Phí vượt: {currencyVN(price.overageFeePer15Min)}/15p</span>
+                            </div>
+                          )}
+                          {plan.type === "Day" && (
+                            <div className="text-xs text-gray-500">
+                              Hiệu lực trong ngày theo giờ địa phương
+                            </div>
+                          )}
+                          {plan.type === "Month" && (
+                            <div className="text-xs text-gray-500">
+                              Hiệu lực {price.validityDays ?? 30} ngày từ thời điểm mua
+                            </div>
+                          )}
+                          {mapMode(price.activationMode) === "ON_FIRST_USE" && (
+                            <div className="text-xs text-gray-500 flex items-start gap-1">
+                              <LockOutlined className="mt-0.5" />
+                              <span>
+                                Kích hoạt khi mở khoá lần đầu (hạn kích hoạt: {price.activationWindowDays ?? 30} ngày)
                               </span>
-                            </Space>
-                            <Button
-                              type="primary"
-                              shape="round"
-                              loading={purchaseMut.isPending}
-                              onClick={() => openBuyModal(plan, price)}
-                              style={
-                                isLoggedIn
-                                  ? ecoBtnStyle
-                                  : {
-                                      ...ecoBtnStyle,
-                                      backgroundColor: "#9CA3AF",
-                                      borderColor: "#9CA3AF",
-                                    }
-                              }
-                            >
-                              {isLoggedIn ? "Mua ngay" : "Đăng nhập để mua vé"}
-                            </Button>
+                            </div>
+                          )}
+                        </div>
+
+                        <Divider className="my-4" />
+
+                        {/* Action Button */}
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2 text-sm text-gray-600">
+                            <WalletOutlined />
+                            <span>Thanh toán bằng ví</span>
                           </div>
+                          <Button
+                            type="primary"
+                            size={screens.xs ? "small" : "middle"}
+                            icon={<ShoppingCartOutlined />}
+                            loading={purchaseMut.isPending}
+                            onClick={() => openBuyModal(plan, price)}
+                            className="bg-emerald-600 hover:bg-emerald-700 border-emerald-600"
+                          >
+                            {isLoggedIn ? "Mua ngay" : "Đăng nhập"}
+                          </Button>
                         </div>
                       </Card>
                     ))
@@ -570,21 +612,55 @@ const BuyTicketsPage: React.FC = () => {
             {
               key: "notes",
               label: (
-                <span className="text-emerald-700 font-medium">Ghi chú</span>
+                <span className="font-medium text-emerald-700 flex items-center gap-2">
+                  <InfoCircleOutlined />
+                  Ghi chú
+                </span>
               ),
               children: (
-                <Card className="rounded-2xl border-emerald-100">
-                  <div className="space-y-2 text-gray-700">
-                    <div>
-                      • Vé lượt (RIDE) <b>không kích hoạt ngay</b>; kích hoạt
-                      khi bạn bắt đầu chuyến.
-                    </div>
-                    <div>
-                      • Vé ngày/tháng (IMMEDIATE) <b>kích hoạt ngay khi mua</b>.
-                      Vé ngày có hiệu lực theo giờ địa phương.
-                    </div>
-                    <div>
-                      • Cần hỗ trợ hoá đơn, vui lòng liên hệ CSKH.
+                <Card className="rounded-2xl border-0 shadow-sm">
+                  <div className="space-y-4">
+                    <Alert
+                      type="info"
+                      message="Thông tin quan trọng"
+                      description="Vui lòng đọc kỹ trước khi mua vé"
+                      showIcon
+                      className="rounded-lg"
+                    />
+                    <div className="space-y-3 text-gray-700">
+                      <div className="flex items-start gap-2">
+                        <div className="p-1 bg-purple-100 rounded mt-0.5">
+                          <TagOutlined className="text-purple-600 text-xs" />
+                        </div>
+                        <div>
+                          <Text strong>Vé lượt (RIDE)</Text>
+                          <Text className="block text-sm">
+                            <b>Không kích hoạt ngay</b>; kích hoạt khi bạn bắt đầu chuyến.
+                          </Text>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <div className="p-1 bg-green-100 rounded mt-0.5">
+                          <CalendarOutlined className="text-green-600 text-xs" />
+                        </div>
+                        <div>
+                          <Text strong>Vé ngày/tháng (IMMEDIATE)</Text>
+                          <Text className="block text-sm">
+                            <b>Kích hoạt ngay khi mua</b>. Vé ngày có hiệu lực theo giờ địa phương.
+                          </Text>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <div className="p-1 bg-blue-100 rounded mt-0.5">
+                          <InfoCircleOutlined className="text-blue-600 text-xs" />
+                        </div>
+                        <div>
+                          <Text strong>Hỗ trợ & Hoá đơn</Text>
+                          <Text className="block text-sm">
+                            Cần hỗ trợ hoá đơn, vui lòng liên hệ CSKH qua email: support@ecojourney.com
+                          </Text>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </Card>
@@ -597,95 +673,254 @@ const BuyTicketsPage: React.FC = () => {
       {/* Modal Mua vé + Voucher */}
       <Modal
         open={buyModal.open}
-        onCancel={() =>
-          setBuyModal((prev) => ({ ...prev, open: false, preview: null }))
-        }
+        onCancel={() => {
+          setBuyModal((prev) => ({ ...prev, open: false, preview: null }));
+          setVoucherApplied(false);
+        }}
         title={
-          buyModal.plan
-            ? `Mua ${buyModal.plan.name} – ${toVehicleLabel(
-                buyModal.price?.vehicleType
-              )}`
-            : "Mua vé"
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-emerald-100 rounded-lg">
+              <ShoppingCartOutlined className="text-emerald-600" />
+            </div>
+            <div>
+              <Title level={4} className="mb-0!">
+                Mua {buyModal.plan?.name}
+              </Title>
+              <Text type="secondary" className="text-sm">
+                {toVehicleLabel(buyModal.price?.vehicleType)} •{" "}
+                {mapMode(buyModal.price?.activationMode) === "ON_FIRST_USE"
+                  ? "Kích hoạt khi dùng"
+                  : "Kích hoạt ngay"}
+              </Text>
+            </div>
+          </div>
         }
         footer={[
           <Button
             key="cancel"
-            onClick={() =>
-              setBuyModal((prev) => ({ ...prev, open: false, preview: null }))
-            }
+            onClick={() => {
+              setBuyModal((prev) => ({ ...prev, open: false, preview: null }));
+              setVoucherApplied(false);
+            }}
+            className="rounded-lg"
           >
             Hủy
           </Button>,
           <Button
             key="buy"
             type="primary"
-            style={ecoBtnStyle}
+            icon={<ShoppingCartOutlined />}
             loading={purchaseMut.isPending}
             onClick={handleConfirmBuy}
+            className="bg-emerald-600 hover:bg-emerald-700 border-emerald-600 rounded-lg"
+            size="large"
           >
-            Mua ngay
+            Xác nhận mua
           </Button>,
         ]}
+        width={screens.xs ? "95%" : 600}
+        className="rounded-2xl"
       >
         {buyModal.price && (
-          <div className="space-y-4">
-            <div>
-              <div className="text-sm text-gray-600">Giá gốc</div>
-              <div className="text-xl font-semibold text-emerald-700">
-                {currencyVN(buyModal.price.price)}
-              </div>
-            </div>
+          <div className="space-y-6">
+            {/* Price Summary */}
+            <Row gutter={[16, 16]}>
+              <Col span={12}>
+                <Card className="border-0 shadow-sm">
+                  <Statistic
+                    title="Giá gốc"
+                    value={buyModal.price.price}
+                    prefix="₫"
+                    valueStyle={{ fontSize: "20px", color: ecoGreen.dark }}
+                  />
+                </Card>
+              </Col>
+              <Col span={12}>
+                <Card className="border-0 shadow-sm">
+                  <Statistic
+                    title="Số dư ví"
+                    value={walletQ.data?.balance ?? 0}
+                    prefix="₫"
+                    valueStyle={{
+                      fontSize: "20px",
+                      color: (walletQ.data?.balance ?? 0) >= (buyModal.price?.price ?? 0) ? ecoGreen.dark : "#EF4444",
+                    }}
+                  />
+                </Card>
+              </Col>
+            </Row>
 
-            <div>
-              <div className="text-sm text-gray-600 mb-1">Mã voucher</div>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  className="flex-1 border rounded-md px-2 py-1 text-sm"
-                  placeholder="Nhập mã giảm giá"
-                  value={buyModal.voucherCode}
-                  onChange={(e) =>
-                    setBuyModal((prev) => ({
-                      ...prev,
-                      voucherCode: e.target.value.trim(),
-                    }))
-                  }
-                />
-                <Button
-                  onClick={handleApplyVoucher}
-                  loading={previewMut.isPending}
-                >
-                  Apply
-                </Button>
+            {/* Voucher Section */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <GiftOutlined className="text-purple-500" />
+                  <Text strong>Voucher ưu đãi</Text>
+                </div>
+                <Tag color="default" className="text-xs">
+                  {vouchersQ.data?.length || 0} mã có sẵn
+                </Tag>
               </div>
-              <div className="text-[11px] text-gray-500 mt-1">
-                Hệ thống sẽ kiểm tra mã và hiển thị giá sau giảm trước khi bạn
-                xác nhận mua.
-              </div>
-            </div>
 
-            {buyModal.preview && (
-              <div className="mt-3 p-3 rounded-lg bg-emerald-50 border border-emerald-100 text-sm">
-                <div>
-                  Giá gốc:{" "}
-                  <b>{currencyVN(buyModal.preview.subtotal)}</b>
+              {/* Voucher Input */}
+              <div className="space-y-3">
+                <div className="flex gap-2">
+                  <Input
+                    size="middle"
+                    placeholder="Nhập mã voucher..."
+                    value={buyModal.voucherCode}
+                    disabled={voucherApplied}
+                    onChange={(e) =>
+                      setBuyModal((prev) => ({
+                        ...prev,
+                        voucherCode: e.target.value.trim(),
+                      }))
+                    }
+                    className="flex-1"
+                    prefix={<GiftOutlined className="text-gray-400" />}
+                  />
+                  <Button
+                    type="default"
+                    loading={previewMut.isPending}
+                    disabled={!buyModal.voucherCode}
+                    onClick={handleApplyVoucher}
+                    className="whitespace-nowrap"
+                  >
+                    {voucherApplied ? "Đã áp dụng" : "Áp dụng"}
+                  </Button>
                 </div>
-                <div>
-                  Giảm giá:{" "}
-                  <b>-{currencyVN(buyModal.preview.discount)}</b>
-                </div>
-                <div>
-                  <span>Giá sau giảm: </span>
-                  <b className="text-emerald-700">
-                    {currencyVN(buyModal.preview.total)}
-                  </b>
-                </div>
-                {buyModal.preview.voucherMessage && (
-                  <div className="text-xs text-emerald-700 mt-1">
-                    {buyModal.preview.voucherMessage}
+
+                {/* Voucher List */}
+                {vouchersQ.isLoading ? (
+                  <Skeleton active paragraph={{ rows: 2 }} />
+                ) : (
+                  <div className="space-y-2 max-h-60 overflow-y-auto pr-2">
+                    {vouchersQ.data?.map((v: AvailableVoucherDTO) => {
+                      const isSelected = buyModal.voucherCode === v.code;
+                      const isApplicable = v.isApplicable;
+
+                      return (
+                        <div
+                          key={v.id}
+                          className={`
+                            p-3 rounded-lg border transition-all duration-200 cursor-pointer
+                            ${
+                              isApplicable
+                                ? isSelected
+                                  ? "border-emerald-500 bg-emerald-50 ring-1 ring-emerald-500"
+                                  : "border-gray-200 hover:border-emerald-300 hover:shadow-sm"
+                                : "border-gray-200 bg-gray-50 opacity-70 cursor-not-allowed"
+                            }
+                          `}
+                          onClick={() => {
+                            if (!isApplicable) return;
+                            setBuyModal((prev) => ({
+                              ...prev,
+                              voucherCode: v.code,
+                            }));
+                          }}
+                        >
+                          <div className="flex justify-between items-start">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2">
+                                <Text 
+                                  strong 
+                                  className={isApplicable ? "text-emerald-700" : "text-gray-500"}
+                                >
+                                  {v.code}
+                                </Text>
+                                {isSelected && (
+                                  <Tag color="green">Đang chọn</Tag>
+                                )}
+                              </div>
+                              <Text type="secondary" className="text-xs mt-1 block">
+                                {v.description}
+                              </Text>
+                              {v.endDate && (
+                                <Text type="secondary" className="text-xs block mt-1">
+                                  HSD: {new Date(v.endDate).toLocaleDateString("vi-VN")}
+                                </Text>
+                              )}
+                              {!isApplicable && v.notApplicableReason && (
+                                <div className="mt-2 text-xs text-red-500 bg-red-50 p-2 rounded-md">
+                                  🚫 {v.notApplicableReason}
+                                </div>
+                              )}
+                            </div>
+                            <div className="text-right ml-4">
+                              <div
+                                className={`text-lg font-bold ${
+                                  isApplicable ? "text-orange-500" : "text-gray-400"
+                                }`}
+                              >
+                                -{v.displayValue}
+                              </div>
+                              {isApplicable && (
+                                <Button
+                                  size="small"
+                                  type={isSelected ? "primary" : "default"}
+                                  icon={<CopyOutlined />}
+                                  className="mt-2"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    navigator.clipboard.writeText(v.code);
+                                    setBuyModal((prev) => ({
+                                      ...prev,
+                                      voucherCode: v.code,
+                                    }));
+                                    notification.success({
+                                      message: "📋 Đã sao chép mã",
+                                      description: v.code,
+                                      placement: "topRight",
+                                      duration: 2,
+                                    });
+                                  }}
+                                >
+                                  Sao chép
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>
+            </div>
+
+            {/* Preview Summary */}
+            {buyModal.preview && (
+              <Card className="border-0 shadow-sm bg-emerald-50">
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <Text>Giá gốc:</Text>
+                    <Text strong>{currencyVN(buyModal.preview.subtotal)}</Text>
+                  </div>
+                  <div className="flex justify-between items-center text-orange-600">
+                    <div className="flex items-center gap-1">
+                      <PercentageOutlined />
+                      <Text>Giảm giá:</Text>
+                    </div>
+                    <Text strong>-{currencyVN(buyModal.preview.discount)}</Text>
+                  </div>
+                  <Divider className="my-2" />
+                  <div className="flex justify-between items-center">
+                    <Text strong className="text-base">Tổng thanh toán:</Text>
+                    <Text strong className="text-xl text-emerald-700">
+                      {currencyVN(buyModal.preview.total)}
+                    </Text>
+                  </div>
+                  {buyModal.preview.voucherMessage && (
+                    <Alert
+                      type="success"
+                      message={buyModal.preview.voucherMessage}
+                      showIcon
+                      className="mt-3"
+                    />
+                  )}
+                </div>
+              </Card>
             )}
           </div>
         )}

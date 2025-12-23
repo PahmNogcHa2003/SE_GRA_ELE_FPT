@@ -1,15 +1,14 @@
 // src/pages/staff/ManageQuestsPage.tsx
 import React, { useState, useRef, useEffect } from 'react';
 import { 
-  Table, Button, Input, Tag, Space, Select, App, Switch 
+  Table, Button, Input, Tag, Space, Select, App, Switch, Tooltip 
 } from 'antd';
 import { 
-  PlusOutlined, TrophyOutlined, EditOutlined, SearchOutlined 
+  PlusOutlined, TrophyOutlined, EditOutlined, SearchOutlined, StopOutlined 
 } from '@ant-design/icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 
-// Imports
 import { 
   getPagedQuests, createQuest, updateQuest, toggleQuestStatus 
 } from '../../services/manage.quest.service';
@@ -21,33 +20,35 @@ const ManageQuestsPage: React.FC = () => {
   const { notification, message } = App.useApp();
   const queryClient = useQueryClient();
 
-  // State
   const [filters, setFilters] = useState<QuestFilterDTO>({
-    page: 1, pageSize: 10, sort: 'Id desc' // Mới nhất lên đầu
+    page: 1, pageSize: 10, sort: 'Id desc'
   });
   const [searchText, setSearchText] = useState('');
   const searchTimer = useRef<number | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editingQuest, setEditingQuest] = useState<QuestDTO | null>(null);
 
-  // Queries
   const { data: pagedData, isLoading } = useQuery({
     queryKey: ['staffQuests', filters],
     queryFn: () => getPagedQuests(filters),
   });
+
   useEffect(() => {
-    if (searchTimer.current) {
-      window.clearTimeout(searchTimer.current);
-    }
+    if (searchTimer.current) window.clearTimeout(searchTimer.current);
     searchTimer.current = window.setTimeout(() => {
       setFilters(prev => ({ ...prev, page: 1, search: searchText || undefined }));
     }, 300);
-
-    return () => {
-      if (searchTimer.current) window.clearTimeout(searchTimer.current);
-    };
+    return () => { if (searchTimer.current) window.clearTimeout(searchTimer.current); };
   }, [searchText]);
-  // Mutations
+
+  const handleError = (error: any, action: string) => {
+      const errorMsg = error?.response?.data?.message || error.message || 'Có lỗi xảy ra';
+      notification.error({
+          message: `${action} thất bại`,
+          description: errorMsg,
+      });
+  };
+
   const createMutation = useMutation({
     mutationFn: createQuest,
     onSuccess: () => {
@@ -55,7 +56,7 @@ const ManageQuestsPage: React.FC = () => {
       setDrawerOpen(false);
       queryClient.invalidateQueries({ queryKey: ['staffQuests'] });
     },
-    onError: (err: any) => notification.error({ message: err.message || 'Lỗi khi tạo' })
+    onError: (err) => handleError(err, 'Tạo Quest')
   });
 
   const updateMutation = useMutation({
@@ -65,7 +66,7 @@ const ManageQuestsPage: React.FC = () => {
       setDrawerOpen(false);
       queryClient.invalidateQueries({ queryKey: ['staffQuests'] });
     },
-    onError: (err: any) => notification.error({ message: err.message || 'Lỗi khi cập nhật' })
+    onError: (err) => handleError(err, 'Cập nhật Quest')
   });
 
   const toggleMutation = useMutation({
@@ -74,14 +75,18 @@ const ManageQuestsPage: React.FC = () => {
       message.success('Đã thay đổi trạng thái Quest');
       queryClient.invalidateQueries({ queryKey: ['staffQuests'] });
     },
-    onError: (err: any) => notification.error({ 
-      message: 'Không thể đổi trạng thái', 
-      description: err.message || 'Có thể Quest đã có người tham gia.' 
-    })
+    onError: (err: any) => {
+        const errorMsg = err?.response?.data?.message || err.message;
+        message.error(errorMsg || 'Không thể đổi trạng thái');
+    }
   });
 
-  // Handlers
   const handleEdit = (record: QuestDTO) => {
+    // Chặn thêm 1 tầng ở hàm click cho chắc chắn
+    if (dayjs(record.endAt).isBefore(dayjs())) {
+        message.warning("Quest đã kết thúc, không thể chỉnh sửa.");
+        return;
+    }
     setEditingQuest(record);
     setDrawerOpen(true);
   };
@@ -100,11 +105,9 @@ const ManageQuestsPage: React.FC = () => {
   };
 
   const handleToggle = (id: number) => {
-    // Optimistic UI update could be applied here, but simpler to just loading switch
     toggleMutation.mutate(id);
   };
 
-  // Columns
   const columns: TableProps<QuestDTO>['columns'] = [
     {
       title: 'Info',
@@ -148,37 +151,57 @@ const ManageQuestsPage: React.FC = () => {
     {
       title: 'Thời gian',
       key: 'time',
-      render: (_, record) => (
-        <div className="text-xs">
-          <div>{dayjs(record.startAt).format('DD/MM/YY HH:mm')}</div>
-          <div className="text-gray-400">đến</div>
-          <div>{dayjs(record.endAt).format('DD/MM/YY HH:mm')}</div>
-        </div>
-      )
+      render: (_, record) => {
+        // Kiểm tra xem đã hết hạn chưa
+        const isExpired = dayjs(record.endAt).isBefore(dayjs());
+        return (
+            <div className={`text-xs ${isExpired ? 'text-red-500 font-semibold' : ''}`}>
+              <div>{dayjs(record.startAt).format('DD/MM/YY HH:mm')}</div>
+              <div className="text-gray-400">đến</div>
+              <div>{dayjs(record.endAt).format('DD/MM/YY HH:mm')}</div>
+            </div>
+        );
+      }
     },
     {
       title: 'Trạng thái',
       key: 'status',
-      render: (_, record) => (
-        <Switch 
-          checked={record.status === 'Active'}
-          checkedChildren="Active"
-          unCheckedChildren="Inactive"
-          loading={toggleMutation.isPending && toggleMutation.variables === record.id}
-          onChange={() => handleToggle(record.id)}
-        />
-      )
+      render: (_, record) => {
+        // LOGIC MỚI: Kiểm tra hết hạn dựa trên thời gian thực hoặc status từ BE
+        const isExpired = dayjs(record.endAt).isBefore(dayjs()) || record.status === 'Expired';
+        
+        if (isExpired) {
+            return <Tag icon={<StopOutlined />} color="error">Expired</Tag>;
+        }
+
+        return (
+            <Switch 
+              checked={record.status === 'Active'}
+              checkedChildren="Active"
+              unCheckedChildren="Inactive"
+              loading={toggleMutation.isPending && toggleMutation.variables === record.id}
+              onChange={() => handleToggle(record.id)}
+            />
+        );
+      }
     },
     {
       title: '',
       key: 'action',
-      render: (_, record) => (
-        <Button 
-          type="text" 
-          icon={<EditOutlined />} 
-          onClick={() => handleEdit(record)} 
-        />
-      )
+      render: (_, record) => {
+        const isExpired = dayjs(record.endAt).isBefore(dayjs()) || record.status === 'Expired';
+        
+        return (
+            <Tooltip title={isExpired ? "Quest đã kết thúc, không thể sửa" : "Chỉnh sửa"}>
+                <Button 
+                  type="text" 
+                  icon={<EditOutlined />} 
+                  disabled={isExpired} // Disable nút nếu hết hạn
+                  onClick={() => handleEdit(record)} 
+                />
+            </Tooltip>
+        );
+      }
     }
   ];
 
@@ -209,9 +232,9 @@ const ManageQuestsPage: React.FC = () => {
             style={{ width: 150 }}
             onChange={(val) => setFilters(prev => ({ ...prev, page: 1, filterField: val ? 'Scope' : undefined, filterValue: val }))}
           >
-             <Select.Option value="Daily">Hàng ngày</Select.Option>
-             <Select.Option value="Weekly">Hàng tuần</Select.Option>
-             <Select.Option value="Monthly">Hàng tháng</Select.Option>
+              <Select.Option value="Daily">Hàng ngày</Select.Option>
+              <Select.Option value="Weekly">Hàng tuần</Select.Option>
+              <Select.Option value="Monthly">Hàng tháng</Select.Option>
           </Select>
         </div>
       </div>

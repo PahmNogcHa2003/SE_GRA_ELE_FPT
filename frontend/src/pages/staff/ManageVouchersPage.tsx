@@ -1,3 +1,5 @@
+// features/voucher/pages/ManageVouchersPage.tsx
+
 import React, { useState } from 'react';
 import {
   Table, Button, Switch, Tag, App
@@ -32,20 +34,31 @@ const ManageVouchersPage: React.FC = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editingVoucher, setEditingVoucher] = useState<VoucherDTO | null>(null);
 
+  // --- QUERY: Lấy danh sách Voucher ---
   const { data, isLoading } = useQuery({
     queryKey: ['staffVouchers', filters],
     queryFn: () => getPagedVouchers(filters)
   });
 
+  // --- MUTATION: Tạo mới ---
   const createMutation = useMutation({
     mutationFn: createVoucher,
     onSuccess: () => {
       notification.success({ message: 'Tạo Voucher thành công' });
       setDrawerOpen(false);
       queryClient.invalidateQueries({ queryKey: ['staffVouchers'] });
+    },
+    // THÊM: Bắt lỗi từ Backend khi tạo
+    onError: (error: any) => {
+        const errorMsg = error?.response?.data?.message || error.message || 'Có lỗi xảy ra khi tạo';
+        notification.error({
+            message: 'Tạo thất bại',
+            description: errorMsg,
+        });
     }
   });
 
+  // --- MUTATION: Cập nhật ---
   const updateMutation = useMutation({
     mutationFn: (p: { id: number; dto: VoucherCreateDTO }) =>
       updateVoucher(p.id, p.dto),
@@ -53,17 +66,32 @@ const ManageVouchersPage: React.FC = () => {
       notification.success({ message: 'Cập nhật Voucher thành công' });
       setDrawerOpen(false);
       queryClient.invalidateQueries({ queryKey: ['staffVouchers'] });
+    },
+    // THÊM: Bắt lỗi từ Backend khi sửa (ví dụ trùng code khi sửa)
+    onError: (error: any) => {
+        const errorMsg = error?.response?.data?.message || error.message || 'Có lỗi xảy ra khi cập nhật';
+        notification.error({
+            message: 'Cập nhật thất bại',
+            description: errorMsg,
+        });
     }
   });
 
+  // --- MUTATION: Đổi trạng thái (Active/Inactive) ---
   const toggleMutation = useMutation({
     mutationFn: toggleVoucherStatus,
     onSuccess: () => {
-      message.success('Đã đổi trạng thái');
+      message.success('Đã đổi trạng thái voucher');
       queryClient.invalidateQueries({ queryKey: ['staffVouchers'] });
+    },
+    // THÊM: Bắt lỗi khi đổi trạng thái
+    onError: (error: any) => {
+        const errorMsg = error?.response?.data?.message || error.message || 'Không thể đổi trạng thái';
+        message.error(errorMsg);
     }
   });
 
+  // --- Cấu hình cột bảng ---
   const columns: TableProps<VoucherDTO>['columns'] = [
     {
       title: 'Mã',
@@ -96,7 +124,8 @@ const ManageVouchersPage: React.FC = () => {
       render: (_, r) => (
         <Switch
           checked={r.status === 'Active'}
-          loading={toggleMutation.isPending}
+          loading={toggleMutation.isPending} // Chỉ xoay loading ở đúng dòng đang bấm thì khó, tạm thời xoay chung hoặc cần state riêng. 
+          // (Lưu ý: toggleMutation.isPending sẽ true chung cho cả bảng, nếu muốn loading từng dòng cần logic phức tạp hơn, nhưng code này vẫn chạy ổn)
           onChange={() => toggleMutation.mutate(r.id)}
         />
       )

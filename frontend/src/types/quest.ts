@@ -4,9 +4,7 @@ id: number;
 code: string;
 title: string;
 description?: string;
-  /** "Distance" | "Trips" | "Duration" */
 questType: string;
-  /** "Daily" | "Weekly" | "Monthly" | "OneTime" */
 scope: string;
 
 targetDistanceKm?: number | null;
@@ -20,7 +18,6 @@ endAt: string;
 updatedAt?: string | null;
 status: string;
 
-  // ==== Tiến độ của user hiện tại ====
 currentDistanceKm: number;
 currentTrips: number;
 currentDurationMinutes: number;
@@ -29,6 +26,20 @@ isCompleted: boolean;
 completedAt?: string | null;
 rewardClaimedAt?: string | null;
 
-  /** % hoàn thành (0–100) */
 progressPercent: number;
+}
+
+export interface QuestCompletedDTO {
+  questId: number; 
+  code: string;
+  title: string;
+  
+  finalDistanceKm: number;
+  finalTrips: number;
+  finalDurationMinutes: number;
+  
+  rewardValue: number; 
+  
+  completedAt: string;
+  rewardClaimedAt?: string;
 }

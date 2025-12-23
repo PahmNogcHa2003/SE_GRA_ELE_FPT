@@ -27,13 +27,11 @@ const QuestFormModal: React.FC<Props> = ({ open, onClose, onSubmit, initialData,
   useEffect(() => {
     if (open) {
       if (initialData) {
-        // Mode Edit
         form.setFieldsValue({
           ...initialData,
           dateRange: [dayjs(initialData.startAt), dayjs(initialData.endAt)],
         });
       } else {
-        // Mode Create
         form.resetFields();
         form.setFieldsValue({
           questType: 'Distance',
@@ -54,7 +52,7 @@ const QuestFormModal: React.FC<Props> = ({ open, onClose, onSubmit, initialData,
       promoReward: values.promoReward,
       startAt: values.dateRange[0].toISOString(),
       endAt: values.dateRange[1].toISOString(),
-      // Chỉ lấy target tương ứng
+      // Chỉ lấy target tương ứng với loại quest
       targetDistanceKm: values.questType === 'Distance' ? values.targetDistanceKm : undefined,
       targetTrips: values.questType === 'Trips' ? values.targetTrips : undefined,
       targetDurationMinutes: values.questType === 'Duration' ? values.targetDurationMinutes : undefined,
@@ -67,12 +65,13 @@ const QuestFormModal: React.FC<Props> = ({ open, onClose, onSubmit, initialData,
       title={initialData ? `Cập nhật Quest: ${initialData.code}` : "Tạo Quest mới"}
       open={open}
       onCancel={onClose}
-      onOk={() => form.submit()} // Kích hoạt submit form khi ấn nút OK của Modal
-      confirmLoading={isLoading} // Hiệu ứng loading trên nút OK
-      width={700} // Độ rộng hợp lý cho form 2 cột
+      onOk={() => form.submit()}
+      confirmLoading={isLoading}
+      width={700}
       okText={initialData ? 'Cập nhật' : 'Tạo mới'}
       cancelText="Hủy bỏ"
-      centered // Thuộc tính quan trọng để Modal nằm chính giữa màn hình dọc/ngang
+      centered
+      maskClosable={false}
     >
       <Form form={form} layout="vertical" onFinish={handleFinish} className="pt-4">
         
@@ -83,16 +82,20 @@ const QuestFormModal: React.FC<Props> = ({ open, onClose, onSubmit, initialData,
               <Form.Item 
                 name="code" 
                 label="Mã Quest (Code)" 
-                rules={[{ required: true, message: 'Nhập mã unique' }]}
+                rules={[
+                    { required: true, message: 'Vui lòng nhập mã Quest' },
+                    { max: 50, message: 'Mã tối đa 50 ký tự' },
+                    { pattern: /^[A-Za-z0-9_]+$/, message: 'Mã chỉ chứa chữ, số và gạch dưới' }
+                ]}
               >
-                <Input placeholder="Vd: Q_WEEKLY_01" disabled={!!initialData} />
+                <Input placeholder="Vd: Q_WEEKLY_01" style={{ textTransform: 'uppercase' }} disabled={!!initialData} />
               </Form.Item>
             </Col>
             <Col span={12}>
               <Form.Item 
                 name="scope" 
                 label="Phạm vi (Scope)"
-                rules={[{ required: true }]}
+                rules={[{ required: true, message: 'Vui lòng chọn phạm vi' }]}
               >
                 <Select>
                   <Option value="Daily">Hàng ngày (Daily)</Option>
@@ -106,7 +109,7 @@ const QuestFormModal: React.FC<Props> = ({ open, onClose, onSubmit, initialData,
           <Form.Item 
             name="title" 
             label="Tên hiển thị" 
-            rules={[{ required: true, message: 'Nhập tên quest' }]}
+            rules={[{ required: true, message: 'Vui lòng nhập tên Quest' }]}
           >
             <Input placeholder="Vd: Đua xe cuối tuần" />
           </Form.Item>
@@ -124,6 +127,7 @@ const QuestFormModal: React.FC<Props> = ({ open, onClose, onSubmit, initialData,
             <Col span={12}>
               <Form.Item name="questType" label="Loại nhiệm vụ" rules={[{ required: true }]}>
                 <Select onChange={() => {
+                  // Reset các field target khi đổi loại để tránh gửi data rác
                   form.setFieldsValue({ targetDistanceKm: null, targetTrips: null, targetDurationMinutes: null });
                 }}>
                   <Option value="Distance">Quãng đường (Distance)</Option>
@@ -138,7 +142,10 @@ const QuestFormModal: React.FC<Props> = ({ open, onClose, onSubmit, initialData,
                 <Form.Item 
                   name="targetDistanceKm" 
                   label="Quãng đường (Km)" 
-                  rules={[{ required: true, message: 'Nhập số Km' }]}
+                  rules={[
+                      { required: true, message: 'Vui lòng nhập số Km' },
+                      { type: 'number', min: 0.1, message: 'Phải lớn hơn 0' }
+                  ]}
                 >
                   <InputNumber style={{ width: '100%' }} min={0.1} step={0.1} suffix="km" />
                 </Form.Item>
@@ -148,7 +155,10 @@ const QuestFormModal: React.FC<Props> = ({ open, onClose, onSubmit, initialData,
                 <Form.Item 
                   name="targetTrips" 
                   label="Số chuyến đi" 
-                  rules={[{ required: true, message: 'Nhập số chuyến' }]}
+                  rules={[
+                      { required: true, message: 'Vui lòng nhập số chuyến' },
+                      { type: 'number', min: 1, message: 'Phải từ 1 chuyến trở lên' }
+                  ]}
                 >
                   <InputNumber style={{ width: '100%' }} min={1} step={1} suffix="chuyến" />
                 </Form.Item>
@@ -158,7 +168,10 @@ const QuestFormModal: React.FC<Props> = ({ open, onClose, onSubmit, initialData,
                 <Form.Item 
                   name="targetDurationMinutes" 
                   label="Thời gian lái" 
-                  rules={[{ required: true, message: 'Nhập số phút' }]}
+                  rules={[
+                      { required: true, message: 'Vui lòng nhập số phút' },
+                      { type: 'number', min: 1, message: 'Phải từ 1 phút trở lên' }
+                  ]}
                 >
                   <InputNumber style={{ width: '100%' }} min={1} suffix="phút" />
                 </Form.Item>
@@ -170,10 +183,10 @@ const QuestFormModal: React.FC<Props> = ({ open, onClose, onSubmit, initialData,
         {/* Block 3: Thời gian & Thưởng */}
         <Row gutter={16}>
           <Col span={12}>
-             <Form.Item 
+              <Form.Item 
                 name="dateRange" 
                 label="Thời gian áp dụng" 
-                rules={[{ required: true, message: 'Chọn thời gian' }]}
+                rules={[{ required: true, message: 'Vui lòng chọn thời gian bắt đầu & kết thúc' }]}
               >
                 <RangePicker showTime format="DD/MM/YYYY HH:mm" style={{ width: '100%' }} />
               </Form.Item>
@@ -182,7 +195,10 @@ const QuestFormModal: React.FC<Props> = ({ open, onClose, onSubmit, initialData,
             <Form.Item 
               name="promoReward" 
               label="Điểm thưởng" 
-              rules={[{ required: true, message: 'Nhập thưởng' }]}
+              rules={[
+                  { required: true, message: 'Vui lòng nhập điểm thưởng' },
+                  { type: 'number', min: 0, message: 'Điểm thưởng không được âm' }
+              ]}
             >
               <InputNumber 
                 style={{ width: '100%' }} 

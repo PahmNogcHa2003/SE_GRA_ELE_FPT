@@ -11,8 +11,8 @@ export const getNews = (params: GetNewsParams) => {
   return httpUser.get<ApiResponse<PagedResult<NewsDTO>>>(BASE_URL, { params });
 };
 
-export const getNewsById = (id: number) => {
-  return httpUser.get<ApiResponse<NewsDTO>>(`${BASE_URL}/${id}`);
+export const getNewsById = (slug: string, id: number) => {
+  return httpUser.get<ApiResponse<NewsDTO>>(`${BASE_URL}/${slug}/${id}`);
 };
 
 export const getRelatedNews = (newsId?: number, limit = 5) => {

@@ -3,6 +3,7 @@ export type VoucherStatus = 'Active' | 'Inactive' | 'Expired' | 'Disabled';
 export interface VoucherDTO {
   id: number;
   code: string;
+  description : string;
   isPercentage: boolean;
   value: number;
   maxDiscountAmount?: number;
@@ -17,6 +18,7 @@ export interface VoucherDTO {
 
 export interface VoucherCreateDTO {
   code: string;
+  description : string;
   isPercentage: boolean;
   value: number;
   maxDiscountAmount?: number;

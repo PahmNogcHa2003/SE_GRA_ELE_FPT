@@ -40,11 +40,15 @@ totalCaloriesBurned: number;
 
 
 export interface LeaderboardEntryDTO {
-userId: number;
-fullName?: string | null;
-avatarUrl?: string | null;
-totalDistanceKm: number;
-totalDurationMinutes: number;
-totalTrips: number;
-rank: number;
+  userId: number;
+  fullName?: string | null;
+  avatarUrl?: string | null;
+  totalDistanceKm: number;
+  totalDurationMinutes: number;
+  totalTrips: number;
+  rank: number;
+
+  weekNumber?: number | null;
+  month?: number | null;
+  year?: number | null;
 }

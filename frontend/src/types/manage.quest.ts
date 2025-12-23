@@ -2,7 +2,7 @@
 
 export type QuestType = 'Distance' | 'Trips' | 'Duration';
 export type QuestScope = 'Daily' | 'Weekly' | 'Monthly';
-export type QuestStatus = 'Active' | 'Inactive';
+export type QuestStatus = 'Active' | 'Inactive' | 'Expired';
 
 export interface QuestDTO {
   id: number;

@@ -35,6 +35,7 @@ import ManageRentalsPage from '../pages/staff/ManageRentalsPage';
 import ManageQuestsPage from '../pages/staff/ManageQuestsPage';
 import ManageTransactionsPage from '../pages/staff/ManageTransactionsPage';
 import ManageVouchersPage from '../pages/staff/ManageVouchersPage';
+import DashboardPage  from '../pages/staff/DashboardPage';
 // Auth
 import AdminLogin from '../features/auth/admin/AdminLogin';
 import LoginModal from '../features/auth/user/LoginModal'; 
@@ -56,7 +57,7 @@ const AppRoutes = () => (
         </Route>
         <Route path="/staff" element={<StaffLayout />}>
             <Route index element={<Navigate to="dashboard" replace />} />
-            <Route path="dashboard" element={<div>Dashboard</div>} />
+            <Route path="dashboard" element={<DashboardPage/>} />
             <Route path="stations" element={<ManageStationsPage />} />
             <Route path="vehicles" element={<ManageVehiclesPage />} />
             <Route path="categories-vehicle" element={<ManageCategoriesVehiclePage />} />
@@ -77,7 +78,7 @@ const AppRoutes = () => (
         <Route path="stations" element={<StationPage />} />
         <Route path="contact" element={<ContactPage/>} />
         <Route path="news" element={<NewsListPage />} />
-        <Route path="news/:id" element={<NewsDetailPage />} />
+        <Route path="news/:slug/:id" element={<NewsDetailPage />} />
         <Route path="pricing" element={<BuyTicketsPage />} />
         <Route path="leaderboard" element={<LeaderboardPage />} />
         <Route path="auth/forgot-password" element={<ForgotPassword />} />
