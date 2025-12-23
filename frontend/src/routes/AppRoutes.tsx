@@ -78,7 +78,7 @@ const AppRoutes = () => (
         <Route path="stations" element={<StationPage />} />
         <Route path="contact" element={<ContactPage/>} />
         <Route path="news" element={<NewsListPage />} />
-        <Route path="news/:slug/:id" element={<NewsDetailPage />} />
+        <Route path="news/:id" element={<NewsDetailPage />} />
         <Route path="pricing" element={<BuyTicketsPage />} />
         <Route path="leaderboard" element={<LeaderboardPage />} />
         <Route path="auth/forgot-password" element={<ForgotPassword />} />
