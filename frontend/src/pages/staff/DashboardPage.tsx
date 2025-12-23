@@ -6,7 +6,6 @@ import {
   Row,
   Col,
   Statistic,
-  Table,
   DatePicker,
   Spin,
   Typography,
@@ -15,7 +14,6 @@ import {
   Progress,
   Select,
   Alert,
-  Divider,
   Grid,
 } from 'antd';
 import {
@@ -208,26 +206,6 @@ const DashboardPage: React.FC = () => {
 
   const COLORS = ['#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6'];
 
-  const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'success':
-      case 'completed':
-      case 'available':
-        return 'green';
-      case 'pending':
-      case 'maintenance':
-        return 'orange';
-      case 'failed':
-      case 'cancelled':
-      case 'unavailable':
-        return 'red';
-      case 'ongoing':
-      case 'inuse':
-        return 'blue';
-      default:
-        return 'default';
-    }
-  };
 
   const getStatusText = (status: string) => {
     switch (status.toLowerCase()) {

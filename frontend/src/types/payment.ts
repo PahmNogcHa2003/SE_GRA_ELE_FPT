@@ -28,7 +28,13 @@ export interface PromoTransactionDetail {
   createdAt: string;
 }
 
-// 3. Cập nhật PaymentResult để chứa cả 2 loại trên
+// 3. [MỚI] Tách interface transaction ra để dễ tái sử dụng
+export interface PaymentTransactionData {
+  wallet?: WalletTransactionDetail;
+  promo?: PromoTransactionDetail | null;
+}
+
+// 4. Cập nhật PaymentResult
 export interface PaymentResult {
   isSuccess: boolean;
   message: string;
@@ -41,9 +47,6 @@ export interface PaymentResult {
     paidAt?: string;
     createdAt?: string;
   };
-  // Cấu trúc mới khớp với Backend C#
-  transaction?: {
-    wallet?: WalletTransactionDetail;
-    promo?: PromoTransactionDetail | null; // Có thể null nếu không có khuyến mãi
-  };
+  // Sử dụng interface đã tách ở trên
+  transaction?: PaymentTransactionData;
 }

@@ -56,17 +56,22 @@ const PaymentReturnPage: React.FC = () => {
     );
   }
 
-   return (
+  return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
       {data?.rspCode === '00' ? (
-        // Thành công mới vừa xác nhận
         <InvoiceCard
           message={data.message}
           order={data.order}
-          transaction={data.transaction}
+          transaction={
+            (data.transaction as any) || {
+              amount: 0,
+              balanceAfter: 0,
+              source: '',
+              createdAt: new Date().toISOString(),
+            }
+          }
         />
       ) : data?.rspCode === '02' ? (
-        // Đã xử lý trước đó (reload / gọi lại) -> không cộng tiền nữa
         <Result
           status="info"
           title="Giao dịch đã được xử lý"

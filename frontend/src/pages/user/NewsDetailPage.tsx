@@ -7,13 +7,13 @@ import { getNewsById, getRelatedNews } from '../../services/news.service';
 import type { NewsDTO } from '../../types/news';
 
 const NewsDetailPage: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const { id, slug } = useParams<{ id: string; slug: string }>();
   const newsId = Number(id);
 
   const { data: news, isLoading } = useQuery({
     queryKey: ['news-detail', newsId],
     queryFn: async () => {
-      const res = await getNewsById(newsId);
+      const res = await getNewsById(slug!, Number(id));
       return res.data.data as NewsDTO;
     },
     enabled: !!newsId,
